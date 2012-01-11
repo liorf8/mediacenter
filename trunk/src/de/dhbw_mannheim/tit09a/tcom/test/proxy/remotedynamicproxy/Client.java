@@ -1,8 +1,9 @@
 package de.dhbw_mannheim.tit09a.tcom.test.proxy.remotedynamicproxy;
 
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
 public class Client
 {
@@ -11,20 +12,23 @@ public class Client
 	try
 	{
 	    // alternative without URL path
-	    // Registry registry = LocateRegistry.getRegistry();
-	    // FileController fc = (FileController) registry.lookup("rmi://localhost/fc");
+	    Registry registry = LocateRegistry.getRegistry("192.168.2.111");
+	    FileController fc = (FileController) registry.lookup("FileController");
+	    System.out.println(fc.getServerTime());
 	    
-	    // syntax: rmi://host:port/name
-	    FileController fc = (FileController) Naming.lookup("filecontroller");
-	    fc.addFile("max", "newfile.txt");
 	    
-	    LoginController lc = (LoginController) Naming.lookup("logincontroller");
-	    lc.addUser("max2", "maxpw");
+//	    // syntax: rmi://host:port/name
+//	    FileController fc = (FileController) Naming.lookup("filecontroller");
+//	    fc.addFile("max", "newfile.txt");
+//	    System.out.println(fc.getServerTime());
+//	    
+//	    LoginController lc = (LoginController) Naming.lookup("logincontroller");
+//	    lc.addUser("max2", "maxpw");
 	    
 	}
 	catch (Exception e)
 	{
-	    System.err.println(e.getCause().toString());
+	    e.printStackTrace();
 	}
 
     }
