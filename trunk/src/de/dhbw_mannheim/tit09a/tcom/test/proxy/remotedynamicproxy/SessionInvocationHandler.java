@@ -26,6 +26,10 @@ public class SessionInvocationHandler implements InvocationHandler
 	System.out.println("Invoking method " + method.getName());
 	try
 	{
+	    if(args == null)
+	    {
+		return method.invoke(this.controller, args);
+	    }
 	    if (methodsExcludedFromSessionValidation.contains(method.getName()))
 	    {
 		return method.invoke(this.controller, args);

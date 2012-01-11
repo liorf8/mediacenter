@@ -36,12 +36,14 @@ public class Server
 
 	    // Registrate the Service at the RMI registry
 	    LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+	    Registry registry = LocateRegistry.getRegistry();
 	    
 	    // syntax: rmi://host:port/name
-	    Naming.rebind("rmi://localhost:1099/filecontroller", remoteSessionProxyFC);
+	    //Naming.rebind("rmi://localhost:1099/filecontroller", remoteSessionProxyFC);
+	    registry.rebind(FileController.class.getSimpleName(), remoteSessionProxyFC);
 	    System.out.println("FileController angemeldet");
 	    
-	    Naming.rebind("rmi://localhost:1099/logincontroller", remoteSessionProxyLC);
+	    Naming.rebind(LoginController.class.getSimpleName(), remoteSessionProxyLC);
 	    System.out.println("LoginController angemeldet");
 	    // Alternative without URL path
 	    // Registry registry = LocateRegistry.getRegistry();
