@@ -1,10 +1,17 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.proxy.remotedynamicproxy;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 
 import java.lang.reflect.InvocationHandler;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteServer;
+
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.ControllerUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.FileController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.FileControllerImpl;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginControllerImpl;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.SessionInvocationHandler;
 
 public class Server
 {

@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.proxy.remotedynamicproxy;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller;
 
 import java.rmi.RemoteException;
 import java.security.NoSuchAlgorithmException;
@@ -11,7 +11,7 @@ public class LoginControllerImpl extends ControllerUtil implements LoginControll
     @Override
     public void registerUser(String login, String password) throws RemoteException
     {
-	System.out.printf("registerUser executed!");
+	System.out.println("registerUser executed!");
     }
 
     @Override
@@ -30,7 +30,7 @@ public class LoginControllerImpl extends ControllerUtil implements LoginControll
 	    e.printStackTrace();
 	}
 
-	System.out.printf("login executed!");
+	System.out.println("login executed!");
 
 	return null;
     }
@@ -39,8 +39,21 @@ public class LoginControllerImpl extends ControllerUtil implements LoginControll
     public void unregisterUser(String sessionId, String login) throws RemoteException,
 	    IllegalAccessException
     {
-	System.out.printf("unregisterUser executed!");
+	System.out.println("unregisterUser executed!");
 
+    }
+
+    @Override
+    public void logout(String sessionId) throws RemoteException, IllegalAccessException
+    {
+	System.out.println("logout executed!");
+    }
+
+    @Override
+    public void changePW(String sessionId, String oldPW, String newPW) throws RemoteException,
+	    IllegalAccessException
+    {
+	System.out.println("changePW executed!");
     }
 
     static boolean validateSession(Object sessionId) throws IllegalAccessException

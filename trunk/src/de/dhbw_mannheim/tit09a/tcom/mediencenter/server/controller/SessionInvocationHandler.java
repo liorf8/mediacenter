@@ -1,10 +1,12 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.proxy.remotedynamicproxy;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Vector;
+
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.LogUtil;
 
 public class SessionInvocationHandler implements InvocationHandler
 {
