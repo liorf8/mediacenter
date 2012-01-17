@@ -16,6 +16,11 @@ public class ByteValue
     {
 	Byte, Kilobyte, Megabyte, Gigabyte, Terabyte, Petabyte
     }
+    
+    public static enum ByteUnitAbbreviation
+    {
+	B, KB, MB, GB, TB, PB
+    }
 
     private long bytes;
 
