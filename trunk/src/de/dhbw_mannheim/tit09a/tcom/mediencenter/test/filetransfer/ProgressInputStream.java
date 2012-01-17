@@ -13,18 +13,21 @@ public class ProgressInputStream extends FilterInputStream
     private File file;
     private PropertyChangeListener l;
     private long totalBytesRead;
-    private int percentage;
+    private long newTotalBytesRead;
+    private int progress;
+    private int newProgress;
+    
 
     protected ProgressInputStream(PropertyChangeListener l, File file) throws FileNotFoundException
     {
 	super(new FileInputStream(file));
 
 	this.l = l;
-	this.file = file;
+	this.setFile(file);
 
 	// reset the value
 	totalBytesRead = 0;
-	percentage = 0;
+	progress = 0;
     }
 
     public int read() throws IOException
@@ -60,20 +63,30 @@ public class ProgressInputStream extends FilterInputStream
 	return file;
     }
 
+    public void setFile(File file)
+    {
+	if (this.file != file)
+	{
+	    l.propertyChange(new PropertyChangeEvent(this, "file", this.file, file));
+	    this.file = file;
+	}
+    }
+
     private void mayFirePropertyChanges(long bytesRead)
     {
-	long newTotalBytesRead = totalBytesRead + bytesRead;
+	newTotalBytesRead = totalBytesRead + bytesRead;
 	if (newTotalBytesRead != totalBytesRead)
 	{
+	    l.propertyChange(new PropertyChangeEvent(this, "totalBytesRead", totalBytesRead,
+		    newTotalBytesRead));
 	    totalBytesRead = newTotalBytesRead;
-	    l.propertyChange(new PropertyChangeEvent(this, "totalBytesRead", totalBytesRead, newTotalBytesRead));
 	}
-	
-	int newPercentage = (int) (totalBytesRead * 100 / file.length());
-	if (newPercentage != percentage)
+
+	newProgress = (int) (totalBytesRead * 100 / file.length());
+	if (newProgress != progress)
 	{
-	    percentage = newPercentage;
-	    l.propertyChange(new PropertyChangeEvent(this, "progress", percentage, newPercentage));
+	    l.propertyChange(new PropertyChangeEvent(this, "progress", progress, newProgress));
+	    progress = newProgress;
 	}
     }
 
