@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -23,8 +24,12 @@ public class MainClass
     private static JPanel panel;
     private static JProgressBar bar;
 
-    public class MyPropertyChangeListener implements PropertyChangeListener
+    public class MyPropertyChangeListener extends CoalescedPropertyChangeListener
     {
+	public MyPropertyChangeListener()
+	{
+	    super(500);
+	}
 	private int progress;
 	private long totalBytesRead;
 	private long fileSize;
@@ -38,35 +43,32 @@ public class MainClass
 	}
 
 	@Override
-	public void propertyChange(PropertyChangeEvent evt)
+	public void delayedPropertyChange(List<PropertyChangeEvent> evts)
 	{
+//	    System.out.print("Events:");
+//	    for(PropertyChangeEvent evt : evts)
+//	    {
+//		System.out.print(evt.getNewValue()+";");
+//	    }
+//	    System.out.println();
+	    PropertyChangeEvent evt = evts.get(evts.size()-1);
+	    //System.out.println("=>"+evt.getNewValue()+";");
+	    
 	    if ("totalBytesRead".equals(evt.getPropertyName()))
 	    {
-		if ((System.currentTimeMillis() - timeStamp) > 500)
-		{
-		    long byteDiff = -1
-			    * (totalBytesRead - (totalBytesRead = (Long) evt.getNewValue()));
-		    long timeDiff = -1 * (timeStamp - (timeStamp = System.currentTimeMillis()));
-		    speed.setBytes((int) (byteDiff / (timeDiff / 1000f)));
+		// speed
+		long byteDiff = -1 * (totalBytesRead - (totalBytesRead = (Long) evt.getNewValue()));
+		long timeDiff = -1 * (timeStamp - (timeStamp = System.currentTimeMillis()));
+		speed.setBytes((int) (byteDiff / (timeDiff / 1000f)));
 
-		    // System.out.printf("Old: %d; New: %d (read:%d) Bytes%n", totalBytesRead, totalBytesRead
-		    // =
-		    // (Long) evt.getNewValue(),totalBytesRead - (Long) evt.getOldValue());
-		    setString();
-		}
-	    }
-	    else if ("progress".equals(evt.getPropertyName()))
-	    {
-		progress = (Integer) evt.getNewValue();
-		// System.out.printf("Old: %d; New: %d%%%n", progress, progress = (Integer)
-		// evt.getNewValue());
-		setString();
+		// progress
+		progress = (int) (totalBytesRead * 100 / fileSize);
 		bar.setValue(progress);
+		setString();
 	    }
 	    else if ("file".equals(evt.getPropertyName()))
 	    {
-		System.out.printf("File changed: Old: %s, New: %s%n", fileSize,
-			fileSize = ((File) evt.getNewValue()).length());
+		fileSize = ((File) evt.getNewValue()).length();
 		setString();
 	    }
 	    else
@@ -88,22 +90,22 @@ public class MainClass
 		    buildGUI();
 		}
 	    });
-	    String filepath = "C:\\Users\\Max\\Videos\\!Filme\\rsg-die frau des zeitreisenden-720p.mkv";
+	    String filepath = "D:\\Downloads\\jeeperscreepers.mkv";
 
 	    PropertyChangeListener pcl = new MainClass().new MyPropertyChangeListener();
-	    InputStream pbis = new ProgressInputStream(pcl, new File(filepath));
+	    InputStream pbis = new ProgressFileInputStream(pcl, new File(filepath));
 
 	    byte[] buffer = new byte[0xFFFF];
 	    // 0xFFFF = 64kb (65535Bytes)
 	    while (pbis.read(buffer) != -1)
 	    {
-		// try
-		// {
-		// Thread.sleep(100);
-		// }
-		// catch (InterruptedException ignore)
-		// {
-		// }
+		 try
+		 {
+		 Thread.sleep(5);
+		 }
+		 catch (InterruptedException ignore)
+		 {
+		 }
 	    }
 	}
 	catch (FileNotFoundException e)
