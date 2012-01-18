@@ -14,20 +14,6 @@ public class FileControllerImpl extends ControllerUtil implements FileController
     }
 
     @Override
-    public void uploadFile(String sessionId, String filePath, byte[] data, boolean replace)
-	    throws RemoteException, IllegalAccessException, IOException
-    {
-	System.out.println("Uploaded File '"+filePath+"'!");
-    }
-
-    @Override
-    public void downloadFile(String sessionId, String filePath) throws RemoteException,
-	    IllegalAccessException, IOException
-    {
-	System.out.println("Downloaded File '"+filePath+"'!");
-    }
-
-    @Override
     public void deleteFile(String sessionId, String filePath) throws RemoteException,
 	    IllegalAccessException, IOException
     {
@@ -67,5 +53,21 @@ public class FileControllerImpl extends ControllerUtil implements FileController
     public void createBasicDirs(String login) throws IOException
     {
 	System.out.println("Created basic directories!");
+    }
+
+    @Override
+    public void uploadFile(String sessionId, String filePath, long size, boolean replace)
+	    throws RemoteException, IllegalAccessException, IOException
+    {
+	// TODO Auto-generated method stub
+	
+    }
+
+    @Override
+    public long downloadFile(String sessionId, String filePath) throws RemoteException,
+	    IllegalAccessException, IOException
+    {
+	// TODO Auto-generated method stub
+	return 0;
     }
 }
