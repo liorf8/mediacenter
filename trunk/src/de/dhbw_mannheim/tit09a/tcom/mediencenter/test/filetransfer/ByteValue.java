@@ -10,7 +10,7 @@ public class ByteValue
     public static final Long ONE_TB = 1024L * 1024L * 1024L * 1024L;
     public static final Long ONE_PB = 1024L * 1024L * 1024L * 1024L * 1024L;
 
-    public static final DecimalFormat noZeros = new DecimalFormat("#.#");
+    public static final DecimalFormat noZeros = new DecimalFormat("#.##");
 
     public static enum ByteUnit
     {
@@ -44,27 +44,27 @@ public class ByteValue
 	if (bytes > ONE_PB)
 	{
 	    return String
-		    .format("%s %s", noZeros.format((float) bytes / ONE_PB), ByteUnit.Petabyte);
+		    .format("%s %s", noZeros.format((float) bytes / ONE_PB), ByteUnitAbbreviation.PB);
 	}
 	else if (bytes > ONE_TB)
 	{
 	    return String
-		    .format("%s %s", noZeros.format((float) bytes / ONE_TB), ByteUnit.Terabyte);
+		    .format("%s %s", noZeros.format((float) bytes / ONE_TB), ByteUnitAbbreviation.TB);
 	}
 	else if (bytes > ONE_GB)
 	{
 	    return String
-		    .format("%s %s", noZeros.format((float) bytes / ONE_GB), ByteUnit.Gigabyte);
+		    .format("%s %s", noZeros.format((float) bytes / ONE_GB), ByteUnitAbbreviation.GB);
 	}
 	else if (bytes > ONE_MB)
 	{
 	    return String
-		    .format("%s %s", noZeros.format((float) bytes / ONE_MB), ByteUnit.Megabyte);
+		    .format("%s %s", noZeros.format((float) bytes / ONE_MB), ByteUnitAbbreviation.MB);
 	}
 	else if (bytes > ONE_KB)
 	{
 	    return String
-		    .format("%s %s", noZeros.format((float) bytes / ONE_KB), ByteUnit.Kilobyte);
+		    .format("%s %s", noZeros.format((float) bytes / ONE_KB), ByteUnitAbbreviation.KB);
 	}
 	else
 	{
