@@ -89,7 +89,7 @@ public class MainClass
 		}
 	    });
 	    
-	    String filename = "C:\\Users\\Max\\Downloads\\himym.avi";
+	    String filename = "D:\\Downloads\\cougar2x20.mkv";
 	    if (args.length > 0)
 	    {
 		filename = args[0];
@@ -98,7 +98,8 @@ public class MainClass
 
 	    PropertyChangeListener pcl = new MainClass().new MyPropertyChangeListener();
 	    InputStream pbis = new ProgressInputStream(new FileInputStream(file), pcl);
-	    fileSize = pbis.available();
+	    fileSize = file.length();
+	    System.out.println(fileSize);
 
 	    byte[] buffer = new byte[0xFFFF];
 	    // 0xFFFF = 64kb (65535Bytes)
@@ -106,7 +107,7 @@ public class MainClass
 	    {
 		try
 		{
-		    Thread.sleep(10);
+		    Thread.sleep(5);
 		}
 		catch (InterruptedException ignore)
 		{
