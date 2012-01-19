@@ -41,7 +41,7 @@ public class ReadFileProgressMainClass
 	{
 	    bar.setString(String.format("%d%% - %s/%s (ETA %s @ %s/s)", progress, new ByteValue(
 		    totalBytesRead).toString(), new ByteValue(fileSize).toString(),
-		    DurationValue.formatMillis(timeRemaining * 1000, true, true), speed));
+		    TimeValue.formatMillis(timeRemaining * 1000, true, true), speed));
 	}
 
 	private void handlePropertyChange(PropertyChangeEvent evt)
@@ -63,12 +63,12 @@ public class ReadFileProgressMainClass
 	@Override
 	public void delayedPropertyChanges(List<PropertyChangeEvent> evts)
 	{
-	    System.out.print("Events:");
-	    for (PropertyChangeEvent evt : evts)
-	    {
-		System.out.print(evt.getNewValue() + ";");
-	    }
-	    System.out.println();
+//	    System.out.print("Events:");
+//	    for (PropertyChangeEvent evt : evts)
+//	    {
+//		System.out.print(evt.getNewValue() + ";");
+//	    }
+//	    System.out.println();
 	    PropertyChangeEvent evt = evts.get(evts.size() - 1);
 
 	    if ("totalBytesRead".equals(evt.getPropertyName()))
@@ -107,7 +107,7 @@ public class ReadFileProgressMainClass
 		}
 	    });
 
-	    String filename = "D:\\mhertram\\Downloads\\eclipse-jee-indigo-SR1-win32-x86_64.zip";
+	    String filename = "D:\\Downloads\\jeeperscreepers.mkv";
 	    if (args.length > 0)
 	    {
 		filename = args[0];
@@ -125,7 +125,7 @@ public class ReadFileProgressMainClass
 	    {
 		try
 		{
-		    Thread.sleep(10);
+		    Thread.sleep(1);
 		}
 		catch (InterruptedException ignore)
 		{

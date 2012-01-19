@@ -12,9 +12,27 @@ public abstract class BufferedPropertyChangeListener implements PropertyChangeLi
 {
     public static final long DEFAULT_DELAY = 300;
     public static final TimeUnit DEFAULT_UNIT = TimeUnit.MILLISECONDS;
-    private final List<PropertyChangeEvent> evts;
-    private final ScheduledExecutorService scheduler;
-    private final Runnable fireEvents;
+
+    private final List<PropertyChangeEvent> evts = new ArrayList<PropertyChangeEvent>();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final Runnable fireEvents = new Runnable()
+    {
+	public void run()
+	{
+	    // atomic block
+	    synchronized (evts)
+	    {
+		delayedPropertyChanges(new ArrayList<PropertyChangeEvent>(evts));
+		// If in between these two commands the add() method is called,
+		// the added event will be cleared by the next line.
+		// Because this is not intended, all access to the List 'evts' is synchronized.
+		evts.clear();
+	    }
+
+	    executed = true;
+	}
+    };
+
     private long delay;
     private TimeUnit unit;
     private boolean executed = true;
@@ -26,24 +44,6 @@ public abstract class BufferedPropertyChangeListener implements PropertyChangeLi
 
     public BufferedPropertyChangeListener(long delay, TimeUnit unit)
     {
-	evts = new ArrayList<PropertyChangeEvent>();
-	scheduler = Executors.newSingleThreadScheduledExecutor();
-	fireEvents = new Runnable()
-	{
-	    public void run()
-	    {
-		synchronized (evts)
-		{
-		    // atomic block
-		    delayedPropertyChanges(new ArrayList<PropertyChangeEvent>(evts));
-		    // If in between these two commands the add() method is called,
-		    // the added event will be cleared by the next line.
-		    // Because this is not intended, all access to the List is synchronized by this method.
-		    evts.clear();
-		}
-		executed = true;
-	    }
-	};
 	this.delay = delay;
 	this.unit = unit;
     }
@@ -52,7 +52,7 @@ public abstract class BufferedPropertyChangeListener implements PropertyChangeLi
     @Override
     public final void propertyChange(PropertyChangeEvent evt)
     {
-	// add() needs to be synchronized as well
+	// evts.add() needs to be synchronized as well
 	synchronized (evts)
 	{
 	    evts.add(evt);
