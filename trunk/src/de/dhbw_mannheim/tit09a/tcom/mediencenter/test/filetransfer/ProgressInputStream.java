@@ -5,7 +5,6 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 
-
 // Similar to FilterInputStream, but it was not necessary to extend the FilterOutputclass.
 public class ProgressInputStream extends InputStream
 {
@@ -21,12 +20,12 @@ public class ProgressInputStream extends InputStream
 
     public int read() throws IOException
     {
+	// -1 is returned when no more bytes when no byte was left to read
 	int nextByte = in.read();
-	if (nextByte != -1) // is returned when no more bytes
-	    firePropertyChange(1);
+	firePropertyChange(nextByte > -1 ? 1 : -1);
 	return nextByte;
     }
-    
+
     public int read(byte[] b) throws IOException
     {
 	return read(b, 0, b.length);
@@ -34,16 +33,19 @@ public class ProgressInputStream extends InputStream
 
     public int read(byte[] b, int off, int len) throws IOException
     {
+	// -1 is returned when no more bytes were read
 	int bytesRead = in.read(b, off, len);
-	if (bytesRead != -1) // is returned when no more bytes
-	    firePropertyChange(bytesRead);
+	firePropertyChange(bytesRead);
 	return bytesRead;
     }
 
     private void firePropertyChange(long bytesRead)
     {
+	// Fire a propertyChange with the old value and the new cumulated totalBytesRead.
+	// If bytesRead == -1, this indicates the end of reading.
+	// To signal this totalyBytesRead is set to -1 as well.
 	l.propertyChange(new PropertyChangeEvent(this, "totalBytesRead", totalBytesRead,
-		totalBytesRead = totalBytesRead + bytesRead));
+		totalBytesRead = (bytesRead > -1 ? totalBytesRead + bytesRead : -1)));
     }
 
 }

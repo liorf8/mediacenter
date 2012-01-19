@@ -35,7 +35,7 @@ public abstract class BufferedPropertyChangeListener implements PropertyChangeLi
 		synchronized (evts)
 		{
 		    // atomic block
-		    delayedPropertyChange(new ArrayList<PropertyChangeEvent>(evts));
+		    delayedPropertyChanges(new ArrayList<PropertyChangeEvent>(evts));
 		    // If in between these two commands the add() method is called,
 		    // the added event will be cleared by the next line.
 		    // Because this is not intended, all access to the List is synchronized by this method.
@@ -65,5 +65,5 @@ public abstract class BufferedPropertyChangeListener implements PropertyChangeLi
 	}
     }
 
-    public abstract void delayedPropertyChange(List<PropertyChangeEvent> evts);
+    public abstract void delayedPropertyChanges(List<PropertyChangeEvent> evts);
 }

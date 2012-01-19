@@ -15,7 +15,7 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-public class MainClass
+public class ReadFileProgressMainClass
 {
     private static JFrame frame;
     private static JPanel panel;
@@ -39,35 +39,53 @@ public class MainClass
 
 	private void setString()
 	{
-	    bar.setString(String.format("%d%% - %s/%s (%s/s, %d s verbleibend)", progress,
-		    new ByteValue(totalBytesRead).toString(), new ByteValue(fileSize).toString(),
-		    speed, timeRemaining));
+	    bar.setString(String.format("%d%% - %s/%s (ETA %s @ %s/s)", progress, new ByteValue(
+		    totalBytesRead).toString(), new ByteValue(fileSize).toString(),
+		    DurationValue.formatMillis(timeRemaining * 1000, true, true), speed));
+	}
+
+	private void handlePropertyChange(PropertyChangeEvent evt)
+	{
+	    System.out.println("=>" + evt.getNewValue() + ";");
+	    // speed
+	    byteDiff = -1 * (totalBytesRead - (totalBytesRead = (Long) evt.getNewValue()));
+	    timeDiff = -1 * (timeStamp - (timeStamp = System.currentTimeMillis()));
+	    speed.setBytes((int) (byteDiff / (timeDiff / 1000f)));
+	    timeRemaining = (fileSize - totalBytesRead) / speed.getBytes();
+
+	    // progress
+	    progress = (int) (totalBytesRead * 100 / fileSize);
+	    bar.setValue(progress);
+
+	    setString();
 	}
 
 	@Override
-	public void delayedPropertyChange(List<PropertyChangeEvent> evts)
+	public void delayedPropertyChanges(List<PropertyChangeEvent> evts)
 	{
-	     System.out.print("Events:");
-	     for (PropertyChangeEvent evt : evts)
-	     {
-	     System.out.print(evt.getNewValue() + ";");
-	     }
-	     System.out.println();
+	    System.out.print("Events:");
+	    for (PropertyChangeEvent evt : evts)
+	    {
+		System.out.print(evt.getNewValue() + ";");
+	    }
+	    System.out.println();
 	    PropertyChangeEvent evt = evts.get(evts.size() - 1);
-	     System.out.println("=>" + evt.getNewValue() + ";");
 
 	    if ("totalBytesRead".equals(evt.getPropertyName()))
 	    {
-		// speed
-		byteDiff = -1 * (totalBytesRead - (totalBytesRead = (Long) evt.getNewValue()));
-		timeDiff = -1 * (timeStamp - (timeStamp = System.currentTimeMillis()));
-		speed.setBytes((int) (byteDiff / (timeDiff / 1000f)));
-		timeRemaining = (fileSize - totalBytesRead) / speed.getBytes();
-
-		// progress
-		progress = (int) (totalBytesRead * 100 / fileSize);
-		bar.setValue(progress);
-		setString();
+		if ((Long) evt.getNewValue() > -1)
+		{
+		    handlePropertyChange(evt);
+		}
+		else
+		{
+		    System.out.println("Finished!");
+		    if (evts.size() > 1) // is there any Evt before?
+		    {
+			evt = evts.get(evts.size() - 2);
+			handlePropertyChange(evt);
+		    }
+		}
 	    }
 	    else
 	    {
@@ -88,15 +106,15 @@ public class MainClass
 		    buildGUI();
 		}
 	    });
-	    
-	    String filename = "D:\\Downloads\\cougar2x20.mkv";
+
+	    String filename = "D:\\mhertram\\Downloads\\eclipse-jee-indigo-SR1-win32-x86_64.zip";
 	    if (args.length > 0)
 	    {
 		filename = args[0];
 	    }
 	    File file = new File(filename);
 
-	    PropertyChangeListener pcl = new MainClass().new MyPropertyChangeListener();
+	    PropertyChangeListener pcl = new ReadFileProgressMainClass().new MyPropertyChangeListener();
 	    InputStream pbis = new ProgressInputStream(new FileInputStream(file), pcl);
 	    fileSize = file.length();
 	    System.out.println(fileSize);
@@ -107,7 +125,7 @@ public class MainClass
 	    {
 		try
 		{
-		    Thread.sleep(5);
+		    Thread.sleep(10);
 		}
 		catch (InterruptedException ignore)
 		{
@@ -130,7 +148,6 @@ public class MainClass
 	panel = new JPanel();
 	panel.setLayout(new GridLayout(1, 1));
 	panel.add(bar);
-
 
 	frame = new JFrame("ReadFile");
 	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
