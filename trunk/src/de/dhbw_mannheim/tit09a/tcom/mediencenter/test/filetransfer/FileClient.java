@@ -37,7 +37,7 @@ public class FileClient
 	private PropertyChangeEvent evt;
 
 	@Override
-	public void delayedPropertyChange(List<PropertyChangeEvent> evts)
+	public void delayedPropertyChanges(List<PropertyChangeEvent> evts)
 	{
 //	    System.out.print("Events:");
 //	    for (PropertyChangeEvent evt : evts)

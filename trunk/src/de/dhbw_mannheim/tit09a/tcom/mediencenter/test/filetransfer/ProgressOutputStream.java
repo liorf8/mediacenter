@@ -40,7 +40,7 @@ public class ProgressOutputStream extends OutputStream
 
     private void firePropertyChange(long bytesWritten)
     {
-	l.propertyChange(new PropertyChangeEvent(this, "totalBytesRead", bytesWritten,
+	l.propertyChange(new PropertyChangeEvent(this, "totalBytesWritten", bytesWritten,
 		totalBytesWritten = totalBytesWritten + bytesWritten));
     }
 
