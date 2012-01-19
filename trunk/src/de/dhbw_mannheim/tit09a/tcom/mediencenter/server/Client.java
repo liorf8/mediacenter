@@ -21,7 +21,7 @@ public class Client
 	    // Get the Controllers
 	    FileController fc = (FileController) registry.lookup(FileController.class.getSimpleName());
 	    System.out.println(fc.getServerTime());
-	    fc.uploadFile("max", "meineneuedatei.txt", 300L, true);
+	    fc.requestUploadFile("max", "meineneuedatei.txt", 300L, true);
 	    
 	    LoginController lc = (LoginController) registry.lookup(LoginController.class.getSimpleName());
 	    

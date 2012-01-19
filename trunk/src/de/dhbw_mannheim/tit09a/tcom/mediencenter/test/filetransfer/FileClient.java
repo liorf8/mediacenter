@@ -13,7 +13,10 @@ public class FileClient
 	// localhost for testing
 	System.out.println("Connecting...");
 	Socket sock = new Socket("127.0.0.1", 13267);
-
+	
+	System.out.println("getReceiveBufferSize(): " +sock.getReceiveBufferSize());
+	System.out.println("getSendBufferSize(): " +sock.getSendBufferSize());
+	
 	// receive file
 	byte[] buffer = new byte[8192];
 	InputStream is = new ProgressInputStream(sock.getInputStream(),

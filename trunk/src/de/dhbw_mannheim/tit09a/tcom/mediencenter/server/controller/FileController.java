@@ -9,10 +9,10 @@ public interface FileController extends Controller
 {
     public Date getServerTime() throws RemoteException;
 
-    public void uploadFile(String sessionId, String filePath, long size, boolean replace)
+    public void requestUploadFile(String sessionId, String filePath, long size, boolean replace)
 	    throws RemoteException, IllegalAccessException, IOException;
 
-    public long downloadFile(String sessionId, String filePath) throws RemoteException,
+    public long requestDownloadFile(String sessionId, String filePath) throws RemoteException,
 	    IllegalAccessException, IOException;
 
     public void deleteFile(String sessionId, String filePath) throws RemoteException,

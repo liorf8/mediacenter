@@ -14,7 +14,8 @@ public class FileServer
 	BufferedInputStream bis = new BufferedInputStream(fis);
 
 	// send file
-	System.out.printf("Sending File '%s' (%d Bytes)...%n", file.getAbsolutePath(), file.length());
+	System.out.printf("Sending File '%s' (%d Bytes)...%n", file.getAbsolutePath(),
+		file.length());
 	OutputStream os = sock.getOutputStream();
 	while (bis.read(sendBuffer) > -1)
 	{
@@ -44,8 +45,11 @@ public class FileServer
 	    System.out.println("Waiting...");
 	    Socket sock = servsock.accept();
 	    System.out.println("Accepted connection : " + sock);
-	    
-	    sendFile(sock, new File("C:\\Users\\Max\\Downloads\\himym.avi"));
+
+	    System.out.println("getReceiveBufferSize(): " + sock.getReceiveBufferSize());
+	    System.out.println("getSendBufferSize(): " + sock.getSendBufferSize());
+
+	    sendFile(sock, new File("D:\\Downloads\\cougar2x20.mkv"));
 
 	    sock.close();
 	}
