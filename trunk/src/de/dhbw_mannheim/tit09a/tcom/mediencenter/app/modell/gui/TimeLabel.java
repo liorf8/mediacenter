@@ -2,7 +2,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.app.modell.gui;
 
 import javax.swing.JLabel;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.app.modell.Duration;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.util.TimeValue;
 
 public class TimeLabel extends JLabel
 {
@@ -33,38 +33,6 @@ public class TimeLabel extends JLabel
     }
 
     // --------------------------------------------------------------------------------
-    // -- Static Method(s) ------------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    private static String millisToTimeString(long millis)
-    {
-	return millisToTimeString(millis, true, true);
-    }
-    
-    // --------------------------------------------------------------------------------
-    private static String millisToTimeString(long millis, boolean abandonMillis,
-	    boolean abandonZeroHours)
-    {
-	Duration duration = new Duration(millis);
-
-	StringBuffer timeSB = new StringBuffer();
-
-	if (!abandonZeroHours || duration.getHours() != 0)
-	{
-	    timeSB.append(String.format("%02d:", duration.getHours()));
-	}
-
-	timeSB.append(String.format("%02d:", duration.getMins()));
-	timeSB.append(String.format("%02d", duration.getSecs()));
-
-	if (!abandonMillis)
-	{
-	    timeSB.append("," + duration.getMillis());
-	}
-
-	return timeSB.toString();
-    }
-
-    // --------------------------------------------------------------------------------
     // -- Instance Method(s) ----------------------------------------------------------
     // --------------------------------------------------------------------------------
     public void setCurrentTime(String currentTime)
@@ -76,7 +44,7 @@ public class TimeLabel extends JLabel
     // --------------------------------------------------------------------------------
     public void setCurrentTime(long millis)
     {
-	this.setCurrentTime(millisToTimeString(millis));
+	this.setCurrentTime(new TimeValue(millis).toString());
     }
 
     // --------------------------------------------------------------------------------
@@ -89,7 +57,7 @@ public class TimeLabel extends JLabel
     // --------------------------------------------------------------------------------
     public void setFullTime(long millis)
     {
-	this.setFullTime(millisToTimeString(millis, true, true));
+	this.setFullTime(new TimeValue(millis).toString());
     }
 
     // --------------------------------------------------------------------------------

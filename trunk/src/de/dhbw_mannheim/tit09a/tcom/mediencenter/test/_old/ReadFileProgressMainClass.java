@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.filetransfer;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.test._old;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -15,6 +15,10 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.util.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.util.IntervalPropertyChangeListener;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.util.TimeValue;
+
 public class ReadFileProgressMainClass
 {
     private static JFrame frame;
@@ -22,7 +26,7 @@ public class ReadFileProgressMainClass
     private static JProgressBar bar;
     private static long fileSize;
 
-    public class MyPropertyChangeListener extends BufferedPropertyChangeListener
+    public class MyPropertyChangeListener extends IntervalPropertyChangeListener
     {
 	public MyPropertyChangeListener()
 	{
@@ -39,6 +43,7 @@ public class ReadFileProgressMainClass
 
 	private void setString()
 	{
+	   // System.out.print("Change GUI @ " +Thread.currentThread());
 	    bar.setString(String.format("%d%% - %s/%s (ETA %s @ %s/s)", progress, new ByteValue(
 		    totalBytesRead).toString(), new ByteValue(fileSize).toString(),
 		    TimeValue.formatMillis(timeRemaining * 1000, true, true), speed));
@@ -46,7 +51,8 @@ public class ReadFileProgressMainClass
 
 	private void handlePropertyChange(PropertyChangeEvent evt)
 	{
-	    System.out.println("=>" + evt.getNewValue() + ";");
+//	    System.out.print("Processing Events @ " +Thread.currentThread());
+//	    System.out.println("=>" + evt.getNewValue() + ";");
 	    // speed
 	    byteDiff = -1 * (totalBytesRead - (totalBytesRead = (Long) evt.getNewValue()));
 	    timeDiff = -1 * (timeStamp - (timeStamp = System.currentTimeMillis()));
@@ -57,18 +63,24 @@ public class ReadFileProgressMainClass
 	    progress = (int) (totalBytesRead * 100 / fileSize);
 	    bar.setValue(progress);
 
-	    setString();
+	    SwingUtilities.invokeLater(new Runnable()
+	    {
+		public void run()
+		{
+		    setString();
+		}
+	    });
 	}
 
 	@Override
-	public void delayedPropertyChanges(List<PropertyChangeEvent> evts)
+	public void propertyChangesAtInterval(List<PropertyChangeEvent> evts)
 	{
-//	    System.out.print("Events:");
-//	    for (PropertyChangeEvent evt : evts)
-//	    {
-//		System.out.print(evt.getNewValue() + ";");
-//	    }
-//	    System.out.println();
+	    System.out.print("Processing Events @ " +Thread.currentThread());
+	    for (PropertyChangeEvent evt : evts)
+	    {
+		System.out.print(evt.getNewValue() + ";");
+	    }
+	    System.out.println();
 	    PropertyChangeEvent evt = evts.get(evts.size() - 1);
 
 	    if ("totalBytesRead".equals(evt.getPropertyName()))
@@ -98,6 +110,7 @@ public class ReadFileProgressMainClass
     {
 	try
 	{
+	    System.out.println("Invoking Main @ " + Thread.currentThread());
 	    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 	    SwingUtilities.invokeAndWait(new Runnable()
 	    {
@@ -107,7 +120,7 @@ public class ReadFileProgressMainClass
 		}
 	    });
 
-	    String filename = "D:\\Downloads\\jeeperscreepers.mkv";
+	    String filename = "D:\\mhertram\\Downloads\\eclipse-jee-indigo-SR1-win32-x86_64.zip";
 	    if (args.length > 0)
 	    {
 		filename = args[0];
@@ -125,7 +138,7 @@ public class ReadFileProgressMainClass
 	    {
 		try
 		{
-		    Thread.sleep(1);
+		    Thread.sleep(100);
 		}
 		catch (InterruptedException ignore)
 		{
@@ -140,6 +153,7 @@ public class ReadFileProgressMainClass
 
     private static void buildGUI()
     {
+	System.out.println("Building GUI @ " +Thread.currentThread());
 	bar = new JProgressBar();
 	bar.setMinimumSize(new Dimension(350, 180));
 	bar.setSize(350, 180);

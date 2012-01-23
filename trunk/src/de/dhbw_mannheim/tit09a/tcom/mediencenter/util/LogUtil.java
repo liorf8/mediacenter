@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.util;
 
 import java.lang.reflect.Method;
 

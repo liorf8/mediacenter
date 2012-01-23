@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.swing.progress;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.swing.progress.example;
 
 /*
  * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
