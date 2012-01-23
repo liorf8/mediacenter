@@ -6,12 +6,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteServer;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.ControllerUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.FileController;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.FileControllerImpl;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginController;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginControllerImpl;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.SessionInvocationHandler;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginService;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginServiceImpl;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.ServiceInvocationHandler;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.util.ProxyUtil;
 
 public class Server
 {
@@ -20,7 +18,7 @@ public class Server
 	try
 	{
 	    RemoteServer.setLog(System.out);
-	    bindControllers();
+	    bindServices();
 
 	}
 	catch (Exception e)
@@ -29,24 +27,19 @@ public class Server
 	}
     }
 
-    private static void bindControllers() throws Exception
+    private static void bindServices() throws Exception
     {
 	LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
 	Registry registry = LocateRegistry.getRegistry();
 
-	// FileController
-	FileController fc = new FileControllerImpl();
-	// Session Security
-	InvocationHandler h = new SessionInvocationHandler(fc);
-	FileController sessionedFC = (FileController) ControllerUtil.getProxiedController(fc, h);
+	// LoginService
+	LoginService s = new LoginServiceImpl();
+	// Dynamic Proxy
+	InvocationHandler h = new ServiceInvocationHandler(s);
+	s = (LoginService) ProxyUtil.dynamicProxyService(s, h);
+	
 	// Export the previous Dynamic Proxy to be a Remote Dynamic Proxy
 	// and register it with the registry.
-	ControllerUtil.bindController(sessionedFC, registry);
-
-	// Same for LoginController
-	LoginController lc = new LoginControllerImpl();
-	h = new SessionInvocationHandler(lc);
-	LoginController sessionedLC = (LoginController) ControllerUtil.getProxiedController(lc, h);
-	ControllerUtil.bindController(sessionedLC, registry);
+	ProxyUtil.bindService(s, registry);
     }
 }

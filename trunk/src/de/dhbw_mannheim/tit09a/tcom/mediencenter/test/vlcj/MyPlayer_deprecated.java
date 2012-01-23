@@ -25,7 +25,8 @@ import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.embedded.videosurface.CanvasVideoSurface;
 import uk.co.caprica.vlcj.player.events.VideoOutputEventListener;
 
-public class MyPlayer
+@SuppressWarnings("deprecation")
+public class MyPlayer_deprecated
 {
     // --------------------------------------------------------------------------------
     // -- Instance Variable(s) --------------------------------------------------------
@@ -57,7 +58,7 @@ public class MyPlayer
 	    @Override
 	    public void run()
 	    {
-		new MyPlayer().start(args[0]);
+		new MyPlayer_deprecated().start(args[0]);
 	    }
 	});
     }
@@ -65,7 +66,7 @@ public class MyPlayer
     // --------------------------------------------------------------------------------
     // -- Constructor(s) --------------------------------------------------------------
     // --------------------------------------------------------------------------------
-    public MyPlayer()
+    public MyPlayer_deprecated()
     {
 	String vmName = System.getProperty("java.vm.name");
 	if (vmName.indexOf("64") > 0)
@@ -84,7 +85,7 @@ public class MyPlayer
 	    if (is64BitVM) bitFolder = "x64";
 
 	    URL libVLC = new URL(
-		    MyPlayer.class.getProtectionDomain().getCodeSource().getLocation(),
+		    MyPlayer_deprecated.class.getProtectionDomain().getCodeSource().getLocation(),
 		    "de\\dhbw_mannheim\\tit09a\\tcom\\lib\\vlc\\" + bitFolder);
 
 	    // URL.getFile() looks like this: "/E:/Java/..." So cut the first char and replace / by \

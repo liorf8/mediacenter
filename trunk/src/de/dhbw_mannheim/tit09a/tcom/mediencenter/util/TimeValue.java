@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.filetransfer;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.util;
 
 import java.util.concurrent.TimeUnit;
 
@@ -13,12 +13,12 @@ public class TimeValue
 
     public String toString()
     {
-	return formatMillis(totalMillis, true, true);
+	return toString(true, true);
     }
 
-    public String toString(long millis, boolean omitZeroDaysAndHours)
+    public String toString(boolean omitZeroDaysAndHours, boolean omitMillis)
     {
-	return toString(millis, omitZeroDaysAndHours);
+	return formatMillis(totalMillis, omitZeroDaysAndHours, omitMillis);
     }
 
     public static String formatMillis(long millis, boolean omitZeroDaysAndHours, boolean omitMillis)
@@ -26,26 +26,25 @@ public class TimeValue
 	String formattedString;
 
 	// e.g. 00:23:00,001 or 100:23:00,001
-	formattedString = String.format("%02d:%02d:%02d:%02d,%03d",
-		getPartial(millis, TimeUnit.DAYS),
-		getPartial(millis, TimeUnit.HOURS),
-		getPartial(millis, TimeUnit.MINUTES),
-		getPartial(millis, TimeUnit.SECONDS),
-		getPartial(millis, TimeUnit.MILLISECONDS));
+	formattedString = String.format("%02d:%02d:%02d:%02d",
+		extractPartial(millis, TimeUnit.DAYS),
+		extractPartial(millis, TimeUnit.HOURS),
+		extractPartial(millis, TimeUnit.MINUTES),
+		extractPartial(millis, TimeUnit.SECONDS));
 
 	if (omitZeroDaysAndHours)
 	{
 	    formattedString = formattedString.replaceFirst("^(0+:){0,2}", "");
 	}
-	if (omitMillis)
+	if (!omitMillis)
 	{
-	    formattedString = formattedString.replaceFirst(",\\d+", "");
+	    formattedString += String.format(",%03d", extractPartial(millis, TimeUnit.MILLISECONDS));
 	}
 
 	return formattedString;
     }
 
-    public static long getPartial(long millis, TimeUnit unit)
+    public static long extractPartial(long millis, TimeUnit unit)
     {
 	if (TimeUnit.DAYS.equals(unit))
 	{

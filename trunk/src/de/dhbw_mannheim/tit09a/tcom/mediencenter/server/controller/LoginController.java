@@ -1,18 +1,35 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller;
 
-import java.rmi.RemoteException;
-
-public interface LoginController extends Controller
+public class LoginController
 {
-    public void registerUser(String login, String pw) throws RemoteException;
+    private static LoginController instance;
 
-    public String login(String login, String pw) throws RemoteException;
+    private LoginController()
+    {
 
-    public void logout(String sessionId) throws RemoteException, IllegalAccessException;
+    }
 
-    public void changePW(String sessionId, String oldPW, String newPW) throws RemoteException,
-	    IllegalAccessException;
+    static synchronized LoginController getInstance()
+    {
+	if (instance == null) instance = new LoginController();
+	return instance;
+    }
 
-    public void unregisterUser(String sessionId, String login) throws RemoteException,
-	    IllegalAccessException;
+    String validateSession(String login, String pw) throws IllegalAccessException
+    {
+	if (login == null || pw == null)
+	{
+	    throw new IllegalAccessException("Null argument!");
+	}
+	else if (login.equals("max") && pw.equals("max"))
+	{
+	    System.out.printf("validateSession() validated [%s]%n", login);
+	    return "sessionid";
+	}
+	else
+	{
+	    throw new IllegalAccessException("Invalid login password combination.");
+	}
+    }
+
 }

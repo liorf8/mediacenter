@@ -2,33 +2,43 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.Date;
 
-public interface FileController extends Controller
+
+public class FileController
 {
-    public Date getServerTime() throws RemoteException;
+    private static FileController instance;
 
-    public void requestUploadFile(String sessionId, String filePath, long size, boolean replace)
-	    throws RemoteException, IllegalAccessException, IOException;
+    private FileController()
+    {
 
-    public long requestDownloadFile(String sessionId, String filePath) throws RemoteException,
-	    IllegalAccessException, IOException;
+    }
 
-    public void deleteFile(String sessionId, String filePath) throws RemoteException,
-	    IllegalAccessException, IOException;
+    public static synchronized FileController getInstance()
+    {
+	if(instance == null)
+	    instance = new FileController();
+	return instance;
+    }
 
-    public void renameFile(String sessionId, String filePath, String newName)
-	    throws RemoteException, IllegalAccessException, IOException;
 
-    public void copyMoveFile(String sessionId, String filePath, String copyMoveDir, boolean move)
-	    throws RemoteException, IllegalAccessException, IOException;
+    void createBasicDirs(String login) throws IOException
+    {
+	System.out.println("Created basic directories!");
+    }
 
-    public void mkDir(String sessionId, String parentDir, String dir) throws RemoteException,
-	    IllegalAccessException, IOException;
+    File getUsersRoot()
+    {
+	return new File("C:\\Users");
+    }
 
-    public File[] listFiles(String sessionId, File dir) throws RemoteException,
-	    IllegalAccessException, IOException;
-
-    void createBasicDirs(String login) throws IOException;
+    File getUserRoot(String login) throws IOException
+    {
+	File userRoot = new File(getUsersRoot().getAbsoluteFile(), login);
+	if (!userRoot.exists())
+	{
+	    if (!userRoot.mkdir())
+		throw new IOException("Could not create user root for " + login + "!");
+	}
+	return userRoot;
+    }
 }

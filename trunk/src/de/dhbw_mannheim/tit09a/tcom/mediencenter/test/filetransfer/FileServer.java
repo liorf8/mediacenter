@@ -22,6 +22,7 @@ public class FileServer
 	    try
 	    {
 		Thread.sleep(10);
+		System.out.println("Writing");
 		os.write(sendBuffer);
 	    }
 	    catch (InterruptedException ignore)

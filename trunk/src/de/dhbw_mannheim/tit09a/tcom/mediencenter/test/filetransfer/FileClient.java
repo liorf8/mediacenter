@@ -5,6 +5,9 @@ import java.util.List;
 import java.beans.PropertyChangeEvent;
 import java.io.*;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.test._old.ProgressInputStream;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.util.IntervalPropertyChangeListener;
+
 public class FileClient
 {
     public static void main(String[] args) throws IOException
@@ -32,12 +35,12 @@ public class FileClient
 	sock.close();
     }
 
-    private class InputStreamProgressListener extends BufferedPropertyChangeListener
+    private class InputStreamProgressListener extends IntervalPropertyChangeListener
     {
 	private PropertyChangeEvent evt;
 
 	@Override
-	public void delayedPropertyChanges(List<PropertyChangeEvent> evts)
+	public void propertyChangesAtInterval(List<PropertyChangeEvent> evts)
 	{
 //	    System.out.print("Events:");
 //	    for (PropertyChangeEvent evt : evts)

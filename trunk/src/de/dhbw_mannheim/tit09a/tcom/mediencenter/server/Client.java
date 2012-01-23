@@ -5,8 +5,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.FileController;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LoginService;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.Session;
 
 public class Client
 {
@@ -19,14 +19,10 @@ public class Client
 	    //Registry registry = LocateRegistry.getRegistry("192.168.2.111");
 	    
 	    // Get the Controllers
-	    FileController fc = (FileController) registry.lookup(FileController.class.getSimpleName());
-	    System.out.println(fc.getServerTime());
-	    fc.requestUploadFile("max", "meineneuedatei.txt", 300L, true);
-	    
-	    LoginController lc = (LoginController) registry.lookup(LoginController.class.getSimpleName());
-	    
-	    String hash = lc.login("maxhertrampf", "123");
-	    System.out.println(hash + "("+hash.length()+")");
+	    LoginService ls = (LoginService) registry.lookup(LoginService.class.getSimpleName());
+	    Session session = (Session) ls.login("max", "max");
+	    System.out.println(session.getServerTime());
+	    System.out.println(session.getSessionId());
 	    
 	}
 	catch (Exception e)

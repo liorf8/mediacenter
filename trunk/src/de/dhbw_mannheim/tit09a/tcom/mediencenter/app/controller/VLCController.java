@@ -4,7 +4,6 @@ import com.sun.jna.NativeLibrary;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.app.modell.listener.MediaListPlayerEventListenerImpl;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.app.modell.listener.MediaPlayerEventListenerImpl;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.app.modell.listener.VideoOutputEventListenerImpl;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.app.view.MainFrame;
 import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
@@ -192,7 +191,6 @@ public class VLCController
     // --------------------------------------------------------------------------------
     private void addListeners()
     {
-	mediaPlayer.addVideoOutputEventListener(new VideoOutputEventListenerImpl());
 	mediaPlayer.addMediaPlayerEventListener(new MediaPlayerEventListenerImpl());
 
 	mediaListPlayer.addMediaListPlayerEventListener(new MediaListPlayerEventListenerImpl());
