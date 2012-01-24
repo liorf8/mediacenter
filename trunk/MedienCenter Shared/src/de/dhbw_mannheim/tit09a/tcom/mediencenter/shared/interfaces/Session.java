@@ -2,7 +2,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces;
 
 import java.io.IOException;
 
-public interface Session
+public interface Session extends Service
 {
     public long getServerTime();
 

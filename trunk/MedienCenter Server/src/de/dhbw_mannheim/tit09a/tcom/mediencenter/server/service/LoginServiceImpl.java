@@ -6,7 +6,9 @@ import java.util.List;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.LoginService;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
+import de.root1.simon.annotation.SimonRemote;
 
+@SimonRemote(value = { LoginService.class })
 public class LoginServiceImpl implements LoginService
 {
 
@@ -21,7 +23,6 @@ public class LoginServiceImpl implements LoginService
 	clientCallback.callback("Login is in progress ...");
 	System.out.flush();
 	Session session = new SessionImpl(user, this);
-	session = (Session) Proxies.dynamicProxyService(session, new LogInvocationHandler(session));
 	userSessions.add(session);
 	clientCallback.callback(Thread.currentThread() + ": Session is created ... Now "
 		+ userSessions.size() + " users are online ...");
