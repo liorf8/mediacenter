@@ -2,6 +2,8 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces;
 
 import java.io.IOException;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
+
 public interface Session extends Service
 {
     public long getServerTime();
@@ -17,5 +19,5 @@ public interface Session extends Service
 
     public void mkDir(String parentDir, String dirPath) throws IOException;
 
-    public String[] listFiles(String dirPath) throws IOException;
+    public FileInfo[] listFiles(String dirPath) throws IOException;
 }
