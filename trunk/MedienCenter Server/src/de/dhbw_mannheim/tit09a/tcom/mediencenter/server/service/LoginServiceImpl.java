@@ -1,8 +1,10 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.IOController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.LoginService;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
@@ -41,10 +43,9 @@ public class LoginServiceImpl implements LoginService
     }
 
     @Override
-    public boolean register(String login, String pw)
+    public void register(String user, String pw) throws IllegalArgumentException, IOException
     {
-	// TODO Auto-generated method stub
-	return false;
+	IOController.getInstance().createUserDirs(user);
     }
 
 }

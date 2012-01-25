@@ -20,7 +20,6 @@ public class FileController
 	return instance;
     }
 
-
     void createBasicDirs(String login) throws IOException
     {
 	System.out.println("Created basic directories!");

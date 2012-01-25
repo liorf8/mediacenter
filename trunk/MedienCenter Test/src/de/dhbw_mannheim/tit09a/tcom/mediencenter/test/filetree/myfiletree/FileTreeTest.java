@@ -25,7 +25,7 @@ public class FileTreeTest
 	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 	// File homeDir = FileSystemView.getFileSystemView().getHomeDirectory();
-	File root = new File("C:\\Users\\Max");
+	File root = new File("C:\\Users\\mhertram");
 	TreeModel model = new FileTreeModel(root);
 	JTree tree = new JTree(model);
 	tree.setCellRenderer(new FileTreeRenderer());

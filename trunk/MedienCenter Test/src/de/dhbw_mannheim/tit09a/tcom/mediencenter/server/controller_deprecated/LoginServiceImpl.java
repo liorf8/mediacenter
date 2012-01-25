@@ -5,7 +5,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.LogInvocationHandler;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.service.LogInvocationHandler;
 
 
 public class LoginServiceImpl extends ProxyUtil implements LoginService
