@@ -10,10 +10,10 @@ public class FileInfoTest
      */
     public static void main(String[] args)
     {
-	FileInfo fi = new FileInfo("D:", 1024*1024);
+	FileInfo fi = new FileInfo("D:", 1024*1024, true);
 
-	System.out.println(fi.getAbsolutPath());
-	System.out.println(fi.getFileName());
+	System.out.println(fi.getFilename());
+	System.out.println(fi.isDir());
 	System.out.println(fi.getFileSize());
     }
 

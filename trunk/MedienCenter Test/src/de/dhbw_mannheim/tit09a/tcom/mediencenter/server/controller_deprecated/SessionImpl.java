@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.util.Date;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 
 public class SessionImpl implements Session
 {
