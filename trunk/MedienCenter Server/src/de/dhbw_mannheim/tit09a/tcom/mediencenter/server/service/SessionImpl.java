@@ -27,12 +27,6 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
     // Overriding Session
     @Override
-    public long getServerTime()
-    {
-	return System.currentTimeMillis();
-    }
-
-    @Override
     public void changeAttr(String key, String newValue)
     {
 	System.out.println(Thread.currentThread() + ": "
@@ -42,38 +36,38 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
     @Override
     public void deleteFile(String filePath) throws IOException
     {
-	
-
+	IOController.deleteFile(this.getUser(), filePath);
     }
 
     @Override
     public void renameFile(String filePath, String newName) throws IOException
     {
-	// TODO Auto-generated method stub
-
+	IOController.renameFile(this.getUser(), filePath, newName);
     }
 
     @Override
-    public void copyMoveFile(String filePath, String targetDirPath, boolean move)
-	    throws IOException
+    public void copyFile(String srcPath, String destPath, boolean replace) throws IOException
     {
-	// TODO Auto-generated method stub
-
+	IOController.copyFile(this.getUser(), srcPath, destPath, replace);
     }
 
     @Override
-    public void mkDir(String parentDir, String dirPath) throws IOException
+    public void mkDir(String parentDir, String dirName) throws IOException
     {
-	// TODO Auto-generated method stub
-
+	IOController.mkDir(this.getUser(), parentDir, dirName);
     }
 
     @Override
     public FileInfo[] listFiles(String dirPath) throws IOException
     {
-	return IOController.getInstance().listFilenames(this.getUser(), dirPath);
+	return IOController.listFilenames(this.getUser(), dirPath);
     }
 
+    public int openFileChannel(String destPath, long fileSize)
+    {
+	return IOController.openFileChannel(getUser(), this, destPath, fileSize);
+    }
+    
     // Overriding SimonUnreferenced
     @Override
     public void unreferenced()
@@ -92,4 +86,11 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
     {
 	return sessionId;
     }
+
+    public String toString()
+    {
+	return this.getSessionId();
+    }
+
+
 }
