@@ -20,6 +20,12 @@ public class LoginServiceImpl implements LoginService
     private List<Session> userSessions = new ArrayList<Session>();
 
     @Override
+    public long getServerTime()
+    {
+	return System.currentTimeMillis();
+    }
+
+    @Override
     public Session login(String user, ClientCallback clientCallback)
     {
 	clientCallback.callback("Login is in progress ...");
@@ -45,7 +51,7 @@ public class LoginServiceImpl implements LoginService
     @Override
     public void register(String user, String pw) throws IllegalArgumentException, IOException
     {
-	IOController.getInstance().createUserDirs(user);
+	IOController.createUserDirs(user);
     }
 
 }

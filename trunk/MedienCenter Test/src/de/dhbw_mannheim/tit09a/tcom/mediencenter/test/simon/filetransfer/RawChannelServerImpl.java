@@ -7,10 +7,10 @@ import de.root1.simon.exceptions.SimonRemoteException;
 @SimonRemote(value = { RawChannelServer.class })
 public class RawChannelServerImpl implements RawChannelServer
 {
-    public int openFileChannel(String filename, long fileSize) throws SimonRemoteException
+    public int openFileChannel(String destPath, long fileSize) throws SimonRemoteException
     {
-	int token = Simon.prepareRawChannel(new FileReceiver(filename, fileSize), this);
-	System.out.println(Thread.currentThread() +": Returning token " +token + " for file " +filename);
+	int token = Simon.prepareRawChannel(new FileReceiver(destPath, fileSize), this);
+	System.out.println(Thread.currentThread() +": Returning token " +token + " for file " +destPath);
 	return token;
     }
 

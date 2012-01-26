@@ -3,36 +3,28 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks;
 import java.io.File;
 import java.io.IOException;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
+
+
 public class DeleteFileTask implements IOTask<Void>
 {
     private final File file;
+
     public DeleteFileTask(String filePath)
     {
 	file = new File(filePath);
     }
-    
+
     @Override
     public Void call() throws IOException
     {
-	if(!file.exists())
+	IOUtil.ensureExists(file);
+	if (file.isDirectory())
 	{
-	    throw new IOException("File does not exist: " + file.getAbsolutePath());
+	    IOUtil.ensureEmptyDir(file);
 	}
-	if(file.isDirectory())
-	{
-	    if(!file.delete())
-	    {
-		throw new IOException("Could not delete Directory " + file.getAbsolutePath());
-	    }
-	}
-	else
-	{
-	    if(!file.delete())
-	    {
-		throw new IOException("Could not delete File " + file.getAbsolutePath());
-	    }
-	}
+	IOUtil.executeDelete(file);
+
 	return null;
     }
-
 }

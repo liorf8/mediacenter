@@ -15,9 +15,9 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.IntervalPropertyChangeListener;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.IntervalPropertyChangeListener;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.TimeValue;
 
 public class ReadFileProgressMainClass
 {
