@@ -31,6 +31,7 @@ public class ClientMain
 	    ClientCallbackImpl clientCallbackImpl = new ClientCallbackImpl();
 
 	    // 'lookup' the server object
+	    //127.0.0.1
 	    nameLookup = Simon.createNameLookup("127.0.0.1", 22222);
 	    server = (LoginService) nameLookup.lookup(LoginService.BIND_NAME);
 
@@ -39,12 +40,12 @@ public class ClientMain
 	    server.register("Donald Duck", "123");
 	    Session mySession = server.login("Donald Duck", clientCallbackImpl);
 	    System.out.println(Arrays.toString(mySession.listFiles("")));
-	    mySession.mkDir("Pictures", "neues_verzeichnis");
+	    mySession.mkDir("Pictures/neues_verzeichnis");
 	    System.out.println(Arrays.toString(mySession.listFiles("Pictures")));
-	    //mySession.copyFile("Pictures\\meinedatei.txt", "Videos\\meinedatei_copy2.txt", true);
-	    System.out.println(Arrays.toString(mySession.listFiles("Pictures")));
-	    System.out.println(Arrays.toString(mySession.listFiles("Videos")));
-	    uploadFile(mySession, new File("C:\\Users\\Max\\Downloads\\himym.avi"), "neuedatei.avi");
+	    //mySession.copyFile("Pictures\\txt.txt", "Videos\\meinedatei_copy2.txt", true);
+	    //System.out.println(Arrays.toString(mySession.listFiles("Pictures")));
+	   // System.out.println(Arrays.toString(mySession.listFiles("Videos")));
+	   // uploadFile(mySession, new File("C:\\Users\\Max\\Downloads\\himym.avi"), "neuedatei.avi");
 	    // ...
 
 	}
@@ -74,9 +75,10 @@ public class ClientMain
 	FileChannel fileChannel = new FileInputStream(file).getChannel();
 
 	// we send the file in 512byte packages through the RawChannel
-	ByteBuffer data = ByteBuffer.allocate(0xFFFF);
+	ByteBuffer data = ByteBuffer.allocate(512);
 	while (fileChannel.read(data) != -1)
 	{
+	    System.out.println("Read " +data.limit());
 	    rawChannel.write(data);
 	    data.clear();
 	}

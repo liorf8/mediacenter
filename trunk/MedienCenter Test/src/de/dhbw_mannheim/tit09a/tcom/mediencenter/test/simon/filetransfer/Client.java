@@ -36,8 +36,9 @@ public class Client
 	    File file = new File(TESTFILE_SENDER);
 	    long filesize = file.length();
 	    
-	    // Get connection to server
-	    Lookup nameLookup = Simon.createNameLookup(InetAddress.getLocalHost(), 2000);
+	    // Get connection to server^
+	    Lookup nameLookup = Simon.createNameLookup("192.168.2.111", 2000);
+	    //Lookup nameLookup = Simon.createNameLookup(InetAddress.getLocalHost(), 2000);
 	    RawChannelServer rcs = (RawChannelServer) nameLookup.lookup(RawChannelServer.BIND_NAME);
 
 	    // get a RawChannel Token from server. This is needed to open the

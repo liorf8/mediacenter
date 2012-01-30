@@ -8,15 +8,15 @@ public interface Session
 {
     public void changeAttr(String key, String newValue);
 
-    public void deleteFile(String filePath) throws IOException;
+    public void deleteFile(String uri) throws IOException;
 
-    public void renameFile(String filePath, String newName) throws IOException;
+    public void renameFile(String uri, String newName) throws IOException;
 
-    public void copyFile(String srcPath, String destPath, boolean replace) throws IOException;
+    public void copyFile(String srcURI, String destURI, boolean replace) throws IOException;
 
-    public void mkDir(String parentDir, String dirName) throws IOException;
+    public void mkDir(String uri) throws IOException;
 
-    public FileInfo[] listFiles(String dirPath) throws IOException;
+    public FileInfo[] listFiles(String dirURI) throws IOException;
     
-    public int openFileChannel(String destPath, long fileSize);
+    public int openFileChannel(String destURI, long fileSize);
 }

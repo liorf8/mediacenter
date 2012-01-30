@@ -7,8 +7,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.regex.Pattern;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks.IOTask;
 
 public class IOUtil
@@ -18,16 +20,25 @@ public class IOUtil
 
     }
 
-    public static <T> T executeIOTask(ExecutorService executor, IOTask<T> task) throws IOException
+    public static <T> T executeIOTask(ThreadPoolExecutor executor, IOTask<T> task)
+	    throws IOException
     {
+	ServerMain.serverLogger.finer(String.format(
+		"Submitting %s to %s. Active: %d/%d. Queued: %d (free slots: %d).", task.getClass()
+			.getSimpleName(), "IOExecutor", executor.getActiveCount(), executor
+			.getMaximumPoolSize(), executor.getQueue().size(), executor.getQueue()
+			.remainingCapacity()));
 	try
 	{
 	    return executor.submit(task).get();
 	}
 	catch (Throwable e)
 	{
+	    e.printStackTrace();
 	    Throwable cause = e;
 	    if (e.getCause() != null) cause = e.getCause();
+	    ServerMain.serverLogger.warning(task.getClass().getSimpleName() + " caused: "
+		    + cause.toString());
 	    if (cause instanceof IOException)
 	    {
 		throw (IOException) cause;
@@ -40,7 +51,7 @@ public class IOUtil
 	}
     }
 
-    public static void ensureValidFilename(String filename, char[] forbiddenChars)
+    public static void ensureValidString(String filename, char[] forbiddenChars)
 	    throws IllegalArgumentException
     {
 	for (char oneChar : forbiddenChars)
@@ -108,9 +119,14 @@ public class IOUtil
 	    throw new IOException("Could create  file: " + file.getAbsolutePath());
     }
 
-    public static String omitRoot(String filePath, String root)
+    public static String omitRoot(String filePath, String rootPath)
     {
-	return filePath.substring(filePath.indexOf(root));
+	return filePath.replaceFirst(Pattern.quote(rootPath), "");
+    }
+    
+    public static String concatToRoot(String rootPath, String filePath)
+    {
+	return rootPath + File.separator + filePath;
     }
 
     public static void close(Closeable closeable) throws IOException
@@ -119,7 +135,7 @@ public class IOUtil
     }
 
     // wenn replace = true, überschreibt er einfach
-    // wenn false
+    // wenn false returned er, wenn File schon da
     public static void copyFile(File src, File dest, boolean replace) throws IOException
     {
 	// do nothing if the dest exists and replace is false
@@ -137,8 +153,8 @@ public class IOUtil
 	    // magic number for Windows, (64Mb - 32Kb)
 	    srcChannel = new FileInputStream(src).getChannel();
 	    destChannel = new FileOutputStream(dest).getChannel();
-	    //int maxCount = (64 * 1024 * 1024) - (32 * 1024);
-	    int maxCount = 64*1024; // 64kb is faster
+	    // int maxCount = (64 * 1024 * 1024) - (32 * 1024);
+	    int maxCount = 64 * 1024; // 64kb is faster
 	    long size = srcChannel.size();
 	    long position = 0;
 	    while (position < size)
@@ -149,8 +165,8 @@ public class IOUtil
 	finally
 	{
 	    // all data written. Now we can close the channels
-	    close(srcChannel);
-	    close(destChannel);
+	    IOUtil.close(srcChannel);
+	    IOUtil.close(destChannel);
 	}
     }
 }

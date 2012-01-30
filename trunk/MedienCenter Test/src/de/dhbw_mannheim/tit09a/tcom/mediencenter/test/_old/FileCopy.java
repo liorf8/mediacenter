@@ -14,7 +14,7 @@ public class FileCopy
     
     // both slower than over transferInto with 64kb buffer
     // slowest: transfer all in one
-    public static void copyFile(File src, File dest, boolean replace) throws IOException
+    public static void copyFileByteBuffer(File src, File dest, boolean replace) throws IOException
     {
 	// do nothing if the dest exists and replace is false
 	if (!replace && dest.exists())
@@ -46,7 +46,7 @@ public class FileCopy
 	}
     }
 
-    public static void copyFile2(File src, File dest, boolean replace) throws IOException
+    public static void copyFileTransferWhole(File src, File dest, boolean replace) throws IOException
     {
 	// do nothing if the dest exists and replace is false
 	if (!replace && dest.exists())

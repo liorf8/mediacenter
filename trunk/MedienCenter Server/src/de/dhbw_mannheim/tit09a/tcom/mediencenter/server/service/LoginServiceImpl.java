@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.IOController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.LoginService;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
@@ -34,7 +35,7 @@ public class LoginServiceImpl implements LoginService
 	userSessions.add(session);
 	clientCallback.callback(Thread.currentThread() + ": Session is created ... Now "
 		+ userSessions.size() + " users are online ...");
-	System.out.println(Thread.currentThread() + ": Session created for user " + user + ". Now "
+	ServerMain.serverLogger.fine(Thread.currentThread() + ": Session created for user " + user + ". Now "
 		+ userSessions.size() + " users are online ...");
 	return session;
     }
@@ -43,7 +44,7 @@ public class LoginServiceImpl implements LoginService
     boolean removeUserSession(SessionImpl userSession)
     {
 	boolean existed = userSessions.remove(userSession);
-	System.out.println(Thread.currentThread() + ": Removed user " + userSession.getUser()
+	ServerMain.serverLogger.fine(Thread.currentThread() + ": Removed user " + userSession.getUser()
 		+ " from sessionlist. " + userSessions.size() + " user are online.");
 	return existed;
     }
@@ -51,7 +52,8 @@ public class LoginServiceImpl implements LoginService
     @Override
     public void register(String user, String pw) throws IllegalArgumentException, IOException
     {
-	IOController.createUserDirs(user);
+	IOUtil.ensureValidString(BIND_NAME, SessionImpl.ILLEGAL_CHARS_IN_FILENAME);
+	SessionImpl.createUserDirs(user);
     }
 
 }
