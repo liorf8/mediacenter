@@ -10,7 +10,7 @@ import javax.swing.filechooser.FileSystemView;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.FileTreeTest;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
 public class FileInfoTreeRenderer extends DefaultTreeCellRenderer

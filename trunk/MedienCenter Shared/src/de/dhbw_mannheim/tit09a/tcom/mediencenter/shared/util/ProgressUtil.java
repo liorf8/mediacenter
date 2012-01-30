@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util;
 
 public class ProgressUtil
 {

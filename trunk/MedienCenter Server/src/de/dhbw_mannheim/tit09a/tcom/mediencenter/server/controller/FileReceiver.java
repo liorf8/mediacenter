@@ -1,5 +1,9 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ProgressUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
 import de.root1.simon.RawChannelDataListener;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,7 +16,8 @@ public class FileReceiver implements RawChannelDataListener
 {
     private FileChannel fc;
     private long fileSize;
-    private long totalBytesWritten;
+    private String destPath;
+    private long start;
 
     public FileReceiver(String destPath, long fileSize)
     {
@@ -20,6 +25,7 @@ public class FileReceiver implements RawChannelDataListener
 	{
 	    this.fc = new FileOutputStream(new File(destPath)).getChannel();
 	    this.fileSize = fileSize;
+	    this.destPath = destPath;
 	}
 	catch (FileNotFoundException ex)
 	{
@@ -32,10 +38,10 @@ public class FileReceiver implements RawChannelDataListener
     {
 	try
 	{
-	    long bytesWritten = data.limit();
-	    totalBytesWritten += bytesWritten;
-	    System.out.printf(Thread.currentThread() +": Written %d (%d/%d - %d%%).%n", bytesWritten, totalBytesWritten,
-		    fileSize, (int) (totalBytesWritten * 100L / fileSize));
+	    if (start == 0)
+	    {
+		start = System.currentTimeMillis();
+	    }
 	    fc.write(data);
 	}
 	catch (IOException ex)
@@ -48,7 +54,12 @@ public class FileReceiver implements RawChannelDataListener
     {
 	try
 	{
-	    System.out.println(Thread.currentThread() +": Closed!");
+	    long duration = System.currentTimeMillis() - start;
+	    ServerMain.serverLogger.info(String.format(
+		    "Successfully uploaded %s in %s to %s (%s/s).",
+		    ByteValue.bytesToString(fileSize, true),
+		    TimeValue.formatMillis(duration, true, true), destPath,
+		    ProgressUtil.speed(fileSize, duration)));
 	    fc.close();
 	}
 	catch (IOException ex)

@@ -5,7 +5,7 @@ import java.util.List;
 import java.beans.PropertyChangeEvent;
 import java.io.*;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.IntervalPropertyChangeListener;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.IntervalPropertyChangeListener;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.test._old.ProgressInputStream;
 
 public class FileClient
