@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

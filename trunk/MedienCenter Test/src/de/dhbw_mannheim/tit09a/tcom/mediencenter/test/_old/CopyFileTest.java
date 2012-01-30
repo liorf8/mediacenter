@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
-
 public class CopyFileTest
 {
 
@@ -20,10 +18,10 @@ public class CopyFileTest
 	long start = 0L;
 	try
 	{
-	    start = System.currentTimeMillis();
-	    NIOUtil.copyFile(src.toPath(), dest.toPath(), true);
-	    System.out.println("Duration Files.copy: " + (System.currentTimeMillis() - start));
-	    
+//	    start = System.currentTimeMillis();
+//	    NIOUtil.copyFile(src.toPath(), dest.toPath(), true);
+//	    System.out.println("Duration Files.copy: " + (System.currentTimeMillis() - start));
+//	    
 	    start = System.currentTimeMillis();
 	    FileCopy.copyFileByteBuffer(src, dest, true);
 	    System.out.println("Duration(copyFileByteBuffer): " + (System.currentTimeMillis() - start));

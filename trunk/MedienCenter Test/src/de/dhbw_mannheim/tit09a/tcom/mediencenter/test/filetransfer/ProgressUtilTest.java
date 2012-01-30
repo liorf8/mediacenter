@@ -1,6 +1,6 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.filetransfer;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.ProgressUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ProgressUtil;
 
 public class ProgressUtilTest
 {

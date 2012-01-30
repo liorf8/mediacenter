@@ -30,7 +30,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
     // os: C:\\Users\\mhertram\\USERS_ROOT_DIR
     // max: C:\\Users\\Max\\USERS_ROOT_DIR
 
-    public static final String USERS_ROOT_DIR = "C:\\Users\\mhertram\\USERS_ROOT_DIR\\";
+    public static final String USERS_ROOT_DIR = "C:\\Users\\Max\\USERS_ROOT_DIR\\";
     public static final char[] ILLEGAL_CHARS_IN_FILENAME = "\\/:*?<>|%&".toCharArray();
     // public static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
     public static final ThreadPoolExecutor IO_EXECUTOR = new ThreadPoolExecutor(1, 4, 30,

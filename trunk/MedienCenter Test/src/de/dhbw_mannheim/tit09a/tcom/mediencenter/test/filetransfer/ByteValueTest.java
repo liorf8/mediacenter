@@ -1,7 +1,7 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.filetransfer;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.ByteValue;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.ByteValue.ByteUnit;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue.ByteUnit;
 
 public class ByteValueTest
 {
