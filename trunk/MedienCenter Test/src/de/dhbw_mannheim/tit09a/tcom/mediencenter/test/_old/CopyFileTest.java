@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
 
 public class CopyFileTest
 {
@@ -13,23 +14,29 @@ public class CopyFileTest
      */
     public static void main(String[] args)
     {
-	File src = new File("C:\\Users\\Max\\Downloads\\Hangover.2009.German.DL.AC3.720p.BluRay.x264-TGF.mkv");
-	File dest = new File("C:\\Users\\Max\\Downloads\\Hangover.2009.German.DL.AC3.720p.BluRay.x264-TGF.mkv.bak");
+	File src = new File("D:\\mhertram\\Downloads\\eclipse-jee-indigo-SR1-win32-x86_64.zip");
+	File dest = new File("D:\\mhertram\\Downloads\\eclipse-jee-indigo-SR1-win32-x86_64.zip.bak");
 
 	long start = 0L;
 	try
 	{
 	    start = System.currentTimeMillis();
-	    FileCopy.copyFile(src, dest, true);
-	    System.out.println("Duration: " + (System.currentTimeMillis() - start));
+	    NIOUtil.copyFile(src.toPath(), dest.toPath(), true);
+	    System.out.println("Duration Files.copy: " + (System.currentTimeMillis() - start));
+	    
+	    start = System.currentTimeMillis();
+	    FileCopy.copyFileByteBuffer(src, dest, true);
+	    System.out.println("Duration(copyFileByteBuffer): " + (System.currentTimeMillis() - start));
 
 	    start = System.currentTimeMillis();
 	    IOUtil.copyFile(src, dest, true);
-	    System.out.println("Duration3: " + (System.currentTimeMillis() - start));
+	    System.out.println("Duration transferInto (64kb): " + (System.currentTimeMillis() - start));
 	    
 	    start = System.currentTimeMillis();
-	    //FileCopy.copyFile2(src, dest, true);
-	    System.out.println("Duration2: " + (System.currentTimeMillis() - start));
+	    FileCopy.copyFileTransferWhole(src, dest, true);
+	    System.out.println("Duration(copyFileTransferWhole): " + (System.currentTimeMillis() - start));
+	    
+
 	    
 	}
 	catch (IOException e)

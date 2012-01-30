@@ -45,7 +45,7 @@ public class TimeLabel extends JLabel
     // --------------------------------------------------------------------------------
     public void setCurrentTime(long millis)
     {
-	this.setCurrentTime(new TimeValue(millis).toString());
+	this.setCurrentTime(TimeValue.formatMillis(millis,  true, true));
     }
 
     // --------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ public class TimeLabel extends JLabel
     // --------------------------------------------------------------------------------
     public void setFullTime(long millis)
     {
-	this.setFullTime(new TimeValue(millis).toString());
+	this.setFullTime(TimeValue.formatMillis(millis,  true, true));
     }
 
     // --------------------------------------------------------------------------------

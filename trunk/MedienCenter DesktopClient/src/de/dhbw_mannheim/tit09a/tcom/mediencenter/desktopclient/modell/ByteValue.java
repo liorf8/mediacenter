@@ -66,54 +66,59 @@ public class ByteValue
 
     public long getBytes()
     {
-	return bytes;
+	return this.bytes;
     }
 
     public float getBytes(ByteUnit unit)
     {
+	return bytesToByteUnit(this.bytes, unit);
+    }
+    
+    public static float bytesToByteUnit(long bytes, ByteUnit unit)
+    {
 	return (float) bytes / unit.getBytesInUnit();
     }
 
-    public String getByteString(ByteUnit unit, boolean abbr)
+    public static String bytesToByteUnitString(long bytes, ByteUnit unit, boolean abbr)
     {
-	return String.format("%s %s", twoDecPlacesNoZeros.format(getBytes(unit)),
+	return String.format("%s %s", twoDecPlacesNoZeros.format(bytesToByteUnit(bytes, unit)),
 		abbr ? unit.getAbbr() : unit);
     }
 
-    public String toString(boolean abbr)
+    public static String bytesToString(long bytes, boolean abbr)
     {
 	if (bytes >= ONE_EB)
 	{
-	    return getByteString(ByteUnit.EXABYTE, abbr);
+	    return bytesToByteUnitString(bytes, ByteUnit.EXABYTE, abbr);
 	}
 	else if (bytes >= ONE_PB)
 	{
-	    return getByteString(ByteUnit.PETABYTE, abbr);
+	    return bytesToByteUnitString(bytes, ByteUnit.PETABYTE, abbr);
 	}
 	else if (bytes >= ONE_TB)
 	{
-	    return getByteString(ByteUnit.TERABYTE, abbr);
+	    return bytesToByteUnitString(bytes,  ByteUnit.TERABYTE, abbr);
 	}
 	else if (bytes >= ONE_GB)
 	{
-	    return getByteString(ByteUnit.GIGABYTE, abbr);
+	    return bytesToByteUnitString(bytes, ByteUnit.GIGABYTE, abbr);
 	}
 	else if (bytes >= ONE_MB)
 	{
-	    return getByteString(ByteUnit.MEGABYTE, abbr);
+	    return bytesToByteUnitString(bytes, ByteUnit.MEGABYTE, abbr);
 	}
 	else if (bytes >= ONE_KB)
 	{
-	    return getByteString(ByteUnit.KILOBYTE, abbr);
+	    return bytesToByteUnitString(bytes, ByteUnit.KILOBYTE, abbr);
 	}
 	else
 	{
-	    return getByteString(ByteUnit.BYTE, abbr);
+	    return bytesToByteUnitString(bytes, ByteUnit.BYTE, abbr);
 	}
     }
 
     public String toString()
     {
-	return toString(true);
+	return bytesToString(this.bytes, true);
     }
 }
