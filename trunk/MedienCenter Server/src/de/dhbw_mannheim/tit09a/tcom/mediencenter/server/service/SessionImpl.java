@@ -3,19 +3,12 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.service;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.FileReceiver;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks.DeleteFileTask;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks.ListFileInfosTask;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks.MkDirTask;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks.MkDirsTask;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks.RenameFileTask;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 import de.root1.simon.Simon;
@@ -25,138 +18,252 @@ import de.root1.simon.annotation.SimonRemote;
 @SimonRemote(value = { Session.class })
 public class SessionImpl implements Session, SimonUnreferenced, Serializable
 {
+    // --------------------------------------------------------------------------------
+    // -- Static Variable(s) ----------------------------------------------------------
+    // --------------------------------------------------------------------------------
     private static final long serialVersionUID = 4608946221610753415L;
-
     // os: C:\\Users\\mhertram\\USERS_ROOT_DIR
     // max: C:\\Users\\Max\\USERS_ROOT_DIR
-
-    public static final String USERS_ROOT_DIR = "C:\\Users\\Max\\USERS_ROOT_DIR\\";
+    public static final String USERS_ROOT_DIR = "C:\\Users\\mhertram\\USERS_ROOT_DIR";
     public static final char[] ILLEGAL_CHARS_IN_FILENAME = "\\/:*?<>|%&".toCharArray();
-    // public static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
-    public static final ThreadPoolExecutor IO_EXECUTOR = new ThreadPoolExecutor(1, 4, 30,
-	    TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(1024));
-    static
-    {
-	IO_EXECUTOR.setRejectedExecutionHandler(new RejectedExecutionHandler()
-	{
-	    @Override
-	    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor)
-	    {
-		ServerMain.serverLogger.warning(String.format(
-			"Executor '%s' + rejected '%s'. Queue length: %d", executor, r, executor
-				.getQueue().size()));
-	    }
-	});
-	IO_EXECUTOR.prestartCoreThread();
-    }
 
     public static enum BASIC_DIRS
     {
 	Music, Pictures, Videos
     };
 
+    // --------------------------------------------------------------------------------
+    // -- Static Method(s) ------------------------------------------------------------
+    // --------------------------------------------------------------------------------
+    static void createUserDirs(String user) throws IllegalArgumentException, IOException,
+	    ServerException
+    {
+	File[] dirs = { new File(getUserRootDir(user)),
+		new File(getUserBasicDir(user, BASIC_DIRS.Music)),
+		new File(getUserBasicDir(user, BASIC_DIRS.Pictures)),
+		new File(getUserBasicDir(user, BASIC_DIRS.Videos)) };
+	IOUtil.mkDirs(dirs);
+    }
+
+    // --------------------------------------------------------------------------------
+    static String getUserRootDir(String user)
+    {
+	return USERS_ROOT_DIR + File.separator + user;
+    }
+
+    // --------------------------------------------------------------------------------
+    static String getUserBasicDir(String user, BASIC_DIRS dir)
+    {
+	return getUserRootDir(user) + File.separator + dir.toString();
+    }
+
+    // --------------------------------------------------------------------------------
+    static String uriToCanonicalUserPath(String uri, String user) throws IllegalArgumentException,
+	    ServerException
+    {
+	String path = getUserRootDir(user) + File.separator + FileInfo.uriPathToFilePath(uri);
+
+	try
+	{
+	    // To be sure, users do not get access to directories other than their own.
+	    // f.i. via session.listFiles("..") -> would point at the parent directory.
+	    if (!IOUtil.isInParentDir(new File(getUserRootDir(user)), new File(path)))
+	    {
+		ServerMain.serverLogger.warning(String.format("User '%s' tried to access %s", user,
+			new File(path).getCanonicalPath()));
+		throw new IllegalArgumentException("Access to path '" + uri + "' for user " + user
+			+ " denied. Access to other directories than your own is not allowed!");
+	    }
+	    return path;
+	}
+	catch (IllegalArgumentException iae)
+	{
+	    throw iae;
+	}
+	catch (IOException e)
+	{
+	    ServerMain.serverLogger.severe(e.toString());
+	    e.printStackTrace();
+	    throw new ServerException();
+	}
+    }
+
+    // --------------------------------------------------------------------------------
+    // -- Instance Variable(s) --------------------------------------------------------
+    // --------------------------------------------------------------------------------
     private final String user;
-    private final LoginServiceImpl loginService;
+    private final ServerImpl server;
+    private final ClientCallback callback;
     private final String sessionId;
 
-    SessionImpl(String user, LoginServiceImpl loginService)
+    // --------------------------------------------------------------------------------
+    // -- Constructor(s) --------------------------------------------------------------
+    // --------------------------------------------------------------------------------
+    SessionImpl(String user, ServerImpl server, ClientCallback callback)
     {
 	this.user = user;
-	this.loginService = loginService;
+	this.server = server;
+	this.callback = callback;
 	this.sessionId = "default_session_id";
     }
 
+    // --------------------------------------------------------------------------------
+    // -- Private/Packet Method(s) ----------------------------------------------------
+    // --------------------------------------------------------------------------------
+    String getUser()
+    {
+	return user;
+    }
+
+    // --------------------------------------------------------------------------------
+    String getSessionId()
+    {
+	return sessionId;
+    }
+
+    // --------------------------------------------------------------------------------
+    ClientCallback getClientCallback()
+    {
+	return callback;
+    }
+
+    // --------------------------------------------------------------------------------
+    // -- Public Method(s) ------------------------------------------------------------
+    // --------------------------------------------------------------------------------
     // Overriding SimonUnreferenced
     @Override
     public void unreferenced()
     {
 	ServerMain.serverLogger.fine(Thread.currentThread() + ": Unreferenced: " + user + "@"
 		+ this);
-	loginService.removeUserSession(this);
+	server.removeUserSession(this);
     }
 
-    //
-    public String getUser()
-    {
-	return user;
-    }
-
-    public String getSessionId()
-    {
-	return sessionId;
-    }
-
-    public String toString()
-    {
-	return this.getSessionId();
-    }
-
+    // Overriding Session
+    // --------------------------------------------------------------------------------
     @Override
     public void changeAttr(String key, String newValue)
     {
 	System.out.println("NOCH NICHT IMPLEMENTIERT!");
     }
 
+    // --------------------------------------------------------------------------------
     @Override
-    public void deleteFile(String uri) throws IOException
+    public Map<String, String> getAttrs() throws ServerException
     {
-	IOUtil.executeIOTask(IO_EXECUTOR, new DeleteFileTask(uriToPath(uri, user)));
+	System.out.println("NOCH NICHT IMPLEMENTIERT!");
+	return null;
     }
 
+    // --------------------------------------------------------------------------------
     @Override
-    public void renameFile(String uri, String newName) throws IOException
+    public String getAttr(String key) throws IllegalArgumentException, ServerException
     {
-	IOUtil.executeIOTask(IO_EXECUTOR, new RenameFileTask(uriToPath(uri, user), newName));
+	System.out.println("NOCH NICHT IMPLEMENTIERT!");
+	return null;
     }
 
+    // --------------------------------------------------------------------------------
     @Override
-    public void copyFile(String srcURI, String destURI, boolean replace) throws IOException
+    public void deleteFile(String uri, boolean deleteNotEmptyDir) throws IllegalArgumentException,
+	    ServerException
     {
-	IOUtil.executeIOTask(IO_EXECUTOR, new RenameFileTask(uriToPath(srcURI, user), uriToPath(destURI, user)));
+	try
+	{
+	    File file = new File(uriToCanonicalUserPath(uri, user));
+	    IOUtil.ensureExists(file);
+	    if (!file.isDirectory()) IOUtil.executeDelete(file);
+	}
+	catch (IOException e)
+	{
+	    throw new ServerException(e.getMessage());
+	}
+
     }
 
+    // --------------------------------------------------------------------------------
     @Override
-    public void mkDir(String uri) throws IOException
+    public void renameFile(String uri, String newName) throws IllegalArgumentException,
+	    ServerException
     {
-	IOUtil.executeIOTask(IO_EXECUTOR, new MkDirTask(uriToPath(uri, user)));
+	try
+	{
+	    IOUtil.ensureValidString(newName, ILLEGAL_CHARS_IN_FILENAME);
+	    File file = new File(uriToCanonicalUserPath(uri, user));
+	    File dest = new File(file.getParent() + File.separator + newName);
+	    IOUtil.ensureExists(file);
+	    IOUtil.ensureDoesNotExist(dest);
+	    IOUtil.executeRenameTo(file, dest);
+	}
+	catch (IOException e)
+	{
+	    throw new ServerException(e.getMessage());
+	}
     }
 
+    // --------------------------------------------------------------------------------
     @Override
-    public FileInfo[] listFiles(String dirURI) throws IOException
+    public void copyFile(String srcURI, String destDirURI, boolean replace)
+	    throws IllegalArgumentException, ServerException
     {
-	return IOUtil.executeIOTask(IO_EXECUTOR, new ListFileInfosTask(user, uriToPath(dirURI, user)));
+	try
+	{
+	    File src = new File(uriToCanonicalUserPath(srcURI, user));
+	    File destDir = new File(uriToCanonicalUserPath(destDirURI, user));
+
+	    IOUtil.ensureExists(src);
+	    if (src.isDirectory())
+	    {
+		throw new ServerException("Copying of directories not supported yet: " + srcURI);
+	    }
+	    IOUtil.copyFile(src, destDir, replace);
+	}
+	catch (IOException e)
+	{
+	    throw new ServerException(e.getMessage());
+	}
     }
 
+    // --------------------------------------------------------------------------------
     @Override
-    public int openFileChannel(String destURI, long fileSize)
+    public void mkDir(String uri) throws IllegalArgumentException, ServerException
     {
-	return Simon.prepareRawChannel(new FileReceiver(uriToPath(destURI, user), fileSize), this);
+	try
+	{
+	    IOUtil.mkDir(new File(uriToCanonicalUserPath(uri, user)));
+	}
+	catch (IOException e)
+	{
+	    throw new ServerException(e.getMessage());
+	}
     }
 
-    
-    
-
-    public static void createUserDirs(String user) throws IOException
+    // --------------------------------------------------------------------------------
+    @Override
+    public FileInfo[] listFileInfos(String dirURI) throws IllegalArgumentException, ServerException
     {
-	String[] dirs = { getUserRootDir(user), getUserBasicDir(user, BASIC_DIRS.Music),
-		getUserBasicDir(user, BASIC_DIRS.Pictures),
-		getUserBasicDir(user, BASIC_DIRS.Videos) };
-	IOUtil.executeIOTask(IO_EXECUTOR, new MkDirsTask(dirs));
+	try
+	{
+	    return IOUtil.listFileInfos(new File(uriToCanonicalUserPath(dirURI, user)), new File(
+		    getUserRootDir(user)));
+	}
+	catch (IOException e)
+	{
+	    throw new ServerException(e.getMessage());
+	}
     }
 
-    public static String getUserRootDir(String user)
+    // --------------------------------------------------------------------------------
+    @Override
+    public int openFileChannel(String destURI, long fileSize) throws IllegalArgumentException,
+	    ServerException
     {
-	return USERS_ROOT_DIR + File.separator + user + File.separator;
+	return Simon.prepareRawChannel(new FileReceiver(uriToCanonicalUserPath(destURI, user),
+		fileSize), this);
     }
 
-    public static String getUserBasicDir(String user, BASIC_DIRS dir)
-    {
-	return getUserRootDir(user) + File.separator + dir.toString() + File.separator;
-    }
 
-    public static String uriToPath(String uri, String user)
-    {
-	return getUserRootDir(user) + FileInfo.uriPathToFilePath(uri);
-    }
-    
+    // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
 }

@@ -1,7 +1,8 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeModelListener;
@@ -9,67 +10,67 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.FileTreeTest;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
 public class FileInfoTreeModel implements TreeModel
 {
     private EventListenerList listeners = new EventListenerList();
-
+    private Map<FileInfo, FileInfo[]> parentsChildren = new HashMap<FileInfo, FileInfo[]>();
 
     @Override
     public Object getRoot()
     {
-	// System.out.println("getRoot()");
+	System.out.println("getRoot()");
 	try
 	{
-	    return new FileInfo("", 0L, true);
+	    return new FileInfo("", true, 0L, System.currentTimeMillis());
 	}
 	catch (URISyntaxException e)
 	{
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
-	};
+	}
+	;
 	return null;
     }
 
     @Override
     public boolean isLeaf(Object node)
     {
-	// System.out.printf("isLeaf( %s )%n", node);
+	System.out.printf("isLeaf( %s )%n", node);
 	return !((FileInfo) node).isDir();
     }
 
     @Override
     public Object getChild(Object parent, int index)
     {
-	// System.out.printf("getChild( %s, %d )%n", parent, index);
+	System.out.printf("getChild( %s, %d )%n", parent, index);
 
 	try
 	{
-	    FileInfo[] childrens = FileTreeTest.getChildren((FileInfo) parent);
-	    if (childrens == null) return null;
-	    return childrens[index];
+	    FileInfo[] children = FileTreeTest.getChildren((FileInfo) parent);
+	    if (children == null) return null;
+	    return children[index];
 	}
-	catch (IOException e)
+	catch (ServerException e)
 	{
 	    e.printStackTrace();
-
 	}
 	return null;
+
     }
 
     @Override
     public int getChildCount(Object parent)
     {
-	// System.out.printf("getChildCount( %s )%n", parent);
-	FileInfo[] childrens;
+	System.out.printf("getChildCount( %s )%n", parent);
 	try
 	{
-	    childrens = FileTreeTest.getChildren((FileInfo) parent);
-	    if (childrens == null) return 0;
-	    return childrens.length;
+	    FileInfo[] children = FileTreeTest.getChildren((FileInfo) parent);
+	    if (children == null) return 0;
+	    return children.length;
 	}
-	catch (IOException e)
+	catch (ServerException e)
 	{
 	    e.printStackTrace();
 	}
@@ -79,13 +80,12 @@ public class FileInfoTreeModel implements TreeModel
     @Override
     public int getIndexOfChild(Object parent, Object child)
     {
-	// System.out.printf("getIndexOfChild( %s, %s )%n", parent, child);
+	System.out.printf("getIndexOfChild( %s, %s )%n", parent, child);
 
 	try
 	{
-	    FileInfo parentFileInfo = (FileInfo) parent;
+	    FileInfo[] children = FileTreeTest.getChildren((FileInfo) parent);
 	    FileInfo childFileInfo = (FileInfo) child;
-	    FileInfo[] children = FileTreeTest.getChildren(parentFileInfo);
 	    for (int i = 0; i < children.length; i++)
 	    {
 		if (children[i].equals(childFileInfo))
@@ -93,11 +93,13 @@ public class FileInfoTreeModel implements TreeModel
 		    return i;
 		}
 	    }
+
 	}
-	catch (IOException e)
+	catch (ServerException e)
 	{
 	    e.printStackTrace();
 	}
+
 	return -1;
     }
 

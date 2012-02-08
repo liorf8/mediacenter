@@ -2,6 +2,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.filetree.myfiletree;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.util.Date;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
@@ -14,10 +15,10 @@ public class FileInfoTest
      */
     public static void main(String[] args) throws URISyntaxException
     {
-	FileInfo fi = new FileInfo("mhertram", 0L, true);
+	FileInfo fi = new FileInfo("mhertram", true, 0L, System.currentTimeMillis());
 	printFileInfo(fi);
 
-	fi = new FileInfo("Donald.txt", 0L, true);
+	fi = new FileInfo("Donald.txt", true, 10L, 0);
 	printFileInfo(fi);
 	
 	fi = new FileInfo(new File("C:\\Users\\mhertram"), new File("C:\\Users"));
@@ -32,6 +33,7 @@ public class FileInfoTest
 	System.out.println(fi.getURIPath());
 	System.out.println(fi.isDir());
 	System.out.println(fi.getSize());
+	System.out.println(new Date(fi.getLastModified()));
 	System.out.println(fi.getName());
 	System.out.println(fi.toFilePath());
 	System.out.println(fi);
