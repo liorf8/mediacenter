@@ -21,6 +21,11 @@ public class CopyFileTest
 //	    start = System.currentTimeMillis();
 //	    NIOUtil.copyFile(src.toPath(), dest.toPath(), true);
 //	    System.out.println("Duration Files.copy: " + (System.currentTimeMillis() - start));
+	    
+	    start = System.currentTimeMillis();
+//	    start = System.currentTimeMillis();
+//	    NIOUtil.copyFile(src.toPath(), dest.toPath(), true);
+//	    System.out.println("Duration Files.copy: " + (System.currentTimeMillis() - start));
 //	    
 	    start = System.currentTimeMillis();
 	    FileCopy.copyFileByteBuffer(src, dest, true);

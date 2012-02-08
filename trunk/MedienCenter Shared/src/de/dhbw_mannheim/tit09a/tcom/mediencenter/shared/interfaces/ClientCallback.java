@@ -4,4 +4,6 @@ public interface ClientCallback
 {
     public void callback(String text);
     
+    public void releaseConnection();
+    
 }

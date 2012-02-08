@@ -85,6 +85,11 @@ public class ByteValue
 		abbr ? unit.getAbbr() : unit);
     }
 
+    public static String bytesToString(long bytes)
+    {
+	return bytesToString(bytes, true);
+    }
+    
     public static String bytesToString(long bytes, boolean abbr)
     {
 	if (bytes >= ONE_EB)

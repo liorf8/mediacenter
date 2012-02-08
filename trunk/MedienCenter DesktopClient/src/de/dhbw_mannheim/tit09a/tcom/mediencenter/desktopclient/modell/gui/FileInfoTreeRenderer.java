@@ -9,15 +9,13 @@ import javax.swing.JTree;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.FileTreeTest;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
 public class FileInfoTreeRenderer extends DefaultTreeCellRenderer
 {
     private static final long serialVersionUID = -704155936579496781L;
     private static FileSystemView fsv = FileSystemView.getFileSystemView();
-    private static final Icon folderIcon = fsv.getSystemIcon(new File(System.getProperty("user.home")));
+    private static final Icon folderIcon = fsv.getSystemIcon(new File(System.getProperty("java.home")));
     
     private String defaultText;
     
@@ -50,7 +48,7 @@ public class FileInfoTreeRenderer extends DefaultTreeCellRenderer
 	    {
 		e.printStackTrace();
 	    }
-	    if (fi.getName().isEmpty())
+	    if (fi.getURIPath().equals("/"))
 	    {
 		setText(defaultText);
 	    }
@@ -58,7 +56,6 @@ public class FileInfoTreeRenderer extends DefaultTreeCellRenderer
 	    {
 		setText(fi.getName());
 	    }
-	    FileTreeTest.setInfo(fi.getName() + ": " +new ByteValue(fi.getSize()));
 	}
 	return this;
     }

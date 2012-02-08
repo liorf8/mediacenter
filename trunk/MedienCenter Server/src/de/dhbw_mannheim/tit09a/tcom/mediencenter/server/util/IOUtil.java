@@ -7,11 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller.tasks.IOTask;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
 public class IOUtil
 {
@@ -20,35 +18,93 @@ public class IOUtil
 
     }
 
-    public static <T> T executeIOTask(ThreadPoolExecutor executor, IOTask<T> task)
-	    throws IOException
+    public static String omitRoot(String filePath, String rootPath)
     {
-	ServerMain.serverLogger.finer(String.format(
-		"Submitting %s to %s. Active: %d/%d. Queued: %d (free slots: %d).", task.getClass()
-			.getSimpleName(), "IOExecutor", executor.getActiveCount(), executor
-			.getMaximumPoolSize(), executor.getQueue().size(), executor.getQueue()
-			.remainingCapacity()));
-	try
+	return filePath.replaceFirst(Pattern.quote(rootPath), "");
+    }
+
+    public static String concatToRoot(String rootPath, String filePath)
+    {
+	return rootPath + File.separator + filePath;
+    }
+
+    /**
+     * @param src
+     * @param dest
+     * @param replace
+     *            wenn replace = true, überschreibt er einfach. wenn false returned er, wenn File schon da
+     * @return
+     * @throws IOException
+     */
+    public static boolean copyFile(File src, File dest, boolean replace) throws IOException
+    {
+	// do nothing if the dest exists and replace is false
+	if (!replace && dest.exists())
 	{
-	    return executor.submit(task).get();
+	    return false;
 	}
-	catch (Throwable e)
+	executeFileCopy(src, dest);
+	return true;
+    }
+
+    public static boolean isEmptyDir(File dir)
+    {
+	return dir.list().length == 0;
+    }
+
+    public static void mkDir(File dir) throws IOException
+    {
+	IOUtil.executeMkDir(dir);
+    }
+
+    public static void mkDirs(File[] dirs) throws IOException
+    {
+	for (File oneDir : dirs)
 	{
-	    e.printStackTrace();
-	    Throwable cause = e;
-	    if (e.getCause() != null) cause = e.getCause();
-	    ServerMain.serverLogger.warning(task.getClass().getSimpleName() + " caused: "
-		    + cause.toString());
-	    if (cause instanceof IOException)
-	    {
-		throw (IOException) cause;
-	    }
-	    else
-	    {
-		e.printStackTrace();
-		return null;
-	    }
+	    IOUtil.executeMkDir(oneDir);
 	}
+    }
+
+    public static boolean deleteDir(File dir, boolean deleteNotEmptyDir) throws IOException
+    {
+	if (IOUtil.isEmptyDir(dir))
+	{
+	    IOUtil.executeDelete(dir);
+	    return true;
+	}
+	else
+	{
+	    if (deleteNotEmptyDir)
+	    {
+		System.out.println("NOT SUPPORTED YET!");
+		return false;
+		// later return true; (when is implemented)
+	    }
+	    return false;
+	}
+    }
+
+    /**
+     * @param dir
+     * @param parentDirToOmit
+     *            Can be "" so that nothing is omitted.
+     * @return
+     * @throws IOException
+     */
+    public static FileInfo[] listFileInfos(File dir, File parentDirToOmit) throws IOException
+    {
+	IOUtil.ensureExists(dir);
+	IOUtil.ensureIsDir(dir);
+
+	File[] files = dir.listFiles();
+	FileInfo[] fileInfos = new FileInfo[files.length];
+	File oneFile = null;
+	for (int i = 0; i < files.length; i++)
+	{
+	    oneFile = files[i];
+	    fileInfos[i] = new FileInfo(oneFile, parentDirToOmit);
+	}
+	return fileInfos;
     }
 
     public static void ensureValidString(String filename, char[] forbiddenChars)
@@ -119,31 +175,13 @@ public class IOUtil
 	    throw new IOException("Could create  file: " + file.getAbsolutePath());
     }
 
-    public static String omitRoot(String filePath, String rootPath)
-    {
-	return filePath.replaceFirst(Pattern.quote(rootPath), "");
-    }
-    
-    public static String concatToRoot(String rootPath, String filePath)
-    {
-	return rootPath + File.separator + filePath;
-    }
-
     public static void close(Closeable closeable) throws IOException
     {
 	if (closeable != null) closeable.close();
     }
 
-    // wenn replace = true, überschreibt er einfach
-    // wenn false returned er, wenn File schon da
-    public static void copyFile(File src, File dest, boolean replace) throws IOException
+    public static void executeFileCopy(File src, File dest) throws IOException
     {
-	// do nothing if the dest exists and replace is false
-	if (!replace && dest.exists())
-	{
-	    return;
-	}
-
 	FileChannel srcChannel = null;
 	FileChannel destChannel = null;
 	try
@@ -168,5 +206,22 @@ public class IOUtil
 	    IOUtil.close(srcChannel);
 	    IOUtil.close(destChannel);
 	}
+    }
+
+    public static void ensureIsInParentDir(File parent, File file) throws IOException
+    {
+	if(!isInParentDir(parent, file))
+	{
+	    throw new IOException(parent+ " is not the parent of " +file);
+	}
+    }
+    
+    public static boolean isInParentDir(File parent, File file) throws IOException
+    {
+	if (file.getCanonicalPath().startsWith(parent.getCanonicalPath()))
+	{
+	    return true;
+	}
+	return false;
     }
 }

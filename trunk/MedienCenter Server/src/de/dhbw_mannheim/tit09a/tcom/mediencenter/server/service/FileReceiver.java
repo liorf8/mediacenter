@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.service;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
@@ -6,7 +6,6 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ProgressUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
 import de.root1.simon.RawChannelDataListener;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,26 +20,20 @@ public class FileReceiver implements RawChannelDataListener
 
     public FileReceiver(String destPath, long fileSize)
     {
-	try
-	{
-	    this.fc = new FileOutputStream(new File(destPath)).getChannel();
-	    this.fileSize = fileSize;
-	    this.destPath = destPath;
-	}
-	catch (FileNotFoundException ex)
-	{
-	    // cannot really occur, because we want to CREATE the file.
-	    ex.printStackTrace();
-	}
+	this.fileSize = fileSize;
+	this.destPath = destPath;
     }
 
     public void write(ByteBuffer data)
     {
 	try
 	{
-	    if (start == 0)
+	    if (start <= 0)
 	    {
 		start = System.currentTimeMillis();
+		ServerMain.serverLogger.info("Starting upload of " + destPath + " @ "
+			+ Thread.currentThread());
+		this.fc = new FileOutputStream(new File(destPath)).getChannel();
 	    }
 	    fc.write(data);
 	}
@@ -56,10 +49,11 @@ public class FileReceiver implements RawChannelDataListener
 	{
 	    long duration = System.currentTimeMillis() - start;
 	    ServerMain.serverLogger.info(String.format(
-		    "Successfully uploaded %s in %s to %s (%s/s).",
-		    ByteValue.bytesToString(fileSize, true),
-		    TimeValue.formatMillis(duration, true, true), destPath,
-		    ProgressUtil.speed(fileSize, duration)));
+		    "Successfully uploaded %s (%s in %s -> %s/s) @ %s", destPath,
+		    ByteValue.bytesToString(fileSize),
+		    TimeValue.formatMillis(duration, true, false),
+		    ByteValue.bytesToString((long) ProgressUtil.speed(fileSize, duration)),
+		    Thread.currentThread()));
 	    fc.close();
 	}
 	catch (IOException ex)

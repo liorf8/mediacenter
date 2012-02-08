@@ -21,6 +21,11 @@ public class TimeValue
 	return formatMillis(totalMillis, omitZeroDaysAndHours, omitMillis);
     }
 
+    public static String formatMillis(long millis)
+    {
+	return formatMillis(millis, true, true);
+    }
+    
     public static String formatMillis(long millis, boolean omitZeroDaysAndHours, boolean omitMillis)
     {
 	String formattedString;
