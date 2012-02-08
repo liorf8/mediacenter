@@ -61,19 +61,21 @@ public class ServerImpl implements Server
     @Override
     public Session login(String user, String pw, ClientCallback callback)
     {
+	// check if user is already logged in
 	for (SessionImpl oneSession : userSessions)
 	{
 	    if (oneSession.getUser().equals(user))
 	    {
-		// log the old client out
 		boolean isSameRemote = Simon.denoteSameRemoteObjekt(callback,
 			oneSession.getClientCallback());
+		// Is the user currently logged in on the same client machine?
 		if (isSameRemote)
 		{
 		    System.out.println(Thread.currentThread()+":calling back to client");
-		    callback.callback("You are already logged in on your computer. Please logout first.");
+		    callback.message("You are already logged in on your computer. Please logout first.");
 		    return null;
 		}
+		// or on another machine
 		else
 		    oneSession.getClientCallback().releaseConnection();
 	    }
