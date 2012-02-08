@@ -25,7 +25,7 @@ public class ClientCallbackImpl implements ClientCallback
     }
 
     @Override
-    public void callback(final String text)
+    public void message(final String text)
     {
 	SwingUtilities.invokeLater(new Runnable()
 	{

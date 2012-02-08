@@ -24,7 +24,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
     private static final long serialVersionUID = 4608946221610753415L;
     // os: C:\\Users\\mhertram\\USERS_ROOT_DIR
     // max: C:\\Users\\Max\\USERS_ROOT_DIR
-    public static final String USERS_ROOT_DIR = "C:\\Users\\mhertram\\USERS_ROOT_DIR";
+    public static final String USERS_ROOT_DIR = "C:\\Users\\Max\\USERS_ROOT_DIR";
     public static final char[] ILLEGAL_CHARS_IN_FILENAME = "\\/:*?<>|%&".toCharArray();
 
     public static enum BASIC_DIRS
@@ -192,7 +192,10 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	    File file = new File(uriToCanonicalUserPath(uri, user));
 	    File dest = new File(file.getParent() + File.separator + newName);
 	    IOUtil.ensureExists(file);
-	    IOUtil.ensureDoesNotExist(dest);
+	    if(dest.exists())
+	    {
+		callback.message("existsssssss");
+	    }
 	    IOUtil.executeRenameTo(file, dest);
 	}
 	catch (IOException e)
