@@ -4,9 +4,9 @@ import java.rmi.RemoteException;
 
 public interface LoginService extends RemoteService
 {
-    public boolean registerUser(String login, String pw) throws RemoteException;
+	public boolean registerUser(String login, String pw) throws RemoteException;
 
-    public Session login(String login, String pw, ClientCallback callback) throws RemoteException, IllegalAccessException;
+	public Session login(String login, String pw, ClientCallback callback) throws RemoteException, IllegalAccessException;
 
-    public boolean logout(Session session)  throws RemoteException;
+	public boolean logout(Session session) throws RemoteException;
 }

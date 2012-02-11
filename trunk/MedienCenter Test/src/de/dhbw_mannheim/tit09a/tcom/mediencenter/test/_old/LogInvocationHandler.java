@@ -6,8 +6,6 @@ import java.lang.reflect.Method;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.LogUtil;
-
 public class LogInvocationHandler implements InvocationHandler
 {
     private final Object source;
@@ -19,7 +17,6 @@ public class LogInvocationHandler implements InvocationHandler
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws IllegalAccessException
     {
-	LogUtil.logMethodEntry(method, args);
 	Object returnObject = null;
 
 	try
@@ -40,7 +37,6 @@ public class LogInvocationHandler implements InvocationHandler
 	    e.printStackTrace();
 	}
 	
-	LogUtil.logMethodExit(method, returnObject);
 	return returnObject;
     }
 }

@@ -7,41 +7,39 @@ import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.controller_deprecated.RemoteService;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.LogUtil;
 
 public class ServiceInvocationHandler implements InvocationHandler
 {
-    private final RemoteService service;
-    public ServiceInvocationHandler(RemoteService service)
-    {
-	this.service = service;
-    }
+	private final RemoteService	service;
 
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws IllegalAccessException
-    {
-	LogUtil.logMethodEntry(method, args);
-	Object returnObject = null;
+	public ServiceInvocationHandler(RemoteService service)
+	{
+		this.service = service;
+	}
 
-	try
+	@Override
+	public Object invoke(Object proxy, Method method, Object[] args) throws IllegalAccessException
 	{
-	    System.out.println("Invoked by client " +RemoteServer.getClientHost());
-	    returnObject = method.invoke(this.service, args);
+		Object returnObject = null;
+
+		try
+		{
+			System.out.println("Invoked by client " + RemoteServer.getClientHost());
+			returnObject = method.invoke(this.service, args);
+		}
+		catch (IllegalArgumentException e)
+		{
+			e.printStackTrace();
+		}
+		catch (InvocationTargetException e)
+		{
+			e.printStackTrace();
+		}
+		catch (ServerNotActiveException e)
+		{
+			e.printStackTrace();
+		}
+
+		return returnObject;
 	}
-	catch (IllegalArgumentException e)
-	{
-	    e.printStackTrace();
-	}
-	catch (InvocationTargetException e)
-	{
-	    e.printStackTrace();
-	}
-	catch (ServerNotActiveException e)
-	{
-	    e.printStackTrace();
-	}
-	
-	LogUtil.logMethodExit(method, returnObject);
-	return returnObject;
-    }
 }
