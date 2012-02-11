@@ -28,146 +28,142 @@ import de.root1.simon.Simon;
 
 public class FileTreeTest
 {
-    private static JLabel info;
-    private static Session session;
-    private static Lookup nameLookup = null;
-    private static Server server = null;
+	private static JLabel	info;
+	private static Session	session;
+	private static Lookup	nameLookup	= null;
+	private static Server	server		= null;
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) throws Exception
-    {
-
-	try
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) throws Exception
 	{
-	    // 'lookup' the server object
-	    // 127.0.0.1
-	    nameLookup = Simon.createNameLookup(Server.IP, Server.REGISTRY_PORT);
-	    server = (Server) nameLookup.lookup(Server.BIND_NAME);
 
-	    // create a callback object
-	    ClientCallbackImpl clientCallbackImpl = new ClientCallbackImpl(nameLookup, server);
-
-	    
-	    // use the serverobject as it would exist on your local machine
-	    session = server.login("Donald Duck", "pw", clientCallbackImpl);
-
-	    SwingUtilities.invokeLater(new Runnable()
-	    {
-
-		@Override
-		public void run()
+		try
 		{
-		    try
-		    {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		    }
-		    catch (Exception e)
-		    {
-			e.printStackTrace();
-		    }
-		    JFrame frame = new JFrame();
-		    frame.setBounds(200, 100, 480, 320);
-		    frame.setTitle("FileTreeTest");
-		    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		    frame.addWindowListener(new WindowListener()
-		    {
+			// 'lookup' the server object
+			// 127.0.0.1
+			nameLookup = Simon.createNameLookup(Server.IP, Server.REGISTRY_PORT);
+			server = (Server) nameLookup.lookup(Server.BIND_NAME);
 
-			@Override
-			public void windowActivated(WindowEvent arg0)
-			{
-			}
+			// create a callback object
+			ClientCallbackImpl clientCallbackImpl = new ClientCallbackImpl(nameLookup, server);
 
-			@Override
-			public void windowClosed(WindowEvent arg0)
-			{
-			}
+			// use the serverobject as it would exist on your local machine
+			server.register("Donald Duck", "daisy");
+			session = server.login("Donald Duck", "pw", clientCallbackImpl);
 
-			@Override
-			public void windowClosing(WindowEvent arg0)
-			{
-			    // and finally 'release' the serverobject to release to connection to the server
-			    if (nameLookup != null && server != null)
-				nameLookup.release(server);
-			    else
-				System.err.println("lookup or server == null");
-
-			    System.exit(0);
-			}
-
-			@Override
-			public void windowDeactivated(WindowEvent arg0)
-			{
-			}
-
-			@Override
-			public void windowDeiconified(WindowEvent arg0)
+			SwingUtilities.invokeLater(new Runnable()
 			{
 
-			}
+				@Override
+				public void run()
+				{
+					try
+					{
+						UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+					}
+					catch (Exception e)
+					{
+						e.printStackTrace();
+					}
+					JFrame frame = new JFrame();
+					frame.setBounds(200, 100, 480, 320);
+					frame.setTitle("FileTreeTest");
+					frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+					frame.addWindowListener(new WindowListener()
+					{
 
-			@Override
-			public void windowIconified(WindowEvent arg0)
-			{
+						@Override
+						public void windowActivated(WindowEvent arg0)
+						{}
 
-			}
+						@Override
+						public void windowClosed(WindowEvent arg0)
+						{}
 
-			@Override
-			public void windowOpened(WindowEvent arg0)
-			{
+						@Override
+						public void windowClosing(WindowEvent arg0)
+						{
+							// and finally 'release' the serverobject to release to connection to the server
+							if (nameLookup != null && server != null)
+								nameLookup.release(server);
+							else
+								System.err.println("lookup or server == null");
 
-			}
+							System.exit(0);
+						}
 
-		    });
-		    frame.setLayout(new BorderLayout());
+						@Override
+						public void windowDeactivated(WindowEvent arg0)
+						{}
 
-		    // File homeDir = FileSystemView.getFileSystemView().getHomeDirectory();
-		    TreeModel model = new FileInfoTreeModel();
-		    JTree tree = new JTree(model);
-		    tree.setCellRenderer(new FileInfoTreeRenderer("Donald Duck"));
-		    tree.addTreeSelectionListener(new TreeSelectionListener()
-		    {
-			@Override
-			public void valueChanged(TreeSelectionEvent evt)
-			{
-			    FileInfo fi = (FileInfo) evt.getPath().getLastPathComponent();
-			    FileTreeTest.setInfo(fi.getURIPath() + ": "
-				    + ByteValue.bytesToString(fi.getSize()) + ", "
-				    + new Date(fi.getLastModified()));
-			}
-		    });
+						@Override
+						public void windowDeiconified(WindowEvent arg0)
+						{
 
-		    info = new JLabel("Gestartet");
+						}
 
-		    frame.add(new JScrollPane(tree), BorderLayout.CENTER);
-		    frame.add(info, BorderLayout.SOUTH);
-		    // frame.pack();
-		    frame.setVisible(true);
+						@Override
+						public void windowIconified(WindowEvent arg0)
+						{
+
+						}
+
+						@Override
+						public void windowOpened(WindowEvent arg0)
+						{
+
+						}
+
+					});
+					frame.setLayout(new BorderLayout());
+
+					// File homeDir = FileSystemView.getFileSystemView().getHomeDirectory();
+					TreeModel model = new FileInfoTreeModel();
+					JTree tree = new JTree(model);
+					tree.setCellRenderer(new FileInfoTreeRenderer("Donald Duck"));
+					tree.addTreeSelectionListener(new TreeSelectionListener()
+					{
+						@Override
+						public void valueChanged(TreeSelectionEvent evt)
+						{
+							FileInfo fi = (FileInfo) evt.getPath().getLastPathComponent();
+							FileTreeTest.setInfo(fi.getURIPath() + ": " + ByteValue.bytesToString(fi.getSize()) + ", "
+									+ new Date(fi.getLastModified()));
+						}
+					});
+
+					info = new JLabel("Gestartet");
+
+					frame.add(new JScrollPane(tree), BorderLayout.CENTER);
+					frame.add(info, BorderLayout.SOUTH);
+					// frame.pack();
+					frame.setVisible(true);
+				}
+
+			});
+		}
+		catch (Throwable t)
+		{
+			t.printStackTrace();
+		}
+		finally
+		{
+			// and finally 'release' the serverobject to release to connection to the server
+			// nameLookup.release(server);
 		}
 
-	    });
 	}
-	catch (Throwable t)
+
+	public static void setInfo(String text)
 	{
-	    t.printStackTrace();
+		info.setText(text);
 	}
-	finally
+
+	public static FileInfo[] getChildren(FileInfo parent) throws ServerException
 	{
-	    // and finally 'release' the serverobject to release to connection to the server
-	    // nameLookup.release(server);
+		// System.out.println("Asking for Children of " +parent);
+		return session.listFileInfos(parent.getURIPath());
 	}
-
-    }
-
-    public static void setInfo(String text)
-    {
-	info.setText(text);
-    }
-
-    public static FileInfo[] getChildren(FileInfo parent) throws ServerException
-    {
-	//System.out.println("Asking for Children of " +parent);
-	return session.listFileInfos(parent.getURIPath());
-    }
 }

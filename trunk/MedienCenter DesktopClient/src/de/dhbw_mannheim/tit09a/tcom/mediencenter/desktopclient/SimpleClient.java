@@ -5,6 +5,7 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import java.awt.BorderLayout;
 
+import javax.swing.JLabel;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
 import javax.swing.JPanel;
@@ -12,6 +13,8 @@ import javax.swing.JButton;
 import javax.swing.JTextField;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Method;
@@ -37,12 +40,13 @@ public class SimpleClient
     private static Session session;
     private static Lookup nameLookup;
     private static ClientCallbackImpl callback;
-
     public JFrame frame;
     private JTextField txtFldArgs;
     private JComboBox comboBox;
     private JButton btnAction;
     private JTextArea logArea;
+    private JButton btnLogout;
+    private JLabel lblInfo;
 
     /**
      * Launch the application.
@@ -54,7 +58,14 @@ public class SimpleClient
     public static void main(String[] args) throws UnknownHostException, LookupFailedException,
 	    EstablishConnectionFailed
     {
-	nameLookup = Simon.createNameLookup(Server.IP, Server.REGISTRY_PORT);
+	String serverIP = Server.IP;
+	if(args.length > 0)
+	{
+	    System.out.println("args[0]=" +args[0]);
+	    serverIP=args[0];
+	}
+	    
+	nameLookup = Simon.createNameLookup(serverIP, Server.REGISTRY_PORT);
 	server = (Server) nameLookup.lookup(Server.BIND_NAME);
 	nameLookup.addClosedListener(server, new ClosedListener()
 	{
@@ -80,7 +91,7 @@ public class SimpleClient
 		}
 	    }
 	});
-	
+
     }
 
     /**
@@ -95,14 +106,14 @@ public class SimpleClient
     {
 	return frame;
     }
-    
+
     /**
      * Initialize the contents of the frame.
      */
     private void initialize()
     {
 	frame = new JFrame();
-	frame.setBounds(100, 100, 450, 300);
+	frame.setBounds(100, 100, 500, 300);
 	frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 	frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
@@ -122,7 +133,10 @@ public class SimpleClient
 	    {
 		// and finally 'release' the serverobject to release to connection to the server
 		if (nameLookup != null && server != null)
+		{
 		    nameLookup.release(server);
+		    server = null;
+		}
 		else
 		    System.err.println("lookup or server == null");
 		System.exit(0);
@@ -135,12 +149,34 @@ public class SimpleClient
 	txtFldArgs = new JTextField();
 	panel.add(txtFldArgs);
 	txtFldArgs.setColumns(10);
+
+	btnLogout = new JButton("Logout");
+	btnLogout.setEnabled(false);
+	btnLogout.addActionListener(new ActionListener()
+	{
+	    public void actionPerformed(ActionEvent e)
+	    {
+		if (nameLookup != null && server != null)
+		{
+		    nameLookup.release(server);
+		    server = null;
+		    session = null;
+		    btnLogout.setEnabled(false);
+		}
+		else
+		    System.err.println("lookup or server == null");
+	    }
+	});
+	panel.add(btnLogout);
+
+	lblInfo = new JLabel("Info");
+	frame.getContentPane().add(lblInfo, BorderLayout.SOUTH);
     }
 
     private void initComboBox(JPanel panel)
     {
-	Method[] sessionMethods = Session.class.getMethods();
-	Method[] serverMethods = Server.class.getMethods();
+	final Method[] sessionMethods = Session.class.getMethods();
+	final Method[] serverMethods = Server.class.getMethods();
 	List<String> methodNames = new ArrayList<String>(sessionMethods.length
 		+ serverMethods.length);
 	for (Method method : sessionMethods)
@@ -152,11 +188,58 @@ public class SimpleClient
 	    methodNames.add("Server." + method.getName());
 	}
 	Collections.sort(methodNames);
+
 	comboBox = new JComboBox();
 	for (String methodName : methodNames)
 	{
 	    comboBox.addItem(methodName);
 	}
+
+	comboBox.addItemListener(new ItemListener()
+	{
+	    @Override
+	    public void itemStateChanged(ItemEvent e)
+	    {
+		String item = (String) e.getItem();
+		if (item.startsWith("Session"))
+		{
+		    for (Method oneMethod : sessionMethods)
+		    {
+			if (item.endsWith(oneMethod.getName()))
+			{
+			    Class<?>[] clazzes = oneMethod.getParameterTypes();
+			    String[] clazzNames = new String[clazzes.length];
+			    int i = 0;
+			    for (Class<?> oneClazz : clazzes)
+			    {
+				clazzNames[i++] = oneClazz.getSimpleName();
+			    }
+			    lblInfo.setText(Arrays.toString(clazzNames) + " -> "
+				    + oneMethod.getReturnType().getSimpleName());
+			}
+		    }
+		}
+		if (item.startsWith("Server"))
+		{
+		    for (Method oneMethod : serverMethods)
+		    {
+			if (item.endsWith(oneMethod.getName()))
+			{
+			    Class<?>[] clazzes = oneMethod.getParameterTypes();
+			    String[] clazzNames = new String[clazzes.length];
+			    int i = 0;
+			    for (Class<?> oneClazz : clazzes)
+			    {
+				clazzNames[i++] = oneClazz.getSimpleName();
+			    }
+			    lblInfo.setText(Arrays.toString(clazzNames) + " -> "
+				    + oneMethod.getReturnType().getSimpleName());
+			}
+		    }
+		}
+
+	    }
+	});
 
 	panel.add(comboBox);
 
@@ -175,6 +258,10 @@ public class SimpleClient
 		    String[] args = txtFldArgs.getText().split(",");
 		    logArea.append("Method: " + method + "\n");
 		    logArea.append("Args: " + Arrays.toString(args) + "\n");
+		    if (server == null)
+		    {
+			server = (Server) nameLookup.lookup(Server.BIND_NAME);
+		    }
 		    if (method.startsWith("Session"))
 		    {
 			if (session == null)
@@ -183,43 +270,43 @@ public class SimpleClient
 			}
 			else
 			{
-			    if (method.endsWith("changeAttr"))
+			    if (method.equals("Session.putAttr"))
 			    {
-				session.changeAttr(args[0], args[1]);
+				session.putAttr(args[0], args[1]);
+				logArea.append("Result: void");
 			    }
-			    else if (method.endsWith("copyFile"))
-			    {
-				session.copyFile(args[0], args[1], Boolean.parseBoolean(args[2]));
-			    }
-			    else if (method.endsWith("deleteFile"))
-			    {
-				session.deleteFile(args[0], Boolean.parseBoolean(args[1]));
-			    }
-			    else if (method.endsWith("getAttr"))
+			    else if (method.equals("Session.getAttr"))
 			    {
 				logArea.append("Result: " + session.getAttr(args[0]));
 			    }
-			    else if (method.endsWith("getAttrs"))
+			    else if (method.equals("Session.getAllAttrs"))
 			    {
-				logArea.append("Result: " + session.getAttrs());
+				logArea.append("Result: " + session.getAllAttrs());
 			    }
-			    else if (method.endsWith("listFileInfos"))
+			    else if (method.equals("Session.copyFile"))
 			    {
-				logArea.append("Result: " + session.listFileInfos(args[0]));
+				logArea.append("Result: "
+					+ session.copyFile(args[0], args[1],
+						Boolean.parseBoolean(args[2])));
 			    }
-			    else if (method.endsWith("mkDir"))
+			    else if (method.equals("Session.deleteFile"))
 			    {
-				session.mkDir(args[0]);
+				logArea.append("Result: "
+					+ session.deleteFile(args[0], Boolean.parseBoolean(args[1])));
 			    }
-			    else if (method.endsWith("renameFile"))
+			    else if (method.equals("Session.mkDir"))
 			    {
-				session.renameFile(args[0], args[1]);
+				logArea.append("Result: " + session.mkDir(args[0], args[1]));
 			    }
-			    else if (method.endsWith(""))
+			    else if (method.equals("Session.renameFile"))
 			    {
-
+				logArea.append("Result: " + session.renameFile(args[0], args[1]));
 			    }
-
+			    else if (method.equals("Session.listFileInfos"))
+			    {
+				logArea.append("Result: "
+					+ Arrays.toString(session.listFileInfos(args[0])));
+			    }
 			    else
 			    {
 				logArea.append("METHOD NOT SUPPORTED!");
@@ -228,31 +315,37 @@ public class SimpleClient
 		    }
 		    else
 		    {
-			if(server == null)
-			{
-			    server = (Server) nameLookup.lookup(Server.BIND_NAME);
-			}
-			if (method.endsWith("serverTime"))
+			if (method.equals("Server.serverTime"))
 			{
 			    logArea.append("Result: " + server.serverTime() + "\n");
 			}
-			else if (method.endsWith("login"))
+			else if (method.equals("Server.login"))
 			{
-			    if (/*session == null*/ true)
+			    if (/* session == null */true)
 			    {
-				logArea.append("Result: "
-					+ (session = server.login(args[0], args[1], callback))
-					+ "\n");
+				Session temp = server.login(args[0], args[1], callback);
+				if (temp == null)
+				{
+				    logArea.append("Login not successfull!\n");
+				}
+				else
+				{
+				    logArea.append("Result: " + (session = temp) + "\n");
+				    btnLogout.setEnabled(true);
+				}
 			    }
 			    else
 			    {
 				logArea.append("ALREADY LOGGED IN!");
 			    }
-
 			}
-			else if (method.endsWith("register"))
+			else if (method.equals("Server.register"))
 			{
-			    server.register(args[0], args[1]);
+			    logArea.append("Result: " + server.register(args[0], args[1]));
+			}
+			else if (method.equals("Server.unregister"))
+			{
+			    logArea.append("Result: " + server.unregister(args[0], args[1]));
 			}
 			else
 			{

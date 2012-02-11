@@ -12,40 +12,39 @@ import de.root1.simon.annotation.SimonRemote;
 @SimonRemote(value = { ClientCallback.class })
 public class ClientCallbackImpl implements ClientCallback
 {
-    @SuppressWarnings("unused")
-    private static final long serialVersionUID = 1L;
+	@SuppressWarnings("unused")
+	private static final long	serialVersionUID	= 1L;
 
-    private final Lookup lookup;
-    private final Server server;
+	private final Lookup		lookup;
+	private final Server		server;
 
-    public ClientCallbackImpl(Lookup lookup, Server server)
-    {
-	this.lookup = lookup;
-	this.server = server;
-    }
-
-    @Override
-    public void message(final String text)
-    {
-	SwingUtilities.invokeLater(new Runnable()
+	public ClientCallbackImpl(Lookup lookup, Server server)
 	{
-	    @Override
-	    public void run()
-	    {
-		JOptionPane.showMessageDialog(null, text, "Message from Server",
-			JOptionPane.INFORMATION_MESSAGE);
-	    }
-	});
-    }
-
-    @Override
-    public void releaseConnection()
-    {
-	if (lookup != null && server != null)
-	    lookup.release(server);
-	else
-	{
-	    System.err.println("Lookup or server == null: " + lookup + ", " + server);
+		this.lookup = lookup;
+		this.server = server;
 	}
-    }
+
+	@Override
+	public void message(final String text, final int messageType)
+	{
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				JOptionPane.showMessageDialog(null, text, "Message from Server", messageType);
+			}
+		});
+	}
+
+	@Override
+	public void releaseConnection()
+	{
+		if (lookup != null && server != null)
+			lookup.release(server);
+		else
+		{
+			System.err.println("Lookup or server == null: " + lookup + ", " + server);
+		}
+	}
 }

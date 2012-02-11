@@ -1,8 +1,6 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui;
 
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeModelListener;
@@ -16,7 +14,6 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 public class FileInfoTreeModel implements TreeModel
 {
     private EventListenerList listeners = new EventListenerList();
-    private Map<FileInfo, FileInfo[]> parentsChildren = new HashMap<FileInfo, FileInfo[]>();
 
     @Override
     public Object getRoot()
@@ -24,7 +21,7 @@ public class FileInfoTreeModel implements TreeModel
 	System.out.println("getRoot()");
 	try
 	{
-	    return new FileInfo("", true, 0L, System.currentTimeMillis());
+	    return new FileInfo("", true, 0L, System.currentTimeMillis(), true);
 	}
 	catch (URISyntaxException e)
 	{

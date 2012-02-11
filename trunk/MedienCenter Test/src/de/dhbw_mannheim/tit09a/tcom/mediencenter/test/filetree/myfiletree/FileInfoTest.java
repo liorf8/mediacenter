@@ -15,13 +15,13 @@ public class FileInfoTest
      */
     public static void main(String[] args) throws URISyntaxException
     {
-	FileInfo fi = new FileInfo("mhertram", true, 0L, System.currentTimeMillis());
+	FileInfo fi = new FileInfo("mhertram", true, 0L, System.currentTimeMillis(), true);
 	printFileInfo(fi);
 
-	fi = new FileInfo("Donald.txt", true, 10L, 0);
+	fi = new FileInfo("Donald.txt", true, 10L, 0, true);
 	printFileInfo(fi);
 	
-	fi = new FileInfo(new File("C:\\Users\\mhertram"), new File("C:\\Users"));
+	fi = new FileInfo(new File("C:\\Users\\mhertram"), new File("C:\\Users"), true);
 	printFileInfo(fi);
 	
 	System.out.println(new File("mhertram\\"));

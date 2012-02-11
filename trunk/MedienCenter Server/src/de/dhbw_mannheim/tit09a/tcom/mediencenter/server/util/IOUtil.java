@@ -6,10 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 import java.util.regex.Pattern;
-
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
 public class IOUtil
 {
@@ -47,75 +44,28 @@ public class IOUtil
 	return true;
     }
 
-    public static boolean isEmptyDir(File dir)
+    public static boolean isFileOrEmptyDir(File file)
     {
-	return dir.list().length == 0;
+	if (!file.isDirectory()) return true;
+	return file.list().length == 0;
     }
 
-    public static void mkDir(File dir) throws IOException
+    public static boolean deleteDir(File dir, boolean deleteNonEmptyDir) throws IOException
     {
-	IOUtil.executeMkDir(dir);
-    }
-
-    public static void mkDirs(File[] dirs) throws IOException
-    {
-	for (File oneDir : dirs)
-	{
-	    IOUtil.executeMkDir(oneDir);
-	}
-    }
-
-    public static boolean deleteDir(File dir, boolean deleteNotEmptyDir) throws IOException
-    {
-	if (IOUtil.isEmptyDir(dir))
+	if (IOUtil.isFileOrEmptyDir(dir))
 	{
 	    IOUtil.executeDelete(dir);
 	    return true;
 	}
 	else
 	{
-	    if (deleteNotEmptyDir)
+	    if (deleteNonEmptyDir)
 	    {
-		System.out.println("NOT SUPPORTED YET!");
+		System.out.println("Deletion of non empty directories is not supported yet!");
 		return false;
 		// later return true; (when is implemented)
 	    }
 	    return false;
-	}
-    }
-
-    /**
-     * @param dir
-     * @param parentDirToOmit
-     *            Can be "" so that nothing is omitted.
-     * @return
-     * @throws IOException
-     */
-    public static FileInfo[] listFileInfos(File dir, File parentDirToOmit) throws IOException
-    {
-	IOUtil.ensureExists(dir);
-	IOUtil.ensureIsDir(dir);
-
-	File[] files = dir.listFiles();
-	FileInfo[] fileInfos = new FileInfo[files.length];
-	File oneFile = null;
-	for (int i = 0; i < files.length; i++)
-	{
-	    oneFile = files[i];
-	    fileInfos[i] = new FileInfo(oneFile, parentDirToOmit);
-	}
-	return fileInfos;
-    }
-
-    public static void ensureValidString(String filename, char[] forbiddenChars)
-	    throws IllegalArgumentException
-    {
-	for (char oneChar : forbiddenChars)
-	{
-	    if (filename.indexOf(oneChar) > -1)
-		throw new IllegalArgumentException("Filename '" + filename
-			+ "' contains illegal char '" + oneChar + "'. Illegal chars: "
-			+ Arrays.toString(forbiddenChars));
 	}
     }
 
@@ -153,12 +103,22 @@ public class IOUtil
 	if (!file.delete()) throw new IOException("Could not delete: " + file.getAbsolutePath());
     }
 
-    public static void executeMkDir(File dir) throws IOException
+    public static boolean executeMkDir(File dir) throws IOException
     {
 	if (!dir.exists())
 	{
 	    if (!dir.mkdir())
 		throw new IOException("Could not create dir: " + dir.getAbsolutePath());
+	    return true;
+	}
+	return false;
+    }
+
+    public static void executeMkDirs(File[] dirs) throws IOException
+    {
+	for (File oneDir : dirs)
+	{
+	    IOUtil.executeMkDir(oneDir);
 	}
     }
 
@@ -186,13 +146,14 @@ public class IOUtil
 	FileChannel destChannel = null;
 	try
 	{
-	    // inChannel.transferTo(0, inChannel.size(), outChannel); // original -- apparently has trouble
+	    // inChannel.transferTo(0, inChannel.size(), outChannel);
+	    // original -- apparently has trouble
 	    // copying large files on Windows
 	    // magic number for Windows, (64Mb - 32Kb)
 	    srcChannel = new FileInputStream(src).getChannel();
 	    destChannel = new FileOutputStream(dest).getChannel();
 	    // int maxCount = (64 * 1024 * 1024) - (32 * 1024);
-	    int maxCount = 64 * 1024; // 64kb is faster
+	    int maxCount = 0xFFFF; // 64kb-1 is faster
 	    long size = srcChannel.size();
 	    long position = 0;
 	    while (position < size)
@@ -208,20 +169,32 @@ public class IOUtil
 	}
     }
 
-    public static void ensureIsInParentDir(File parent, File file) throws IOException
+    public static boolean isOrIsInParentDir(File parentDir, File file) throws IOException
     {
-	if(!isInParentDir(parent, file))
-	{
-	    throw new IOException(parent+ " is not the parent of " +file);
-	}
-    }
-    
-    public static boolean isInParentDir(File parent, File file) throws IOException
-    {
-	if (file.getCanonicalPath().startsWith(parent.getCanonicalPath()))
+	if (file.getCanonicalPath().startsWith(parentDir.getCanonicalPath()))
 	{
 	    return true;
 	}
 	return false;
+    }
+
+    public static void ensureIsOrIsInParentDir(File parent, File file) throws IOException
+    {
+	if (!isOrIsInParentDir(parent, file))
+	{
+	    throw new IOException(parent + " is not the parent of " + file);
+	}
+    }
+
+    public static String nonExistingFilePath(File file)
+    {
+	int i = 1;
+	String filePath = file.getAbsolutePath();
+	while (file.exists())
+	{
+	    file = new File(filePath.substring(0, filePath.lastIndexOf('.')) + " (" + (i++)
+		    + ")" + filePath.substring(filePath.lastIndexOf('.'), filePath.length()));
+	}
+	return file.getAbsolutePath();
     }
 }

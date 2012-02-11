@@ -4,5 +4,5 @@ import java.rmi.RemoteException;
 
 public interface ClientCallback extends RemoteService
 {
-    public void callback(String text) throws RemoteException;
+	public void callback(String text) throws RemoteException;
 }
