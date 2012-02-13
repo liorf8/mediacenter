@@ -8,6 +8,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
+import java.util.logging.Logger;
+
+import org.hsqldb.lib.FrameworkLogger;
+import org.slf4j.LoggerFactory;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.DatabaseManager;
 
@@ -24,20 +28,18 @@ public class DriverManagerTest
 	{
 		try
 		{
-			for (Enumeration<Driver> e = DriverManager.getDrivers(); e.hasMoreElements();)
-				System.out.println(e.nextElement().getClass().getName());
+			// for (Enumeration<Driver> e = DriverManager.getDrivers(); e.hasMoreElements();)
+			// System.out.println(e.nextElement().getClass().getName());
 
 			String url = String.format("jdbc:%s:%s", SUB_PROTOCOL, SUB_NAME);
-			Connection con;
-			con = DriverManager.getConnection(url, USER, PW);
-			con = null;
-
+			Connection con = null;
 			DatabaseManager dbMan = DatabaseManager.getInstance();
 			con = dbMan.borrowConnection();
 			dbMan.returnConnection(con);
-			System.out.println("Gotten con:"+con);
+
+			System.out.println("Gotten con:" + con);
 		}
-		catch(Exception e)
+		catch (Exception e)
 		{
 			e.printStackTrace();
 		}

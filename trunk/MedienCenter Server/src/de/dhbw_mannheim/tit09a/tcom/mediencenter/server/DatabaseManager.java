@@ -15,6 +15,7 @@ import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
+
 public class DatabaseManager
 {
 	// --------------------------------------------------------------------------------
@@ -35,7 +36,7 @@ public class DatabaseManager
 	private static final byte		WHEN_EXAUSTED_ACTION	= GenericObjectPool.WHEN_EXHAUSTED_BLOCK;
 	private static final long		MAX_WAIT				= 30 * 1000;
 	private static DatabaseManager	instance;
-	private final Logger			logger					= Logger.getLogger(DatabaseManager.class.getName());
+	private final Logger			logger					= Logger.getLogger(getClass().getName());
 
 	// --------------------------------------------------------------------------------
 	// -- Static Methods --------------------------------------------------------------
@@ -60,9 +61,15 @@ public class DatabaseManager
 	{
 		try
 		{
+			// FIXME: Sadly the logger of HSQL sets global Formatter.
+			// So only warning and severe messages are displayed in a shortened format.
+			// And all loggers initialized before this command never log anything more.
+			
+			DriverManager.getConnection(URL, USER, PW);
 			logger.setLevel(Level.ALL);
-			logger.addHandler(new FileHandler(getClass().getName()+".log", false));
-			logger.info("DatabaseManager Logger started.");
+			logger.addHandler(new FileHandler(getClass().getName() + ".log", false));
+			logger.info("Logger started.");
+			logger.severe("Logger severely started!");
 
 			// Check if driver class exists
 			logger.finer("Loading driver class " + DRIVER_CLASS);
@@ -82,7 +89,7 @@ public class DatabaseManager
 		}
 		catch (ClassNotFoundException e)
 		{
-			ServerMain.logger.severe("Driver class missing: " + DRIVER_CLASS);
+			ServerMain.logger.severe("ERROR: failed to load HSQLDB JDBC driver: " + DRIVER_CLASS);
 			throw e;
 		}
 	}
@@ -113,6 +120,15 @@ public class DatabaseManager
 		Connection con = conPool.borrowObject();
 		logger.finest("After borrowing: active/idling Connections:" + conPool.getNumActive() + "/" + conPool.getNumIdle());
 		logger.exiting("DatabaseManager", "borrowConnection", con);
+		logger.severe("Test logger!");
+		return con;
+	}
+
+	public Connection newConnection() throws SQLException
+	{
+		logger.entering("DatabaseManager", "newConnection");
+		Connection con = DriverManager.getConnection(URL, USER, PW);
+		logger.fine("bla");
 		return con;
 	}
 
@@ -152,14 +168,7 @@ public class DatabaseManager
 		public Connection makeObject() throws Exception
 		{
 			logger.entering("DatabaseManager", "makeObject");
-			// TODO: As soon as the next line is called in this class, no logging will be done anymore.
-			// Calling it beforehand in another class, fixes this... What?!!
-			// FIXME: ...
 			Connection con = DriverManager.getConnection(url, user, pw);
-			logger.severe("severe!");
-			logger.warning("warn!");
-			logger.info("info!");
-			logger.fine("fine!");
 			logger.exiting("DatabaseManager", "makeObject", con);
 			return con;
 		}

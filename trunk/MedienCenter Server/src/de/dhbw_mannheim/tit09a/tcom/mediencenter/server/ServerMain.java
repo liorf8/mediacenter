@@ -48,16 +48,16 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	// -- Main Method -----------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{
 		try
 		{
 			logger.setLevel(Level.ALL);
-			logger.addHandler(new FileHandler("ServerMain.log", false));
+			logger.addHandler(new FileHandler(ServerMain.class.getName()+"log", false));
 			logger.info("ServerMain Logger started!");
 
 			invokeLogger.setLevel(Level.ALL);
-			invokeLogger.addHandler(new FileHandler("Invoke.log", false));
+			invokeLogger.addHandler(new FileHandler("de.root1.simon.InvokeLogger.log", false));
 
 			// for testing purposes quickstart
 			startServer();
@@ -87,15 +87,14 @@ public class ServerMain
 		catch (Exception e)
 		{
 			logger.severe(e.toString());
-			e.printStackTrace();
-			exit();
+			throw e;
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	// -- Static Method(s) ------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private static void startServer() throws Exception
+	public static void startServer() throws Exception
 	{
 		if (isRunning == false)
 		{
@@ -151,7 +150,7 @@ public class ServerMain
 	}
 
 	// --------------------------------------------------------------------------------
-	private static void exit()
+	public static void exit()
 	{
 		if (isRunning)
 			shutdownServer();
