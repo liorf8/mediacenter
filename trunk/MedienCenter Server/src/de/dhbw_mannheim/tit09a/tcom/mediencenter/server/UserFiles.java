@@ -42,7 +42,7 @@ class UserFiles
 		try
 		{
 			logger.setLevel(Level.ALL);
-			logger.addHandler(new FileHandler("UserFiles.log", false));
+			logger.addHandler(new FileHandler(UserFiles.class.getName()+".log", false));
 			logger.info("UserFiles Logger started.");
 		}
 		catch (Exception e)
