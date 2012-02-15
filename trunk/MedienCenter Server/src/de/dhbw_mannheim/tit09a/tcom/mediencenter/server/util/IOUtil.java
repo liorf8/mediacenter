@@ -12,6 +12,11 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.channels.FileChannel;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Stack;
 import java.util.regex.Pattern;
 
 public class IOUtil
@@ -112,6 +117,27 @@ public class IOUtil
 			throw new IOException("Could not delete: " + file.getAbsolutePath());
 	}
 
+	// TODO: do with LIFO-Queue instead of Stack
+	public static int executeMkDirRecursively(File dir) throws IOException
+	{
+		if(dir.exists())
+			return 0;
+		Stack<File> parentFilesToCreate = new Stack<File>();
+		parentFilesToCreate.push(dir);
+		while(!dir.getParentFile().exists())
+		{
+			parentFilesToCreate.push(dir.getParentFile());
+			dir = dir.getParentFile();
+		}
+		int createdDirs=0;
+		while(!parentFilesToCreate.isEmpty())
+		{
+			executeMkDir(parentFilesToCreate.pop());
+			createdDirs++;
+		}
+		return createdDirs;
+	}
+	
 	public static boolean executeMkDir(File dir) throws IOException
 	{
 		if (!dir.exists())
@@ -148,6 +174,46 @@ public class IOUtil
 		if (closeable != null)
 			closeable.close();
 	}
+	
+	public static void close(Connection con)
+	{
+		if (con != null)
+		{
+			try
+			{
+				con.close();
+			}
+			catch (SQLException ignore)
+			{}
+		}
+	}
+	
+	public static void close(Statement ps)
+	{
+		if (ps != null)
+		{
+			try
+			{
+				ps.close();
+			}
+			catch (SQLException ignore)
+			{}
+		}
+	}
+
+	public static void close(ResultSet rs)
+	{
+		if (rs != null)
+		{
+			try
+			{
+				rs.close();
+			}
+			catch (SQLException ignore)
+			{}
+		}
+	}
+
 
 	public static void executeFileCopy(File src, File dest) throws IOException
 	{
@@ -245,4 +311,5 @@ public class IOUtil
 	{
 		return convertStreamToString(IOUtil.class.getResourceAsStream(path));
 	}
+	
 }

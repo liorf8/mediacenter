@@ -1,5 +1,6 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,40 +60,55 @@ public class ServerImpl implements Server
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public Session login(String user, String pw, ClientCallback callback) throws IllegalArgumentException, ServerException
+	public Session login(String login, String pw, ClientCallback callback) throws IllegalArgumentException, ServerException
 	{
 		try
 		{
-			MiscUtil.ensureValidString(user, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+			MiscUtil.ensureValidString(login, FileManager.ILLEGAL_CHARS_IN_FILENAME);
 			MiscUtil.ensureValidString(pw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			
+
 			// check if user is already logged in
 			for (SessionImpl oneSession : userSessions)
 			{
-				if (oneSession.getUser().equals(user))
+				if (oneSession.getLogin().equals(login))
 				{
 					boolean isSameRemote = Simon.denoteSameRemoteObjekt(callback, oneSession.getClientCallback());
 					// Is the user currently logged in on the same clientmachine?
 					if (isSameRemote)
 					{
-						System.out.println(Thread.currentThread() + ":calling back to client");
 						callback.message("You are already logged in on your computer. Please logout first.", JOptionPane.INFORMATION_MESSAGE);
 						return null;
 					}
-					// or on another machine else
+					// or on another machine
 					oneSession.getClientCallback().releaseConnection();
 				}
 			}
-			SessionImpl session = new SessionImpl(this, user, callback);
+
+			// Check pw
+			Connection con = DatabaseManager.getInstance().getConnection();
+			Authenticator auth = Authenticator.getInstance();
+			if (!auth.authenticate(con, login, pw))
+			{
+				callback.message("Login or password incorrect!", JOptionPane.WARNING_MESSAGE);
+				return null;
+			}
+			
+			// Get ID
+			long id = auth.idForLogin(con, login);
+			if(id == -1L)
+				throw new ServerException("Illegal id: "+id);
+			
+			// Create Session
+			SessionImpl session = new SessionImpl(this, id, login, callback);
 			userSessions.add(session);
 			ServerMain.logger.info("Session created for " + session + ". Now " + userSessions.size() + " user(s) are online.");
-			session.getClientCallback().message("Successfully logged in " + user + "!", JOptionPane.INFORMATION_MESSAGE);
+			callback.message("Successfully logged in " + login + "!", JOptionPane.INFORMATION_MESSAGE);
 			return session;
 		}
 		catch (IllegalArgumentException iae)
@@ -102,23 +118,33 @@ public class ServerImpl implements Server
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public boolean register(String user, String pw) throws IllegalArgumentException, ServerException
+	public boolean register(String login, String pw) throws IllegalArgumentException, ServerException
 	{
 		try
 		{
 			boolean wasNotRegisteredYet = false;
-			if (!FileManager.getInstance().getUserRootDir(user).exists())
+			MiscUtil.ensureValidString(login, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+			MiscUtil.ensureValidString(pw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+			
+			Connection con = DatabaseManager.getInstance().getConnection();
+			Authenticator auth = Authenticator.getInstance();
+			if (!auth.userExists(con, login))
 			{
-				MiscUtil.ensureValidString(user, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-				MiscUtil.ensureValidString(pw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-				FileManager.getInstance().createUserDirs(user);
+				ServerMain.logger.finer("User does not  exist. Creating dirs and inser into Database ...");
+				FileManager.getInstance().createUserDirs(login);
+				if(!auth.insertUser(con, login, pw))
+					throw new IllegalStateException("User was tested for not existing, but apparently he existed already!");
 				wasNotRegisteredYet = true;
+			}
+			else
+			{
+				ServerMain.logger.fine("User already exists: " +login);
 			}
 			return wasNotRegisteredYet;
 		}
@@ -129,24 +155,24 @@ public class ServerImpl implements Server
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public boolean unregister(String user, String pw) throws IllegalArgumentException, ServerException
+	public boolean unregister(String login, String pw) throws IllegalArgumentException, ServerException
 	{
 		try
 		{
 			boolean wasRegistered = false;
-			if (FileManager.getInstance().getUserRootDir(user).exists())
+			if (FileManager.getInstance().getUserRootDir(login).exists())
 			{
 				wasRegistered = true;
-				if (!IOUtil.deleteDir(FileManager.getInstance().getUserRootDir(user), true))
+				if (!IOUtil.deleteDir(FileManager.getInstance().getUserRootDir(login), true))
 				{
-					ServerMain.logger.warning("Deletion of user root dir failed: " + FileManager.getInstance().getUserRootDir(user));
-					throw new ServerException("Could not unregister user: " + user);
+					ServerMain.logger.warning("Deletion of user root dir failed: " + FileManager.getInstance().getUserRootDir(login));
+					throw new ServerException("Could not unregister user: " + login);
 				}
 			}
 			return wasRegistered;
@@ -158,7 +184,7 @@ public class ServerImpl implements Server
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 

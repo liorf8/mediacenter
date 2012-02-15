@@ -2,7 +2,6 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Map;
 
 import javax.swing.JOptionPane;
 
@@ -29,7 +28,8 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	// --------------------------------------------------------------------------------
 	// -- Instance Variable(s) --------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private final String			user;
+	private final long				id;
+	private final String			login;
 	private final ServerImpl		server;
 	private final ClientCallback	callback;
 	private final String			sessionId;
@@ -38,10 +38,11 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	// --------------------------------------------------------------------------------
 	// -- Constructor(s) --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	SessionImpl(ServerImpl server, String user, ClientCallback callback)
+	SessionImpl(ServerImpl server, long id, String login, ClientCallback callback)
 	{
 		this.server = server;
-		this.user = user;
+		this.id = id;
+		this.login = login;
 		this.callback = callback;
 		this.sessionId = "default_session_id";
 		this.role = Role.USER;
@@ -50,9 +51,15 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	// --------------------------------------------------------------------------------
 	// -- Private/Packet Method(s) ----------------------------------------------------
 	// --------------------------------------------------------------------------------
-	String getUser()
+	long getId()
 	{
-		return user;
+		return id;
+	}
+	
+	// --------------------------------------------------------------------------------
+	String getLogin()
+	{
+		return login;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -80,70 +87,27 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public void unreferenced()
 	{
-		ServerMain.logger.fine(Thread.currentThread() + ": Unreferenced: " + user + "@" + this);
+		ServerMain.logger.fine(Thread.currentThread() + ": Unreferenced: " + login + "@" + this);
 		server.removeUserSession(this);
 	}
 
 	// Overriding Session
 	// --------------------------------------------------------------------------------
 	@Override
-	public void putAttr(String key, String newValue) throws IllegalArgumentException, ServerException
+	public void changePw(String oldPw, String newPw) throws IllegalArgumentException, ServerException
 	{
-		try
-		{
-			callback.message("Method putAttr() not implemented yet!", JOptionPane.WARNING_MESSAGE);
-		}
-		catch (IllegalArgumentException iae)
-		{
-			throw iae;
-		}
-		catch (Throwable e)
-		{
-			e.printStackTrace();
-			throw new ServerException(e.getMessage());
-		}
+		// TODO Auto-generated method stub
+		
 	}
-
+	
 	// --------------------------------------------------------------------------------
 	@Override
-	public Map<String, String> getAllAttrs() throws IllegalArgumentException, ServerException
+	public void changeLogin(String newLogin) throws IllegalArgumentException, ServerException
 	{
-		try
-		{
-			callback.message("Method getAllAttrs() not implemented yet!", JOptionPane.WARNING_MESSAGE);
-			return null;
-		}
-		catch (IllegalArgumentException iae)
-		{
-			throw iae;
-		}
-		catch (Throwable e)
-		{
-			e.printStackTrace();
-			throw new ServerException(e.getMessage());
-		}
+		// TODO Auto-generated method stub
+		
 	}
-
-	// --------------------------------------------------------------------------------
-	@Override
-	public String getAttr(String key) throws IllegalArgumentException, ServerException
-	{
-		try
-		{
-			callback.message("Method getAttr() not implemented yet!", JOptionPane.WARNING_MESSAGE);
-			return null;
-		}
-		catch (IllegalArgumentException iae)
-		{
-			throw iae;
-		}
-		catch (Throwable e)
-		{
-			e.printStackTrace();
-			throw new ServerException(e.getMessage());
-		}
-	}
-
+	
 	// --------------------------------------------------------------------------------
 	@Override
 	public boolean deleteFile(String uri, boolean deleteNotEmptyDir) throws IllegalArgumentException, ServerException
@@ -172,7 +136,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
@@ -205,7 +169,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
@@ -236,7 +200,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
@@ -259,7 +223,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
@@ -270,7 +234,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		try
 		{
 			File dir = FileManager.getInstance().uriToUserFile(this, dirURI, FileType.DIR, false);
-			return FileManager.getInstance().listFileInfos(this, dir, FileManager.getInstance().getUserRootDir(user));
+			return FileManager.getInstance().listFileInfos(this, dir, FileManager.getInstance().getUserRootDir(login));
 		}
 		catch (IllegalArgumentException iae)
 		{
@@ -279,7 +243,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
@@ -301,14 +265,14 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		catch (Throwable e)
 		{
 			e.printStackTrace();
-			throw new ServerException(e.getMessage());
+			throw new ServerException(e.getClass().getName()+": "+e.getMessage());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	public String toString()
 	{
-		return String.format("SessionImpl[%s,%s,%s]", user, role.toString(), Simon.getRemoteInetSocketAddress(callback));
+		return String.format("SessionImpl[%d,%s,%s,%s]", id, login, role.toString(), Simon.getRemoteInetSocketAddress(callback));
 	}
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------

@@ -10,7 +10,7 @@ public class CreateTest
 		try
 		{
 			DatabaseManager.getInstance().createTables(true);
-			DatabaseManager.getInstance().closeConnection();
+			DatabaseManager.getInstance().disConnect();
 		}
 		catch(Exception e)
 		{

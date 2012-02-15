@@ -19,4 +19,13 @@ public class MiscUtil
 						+ Arrays.toString(forbiddenChars));
 		}
 	}
+	
+	public static boolean checkStringLength(String test, int minLength, int maxLength)
+	{
+		if (test == null)
+			return false;
+		if (test.length() < minLength || test.length() > maxLength)
+			return false;
+		return true;
+	}
 }

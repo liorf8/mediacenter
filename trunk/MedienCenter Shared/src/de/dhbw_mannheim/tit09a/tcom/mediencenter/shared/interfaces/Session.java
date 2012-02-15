@@ -1,18 +1,14 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces;
 
-import java.util.Map;
-
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
 public interface Session
 {
-	public void putAttr(String key, String newValue) throws IllegalArgumentException, ServerException;
-
-	public Map<String, String> getAllAttrs() throws ServerException;
-
-	public String getAttr(String key) throws IllegalArgumentException, ServerException;
-
+	public void changePw(String oldPw, String newPw) throws IllegalArgumentException, ServerException;
+	
+	public void changeLogin(String newLogin) throws IllegalArgumentException, ServerException;
+	
 	public boolean copyFile(String srcUri, String destDirUri, boolean replace) throws IllegalArgumentException, ServerException;
 
 	public boolean deleteFile(String uri, boolean onlyIfDirIsEmpty) throws IllegalArgumentException, ServerException;

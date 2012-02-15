@@ -19,19 +19,28 @@ public class SelectUsers
 		start = System.currentTimeMillis();
 		DatabaseManager dbMan = DatabaseManager.getInstance();
 		System.out.println("Gotten instance in " + (System.currentTimeMillis() - start));
-
+		
 		start = System.currentTimeMillis();
-		ResultSet rs = dbMan.executeStatement("SELECT * FROM USERS", ResultSet.class);
+		ResultSet rs = dbMan.executeStatement("SELECT * FROM Users", ResultSet.class);
 		System.out.println("SELECT in " + (System.currentTimeMillis() - start));
 		start = System.currentTimeMillis();
 
-		String formatString = "%-10s%-15s%-15s%-25s%n";
 		ResultSetMetaData rsMd = rs.getMetaData();
-		System.out.printf(formatString, rsMd.getColumnName(1), rsMd.getColumnName(2), rsMd.getColumnName(3), rsMd.getColumnName(4));
-		while (rs.next())
+		for(int i=1; i<=rsMd.getColumnCount(); i++)
 		{
-			System.out.printf(formatString, rs.getInt(1), rs.getString(2), rs.getString(3), rs.getTimestamp(4));
+			System.out.print(rsMd.getColumnName(i)+ " ");
 		}
+		System.out.println();
+		while(rs.next())
+		{
+			for(int i=1; i<=rsMd.getColumnCount(); i++)
+			{
+				System.out.print(rs.getString(i) +" ");
+			}
+			System.out.println();
+		}
+
+		rs.close();
 
 	}
 

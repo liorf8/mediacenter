@@ -35,9 +35,10 @@ public class ClientMain
 			ClientCallbackImpl clientCallbackImpl = new ClientCallbackImpl(nameLookup, server);
 
 			// use the serverobject as it would exist on your local machine
-			System.out.println(Thread.currentThread() + ": Logging in ...");
+			System.out.println(Thread.currentThread() + ": Registering ...");
 			server.register("Donald Duck", "123");
-			Session session = server.login("Donald Duck", "pw", clientCallbackImpl);
+			System.out.println(Thread.currentThread() + ": Logging in ...");
+			Session session = server.login("Donald Duck", "123", clientCallbackImpl);
 			System.out.println(Arrays.toString(session.listFileInfos("")));
 			session.mkDir("Pictures", "neues_verzeichnis");
 			System.out.println(Arrays.toString(session.listFileInfos("Pictures")));
