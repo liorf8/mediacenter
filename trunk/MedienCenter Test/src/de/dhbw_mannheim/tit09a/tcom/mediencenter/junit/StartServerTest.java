@@ -24,10 +24,10 @@ public class StartServerTest
 	{
 		try
 		{
-			ServerMain.initServer();
-			ServerMain.shutdownServer();
-			ServerMain.startServer();
-			ServerMain.restartServer();
+			ServerMain.start();
+			ServerMain.shutdown();
+			ServerMain.start();
+			ServerMain.restart();
 			ServerMain.exit();
 		}
 		catch (Exception e)

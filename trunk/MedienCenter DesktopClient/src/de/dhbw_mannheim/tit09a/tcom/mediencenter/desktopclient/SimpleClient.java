@@ -266,20 +266,7 @@ public class SimpleClient
 						}
 						else
 						{
-							if (method.equals("Session.putAttr"))
-							{
-								session.putAttr(args[0], args[1]);
-								logArea.append("Result: void");
-							}
-							else if (method.equals("Session.getAttr"))
-							{
-								logArea.append("Result: " + session.getAttr(args[0]));
-							}
-							else if (method.equals("Session.getAllAttrs"))
-							{
-								logArea.append("Result: " + session.getAllAttrs());
-							}
-							else if (method.equals("Session.copyFile"))
+							if (method.equals("Session.copyFile"))
 							{
 								logArea.append("Result: " + session.copyFile(args[0], args[1], Boolean.parseBoolean(args[2])));
 							}

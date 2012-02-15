@@ -1,8 +1,10 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.db;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.Authenticator;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.DatabaseManager;
 
 public class SimpleQuery
@@ -10,17 +12,22 @@ public class SimpleQuery
 	public static void main(String[] args) throws NoSuchElementException, IllegalStateException, Exception
 	{
 		DatabaseManager dbMan = null;
+		String login = "Max";
+		String pw = "pw";
+		
 		try
 		{
+
 			long start = System.currentTimeMillis();
 			dbMan = DatabaseManager.getInstance();
 			System.out.println("Gotten instance in " + (System.currentTimeMillis() - start));
-			start = System.currentTimeMillis() ;
-			System.out.println(dbMan.registerUser("max1", "pw"));
-			System.out.println("Registered in " + (System.currentTimeMillis() - start));
-			start = System.currentTimeMillis() ;
-			System.out.println(dbMan.registerUser("karo", "<3"));
-			System.out.println("Registered in " + (System.currentTimeMillis() - start));
+
+			Connection con = dbMan.getConnection();
+			System.out.println(Authenticator.getInstance().userExists(con, login));
+			boolean inserted = Authenticator.getInstance().insertUser(con, login, pw);
+			System.out.println(inserted);
+			
+			System.out.println(Authenticator.getInstance().userExists(con, login));
 		}
 		catch (SQLException e)
 		{
@@ -32,15 +39,15 @@ public class SimpleQuery
 			{
 				try
 				{
-					dbMan.closeConnection();
+					dbMan.disConnect();
 				}
 				catch (Exception e)
 				{
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
 			}
 		}
+		System.out.println(Authenticator.getInstance().userExists(dbMan.getConnection(), login));
 	}
 }

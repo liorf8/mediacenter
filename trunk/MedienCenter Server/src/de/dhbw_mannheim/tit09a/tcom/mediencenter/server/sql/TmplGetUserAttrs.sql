@@ -1,1 +1,0 @@
-SELECT (%s) FROM Users WHERE user_id=%d;

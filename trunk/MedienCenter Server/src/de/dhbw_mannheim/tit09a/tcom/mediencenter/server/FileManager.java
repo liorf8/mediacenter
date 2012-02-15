@@ -15,11 +15,10 @@ public class FileManager
 	// --------------------------------------------------------------------------------
 	// -- Static Variable(s) ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	// os: C:\\Users\\mhertram\\ALL_USERS_ROOT_DIR
-	// max: C:\\Users\\Max\\ALL_USERS_ROOT_DIR
-	private final File			USER_FILES_DIR				= new File("C:\\Users\\Max\\MedienCenter\\USER_FILES");
+	private static final String	CLASS_NAME					= FileManager.class.getName();
+	private final File			USER_FILES_DIR				= new File(ServerMain.SERVER_DIR, "USER_FILES");
 	public static final char[]	ILLEGAL_CHARS_IN_FILENAME	= "\\/:*?<>|%&".toCharArray();
-	public final static Logger	logger						= Logger.getLogger(FileManager.class.getName());
+	public final static Logger	logger						= Logger.getLogger(CLASS_NAME);
 
 	static enum BASIC_DIRS
 	{
@@ -38,6 +37,9 @@ public class FileManager
 
 	private static FileManager	instance;
 
+	// --------------------------------------------------------------------------------
+	// -- Static Methods --------------------------------------------------------------
+	// --------------------------------------------------------------------------------
 	public static synchronized FileManager getInstance() throws Exception
 	{
 		if (instance == null)
@@ -46,35 +48,38 @@ public class FileManager
 	}
 
 	// --------------------------------------------------------------------------------
-	// -- Constructor(s) --------------------------------------------------------------
+	// -- Constructors ----------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	private FileManager() throws Exception
 	{
 		try
 		{
+			// Logging
 			try
 			{
-				IOUtil.executeMkDir(USER_FILES_DIR);
+				logger.setLevel(Level.ALL);
+				logger.addHandler(new FileHandler(CLASS_NAME + ".log", false));
+				logger.info(CLASS_NAME + " Logger started!");
+			}
+			catch (IOException e)
+			{
+				throw new Exception("Could not establish logging", e);
+			}
+
+			// Make directory
+			try
+			{
+				IOUtil.executeMkDirRecursively(USER_FILES_DIR);
 			}
 			catch (IOException e)
 			{
 				throw new Exception("Could not create user files directory: " + USER_FILES_DIR, e);
 			}
 
-			try
-			{
-				logger.setLevel(Level.ALL);
-				logger.addHandler(new FileHandler(FileManager.class.getName() + ".log", false));
-				logger.info("Logger started.");
-			}
-			catch (IOException e)
-			{
-				throw new Exception("Could not establish logging", e);
-			}
 		}
 		catch (Exception e)
 		{
-			throw new Exception("FileManager.<init> failed: " + e.getMessage(), e.getCause());
+			throw new Exception(CLASS_NAME + " <init> failed: " + e.getMessage(), e.getCause());
 		}
 	}
 
@@ -108,14 +113,15 @@ public class FileManager
 	// --------------------------------------------------------------------------------
 	void createUserDirs(String user) throws IllegalArgumentException, IOException, ServerException
 	{
-		IOUtil.executeMkDir(getUserRootDir(user));
+		IOUtil.executeMkDirRecursively(getUserRootDir(user));
 		IOUtil.executeMkDirs(getUsersBasicDirs(user));
 	}
 
 	// --------------------------------------------------------------------------------
 	File uriToUserFile(SessionImpl session, String uri, FileType fileType, boolean wantToModify) throws IllegalArgumentException, ServerException
 	{
-		File userFile = new File(getUserRootDir(session.getUser()), FileInfo.uriPathToFilePath(uri));
+		logger.entering(CLASS_NAME, "uriToUserFile", new Object[] { session, uri, fileType, wantToModify });
+		File userFile = new File(getUserRootDir(session.getLogin()), FileInfo.uriPathToFilePath(uri));
 		try
 		{
 			// To be sure, users do not get access to directories other than their own.
@@ -126,7 +132,7 @@ public class FileManager
 				ServerMain.logger.warning(String.format("User %s wanted %sing access to '%s' (URI: %s)", session, (wantToModify ? "modify" : "read"),
 						userFile, uri));
 				throw new IllegalArgumentException(String.format("%sing access to path '%s' for user '%s' (%s) denied.", (wantToModify ? "Modify"
-						: "Read"), uri, session.getUser(), session.getRole()));
+						: "Read"), uri, session.getLogin(), session.getRole()));
 			}
 
 			// Check for existence and is dir / file
@@ -144,6 +150,7 @@ public class FileManager
 					break;
 			}
 
+			logger.exiting(CLASS_NAME, "uriToUserFile", userFile);
 			return userFile;
 		}
 		catch (IllegalArgumentException iae)
@@ -161,12 +168,11 @@ public class FileManager
 	// --------------------------------------------------------------------------------
 	boolean validateAccess(SessionImpl session, File file, boolean wantToModify)
 	{
-		logger.entering("AccessControls", "checkFileAccess", new Object[] { session, file, wantToModify });
+		logger.entering(CLASS_NAME, "validateAccess", new Object[] { session, file, wantToModify });
 		boolean grantAccess = true;
 		try
 		{
-			String user = session.getUser();
-			logger.finer(String.format("user=%s;role=%s;", user, session.getRole()));
+			String user = session.getLogin();
 			switch (session.getRole())
 			{
 				case USER:
@@ -210,7 +216,7 @@ public class FileManager
 		{
 			grantAccess = false;
 		}
-		logger.exiting("AccessControls", "checkFileAccess", grantAccess);
+		logger.exiting(CLASS_NAME, "validateAccess", grantAccess);
 		return grantAccess;
 	}
 

@@ -1,0 +1,1 @@
+SELECT pw, salt FROM Users WHERE login=?;

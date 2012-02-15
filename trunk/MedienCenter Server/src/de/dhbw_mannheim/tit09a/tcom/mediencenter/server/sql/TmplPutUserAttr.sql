@@ -1,1 +1,0 @@
-UPDATE Users SET %s = %s WHERE user_id = %d;
