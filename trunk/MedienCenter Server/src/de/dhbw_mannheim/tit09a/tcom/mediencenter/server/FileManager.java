@@ -10,17 +10,16 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
 
-class UserFiles
+public class FileManager
 {
 	// --------------------------------------------------------------------------------
 	// -- Static Variable(s) ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	// os: C:\\Users\\mhertram\\ALL_USERS_ROOT_DIR
 	// max: C:\\Users\\Max\\ALL_USERS_ROOT_DIR
-	static final File			USER_FILES_DIR				= new File("C:\\Users\\Max\\MedienCenter\\USER_FILES");
-	static final char[]			ILLEGAL_CHARS_IN_FILENAME	= "\\/:*?<>|%&".toCharArray();
-
-	public final static Logger	logger						= Logger.getLogger(UserFiles.class.getName());
+	private final File			USER_FILES_DIR				= new File("C:\\Users\\Max\\MedienCenter\\USER_FILES");
+	public static final char[]	ILLEGAL_CHARS_IN_FILENAME	= "\\/:*?<>|%&".toCharArray();
+	public final static Logger	logger						= Logger.getLogger(FileManager.class.getName());
 
 	static enum BASIC_DIRS
 	{
@@ -37,36 +36,64 @@ class UserFiles
 		DIR, FILE, FILE_OR_DIR;
 	}
 
-	static
+	private static FileManager	instance;
+
+	public static synchronized FileManager getInstance() throws Exception
+	{
+		if (instance == null)
+			instance = new FileManager();
+		return instance;
+	}
+
+	// --------------------------------------------------------------------------------
+	// -- Constructor(s) --------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	private FileManager() throws Exception
 	{
 		try
 		{
-			logger.setLevel(Level.ALL);
-			logger.addHandler(new FileHandler(UserFiles.class.getName()+".log", false));
-			logger.info("UserFiles Logger started.");
+			try
+			{
+				IOUtil.executeMkDir(USER_FILES_DIR);
+			}
+			catch (IOException e)
+			{
+				throw new Exception("Could not create user files directory: " + USER_FILES_DIR, e);
+			}
+
+			try
+			{
+				logger.setLevel(Level.ALL);
+				logger.addHandler(new FileHandler(FileManager.class.getName() + ".log", false));
+				logger.info("Logger started.");
+			}
+			catch (IOException e)
+			{
+				throw new Exception("Could not establish logging", e);
+			}
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			throw new Exception("FileManager.<init> failed: " + e.getMessage(), e.getCause());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	// -- Private/Packet Method(s) ----------------------------------------------------
 	// --------------------------------------------------------------------------------
-	static File getUserRootDir(String user)
+	File getUserRootDir(String user)
 	{
 		return new File(USER_FILES_DIR, user);
 	}
 
 	// --------------------------------------------------------------------------------
-	static File getUserBasicDir(String user, BASIC_DIRS dir)
+	File getUserBasicDir(String user, BASIC_DIRS dir)
 	{
 		return new File(getUserRootDir(user), dir.toString());
 	}
 
 	// --------------------------------------------------------------------------------
-	static File[] getUsersBasicDirs(String user)
+	File[] getUsersBasicDirs(String user)
 	{
 		File[] basicDirs = new File[BASIC_DIRS.values().length];
 		int i = 0;
@@ -79,26 +106,25 @@ class UserFiles
 	}
 
 	// --------------------------------------------------------------------------------
-	static void createUserDirs(String user) throws IllegalArgumentException, IOException, ServerException
+	void createUserDirs(String user) throws IllegalArgumentException, IOException, ServerException
 	{
 		IOUtil.executeMkDir(getUserRootDir(user));
 		IOUtil.executeMkDirs(getUsersBasicDirs(user));
 	}
 
 	// --------------------------------------------------------------------------------
-	static File uriToUserFile(SessionImpl session, String uri, FileType fileType, boolean wantToModify) throws IllegalArgumentException,
-			ServerException
+	File uriToUserFile(SessionImpl session, String uri, FileType fileType, boolean wantToModify) throws IllegalArgumentException, ServerException
 	{
-		File userFile = new File(UserFiles.getUserRootDir(session.getUser()), FileInfo.uriPathToFilePath(uri));
+		File userFile = new File(getUserRootDir(session.getUser()), FileInfo.uriPathToFilePath(uri));
 		try
 		{
 			// To be sure, users do not get access to directories other than their own.
 			// f.i. via session.listFiles("..") -> would point at the parent directory.
 			// furthermore users cannot alter their root dir or basic dirs
-			if (!UserFiles.validateAccess(session, userFile, wantToModify))
+			if (!validateAccess(session, userFile, wantToModify))
 			{
-				ServerMain.logger.warning(String.format("User %s wanted %sing access to '%s' (URI: %s)", session, (wantToModify ? "modify"
-						: "read"), userFile, uri));
+				ServerMain.logger.warning(String.format("User %s wanted %sing access to '%s' (URI: %s)", session, (wantToModify ? "modify" : "read"),
+						userFile, uri));
 				throw new IllegalArgumentException(String.format("%sing access to path '%s' for user '%s' (%s) denied.", (wantToModify ? "Modify"
 						: "Read"), uri, session.getUser(), session.getRole()));
 			}
@@ -133,7 +159,7 @@ class UserFiles
 	}
 
 	// --------------------------------------------------------------------------------
-	static boolean validateAccess(SessionImpl session, File file, boolean wantToModify)
+	boolean validateAccess(SessionImpl session, File file, boolean wantToModify)
 	{
 		logger.entering("AccessControls", "checkFileAccess", new Object[] { session, file, wantToModify });
 		boolean grantAccess = true;
@@ -145,7 +171,7 @@ class UserFiles
 			{
 				case USER:
 					// users can only access folders within their dir
-					if (!IOUtil.isOrIsInParentDir(UserFiles.getUserRootDir(user), file))
+					if (!IOUtil.isOrIsInParentDir(getUserRootDir(user), file))
 					{
 						grantAccess = false;
 						logger.finer(String.format("Access denied: File %s is not in parent dir of %s!", file, user));
@@ -154,13 +180,13 @@ class UserFiles
 					if (wantToModify)
 					{
 						// users cannot modify their user root dir
-						if (file.equals(UserFiles.getUserRootDir(user)))
+						if (file.equals(getUserRootDir(user)))
 						{
 							grantAccess = false;
 							logger.finer(String.format("Access denied: File %s equals user's root dir!", file));
 						}
 						// users also cannot modify their basic dirs
-						for (File oneBasicDir : UserFiles.getUsersBasicDirs(user))
+						for (File oneBasicDir : getUsersBasicDirs(user))
 						{
 							if (file.equals(oneBasicDir))
 							{
@@ -172,7 +198,7 @@ class UserFiles
 					break;
 				case ADMIN:
 					// admins can access all user dirs
-					if (!IOUtil.isOrIsInParentDir(UserFiles.USER_FILES_DIR, file))
+					if (!IOUtil.isOrIsInParentDir(USER_FILES_DIR, file))
 					{
 						grantAccess = false;
 						logger.finer(String.format("Access denied: File %s is not in parent dir of %s!", file, user));
@@ -196,7 +222,7 @@ class UserFiles
 	 * @return
 	 * @throws IOException
 	 */
-	public static FileInfo[] listFileInfos(SessionImpl session, File dir, File parentDirToOmit) throws IOException
+	public FileInfo[] listFileInfos(SessionImpl session, File dir, File parentDirToOmit) throws IOException
 	{
 		File[] files = dir.listFiles();
 		FileInfo[] fileInfos = new FileInfo[files.length];
@@ -205,19 +231,11 @@ class UserFiles
 		for (int i = 0; i < files.length; i++)
 		{
 			oneFile = files[i];
-			// check if the user denoted by the session can alter the file
+			// check if the user denoted by the session can modify the file
 			modifyable = validateAccess(session, oneFile, true);
 			fileInfos[i] = new FileInfo(oneFile, parentDirToOmit, modifyable);
 		}
 		return fileInfos;
-	}
-
-	// --------------------------------------------------------------------------------
-	// -- Constructor(s) --------------------------------------------------------------
-	// --------------------------------------------------------------------------------
-	private UserFiles()
-	{
-
 	}
 
 	// --------------------------------------------------------------------------------

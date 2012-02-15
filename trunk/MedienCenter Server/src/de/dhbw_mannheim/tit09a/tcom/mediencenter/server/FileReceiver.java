@@ -31,7 +31,7 @@ public class FileReceiver implements RawChannelDataListener
 			if (start <= 0)
 			{
 				start = System.currentTimeMillis();
-				UserFiles.logger.fine("Starting upload of " + dest);
+				FileManager.logger.fine("Starting upload of " + dest);
 				this.fc = new FileOutputStream(dest).getChannel();
 			}
 			fc.write(data);
@@ -47,7 +47,7 @@ public class FileReceiver implements RawChannelDataListener
 		try
 		{
 			long duration = System.currentTimeMillis() - start;
-			UserFiles.logger.fine(String.format("Successfully uploaded %s (%s in %s -> %s/s)", dest, ByteValue.bytesToString(fileSize),
+			FileManager.logger.fine(String.format("Successfully uploaded %s (%s in %s -> %s/s)", dest, ByteValue.bytesToString(fileSize),
 					TimeValue.formatMillis(duration, true, false), ByteValue.bytesToString((long) ProgressUtil.speed(fileSize, duration))));
 			fc.close();
 		}

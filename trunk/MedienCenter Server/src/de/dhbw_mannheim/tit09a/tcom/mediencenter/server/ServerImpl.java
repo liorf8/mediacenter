@@ -69,8 +69,8 @@ public class ServerImpl implements Server
 	{
 		try
 		{
-			MiscUtil.ensureValidString(user, UserFiles.ILLEGAL_CHARS_IN_FILENAME);
-			MiscUtil.ensureValidString(pw, UserFiles.ILLEGAL_CHARS_IN_FILENAME);
+			MiscUtil.ensureValidString(user, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+			MiscUtil.ensureValidString(pw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
 			
 			// check if user is already logged in
 			for (SessionImpl oneSession : userSessions)
@@ -113,11 +113,11 @@ public class ServerImpl implements Server
 		try
 		{
 			boolean wasNotRegisteredYet = false;
-			if (!UserFiles.getUserRootDir(user).exists())
+			if (!FileManager.getInstance().getUserRootDir(user).exists())
 			{
-				MiscUtil.ensureValidString(user, UserFiles.ILLEGAL_CHARS_IN_FILENAME);
-				MiscUtil.ensureValidString(pw, UserFiles.ILLEGAL_CHARS_IN_FILENAME);
-				UserFiles.createUserDirs(user);
+				MiscUtil.ensureValidString(user, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+				MiscUtil.ensureValidString(pw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+				FileManager.getInstance().createUserDirs(user);
 				wasNotRegisteredYet = true;
 			}
 			return wasNotRegisteredYet;
@@ -140,12 +140,12 @@ public class ServerImpl implements Server
 		try
 		{
 			boolean wasRegistered = false;
-			if (UserFiles.getUserRootDir(user).exists())
+			if (FileManager.getInstance().getUserRootDir(user).exists())
 			{
 				wasRegistered = true;
-				if (!IOUtil.deleteDir(UserFiles.getUserRootDir(user), true))
+				if (!IOUtil.deleteDir(FileManager.getInstance().getUserRootDir(user), true))
 				{
-					ServerMain.logger.warning("Deletion of user root dir failed: " + UserFiles.getUserRootDir(user));
+					ServerMain.logger.warning("Deletion of user root dir failed: " + FileManager.getInstance().getUserRootDir(user));
 					throw new ServerException("Could not unregister user: " + user);
 				}
 			}
