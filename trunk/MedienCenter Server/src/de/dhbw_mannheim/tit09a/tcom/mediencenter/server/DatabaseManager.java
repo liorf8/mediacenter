@@ -1,42 +1,53 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.pool.ObjectPool;
-import org.apache.commons.pool.PoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
-
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 
 public class DatabaseManager
 {
 	// --------------------------------------------------------------------------------
 	// -- Static Variable(s) ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	// Database config
-	static final File				DATABASE_DIR			= new File("C:\\Users\\Max\\MedienCenter\\DATABASE");
-	private static final String		DRIVER_CLASS			= "org.hsqldb.jdbcDriver";
-	private static final String		SUB_PROTOCOL			= "hsqldb";
-	private static final String		SUB_NAME				= "file:" + DATABASE_DIR + ";shutdown=true";
-	private static final String		URL						= String.format("jdbc:%s:%s", SUB_PROTOCOL, SUB_NAME);
-	private static final String		USER					= "SA";
-	private static final String		PW						= "max";
+	// SQL scripts
+	public static final String		SQL_STMTS_PATH	= "/de/dhbw_mannheim/tit09a/tcom/mediencenter/server/sql/";
 
-	// Connection pool config
-	// after 30s throw NoSuchElementException
-	private static final int		MAX_ACTIVE				= 5;
-	private static final byte		WHEN_EXAUSTED_ACTION	= GenericObjectPool.WHEN_EXHAUSTED_BLOCK;
-	private static final long		MAX_WAIT				= 30 * 1000;
+	// Database config
+	static final String				DRIVER_CLASS	= "org.hsqldb.jdbcDriver";
+	static final File				DATABASE_DIR	= new File("C:\\Users\\Max\\MedienCenter\\DATABASE\\db");
+	static final String				SUB_PROTOCOL	= "hsqldb";
+	static final String				OPTIONS			= "shutdown=true;ifexists=false;";
+	// shutdown=true -> shut the database if no Connection is still open
+	// ifexists=true -> throw an Exception if the db does not exist
+	private static final String		SUB_NAME		= String.format("file:%s;%s", DATABASE_DIR, OPTIONS);
+	private static final String		URL				= String.format("jdbc:%s:%s", SUB_PROTOCOL, SUB_NAME);
+
+	// Users
+	private static final String		ADMIN			= "SA";
+	private static final String		ADMIN_PW		= "max";
+	// TODO: use the User user for user activities, not the admin!
+	static final String				USER			= "user";
+	static final String				USER_PW			= "max";
+
 	private static DatabaseManager	instance;
-	private final Logger			logger					= Logger.getLogger(getClass().getName());
+
+	public static enum StatementType
+	{
+		UPDATE, QUERY, STATEMENT
+	};
 
 	// --------------------------------------------------------------------------------
 	// -- Static Methods --------------------------------------------------------------
@@ -51,8 +62,8 @@ public class DatabaseManager
 	// --------------------------------------------------------------------------------
 	// -- Instance Variable(s) --------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private ObjectPool<Connection>	conPool;
-	private Map<String, String[]>	tables;
+	private Connection				con;
+	private final Logger			logger	= Logger.getLogger(getClass().getName());
 
 	// --------------------------------------------------------------------------------
 	// -- Constructor(s) --------------------------------------------------------------
@@ -61,50 +72,67 @@ public class DatabaseManager
 	{
 		try
 		{
-			// FIXME: Sadly the logger of HSQL sets global Formatter.
-			// So only warning and severe messages are displayed in a shortened format.
-			// And all loggers initialized before this command never log anything more.
-			
-			DriverManager.getConnection(URL, USER, PW);
-			logger.setLevel(Level.ALL);
-			logger.addHandler(new FileHandler(getClass().getName() + ".log", false));
-			logger.info("Logger started.");
-			logger.severe("Logger severely started!");
+			// Initialize logging
+			try
+			{
+				System.setProperty("hsqldb.reconfig_logging", "false");
+				// Fix for: Sadly the logger of HSQL sets global Formatter.
+				// So only warning and severe messages are displayed in a shortened format.
+				// And all loggers initialized before this command never log anything more.
+				logger.setLevel(Level.ALL);
+				logger.addHandler(new FileHandler(getClass().getName() + ".log", false));
+				logger.info("Logger started.");
+			}
+			catch (IOException e)
+			{
+				throw new Exception("Could not establish logging", e);
+			}
 
-			// Check if driver class exists
-			logger.finer("Loading driver class " + DRIVER_CLASS);
-			Class.forName(DRIVER_CLASS);
-			logger.fine("Loading driver class " + DRIVER_CLASS + " successfull");
+			// Check if HSQLDB driver class exists
+			try
+			{
+				logger.finer("Loading driver class " + DRIVER_CLASS);
+				Class.forName(DRIVER_CLASS);
+				logger.fine("Loading driver class " + DRIVER_CLASS + " successfull");
+			}
+			catch (ClassNotFoundException e)
+			{
+				throw new Exception("Failed to load HSQLDB JDBC driver: " + DRIVER_CLASS, e);
+			}
 
-			// DriverManager.setLogWriter(new PrintWriter(System.out));
-
-			// Build the tables Map
-			tables = new HashMap<String, String[]>();
-			tables.put("user", new String[] { "user", "pw_hash", "role", "reg_date" });
-			logger.fine("Tables: " + tables);
-
-			// Build the ConnectionPool
-			PoolableObjectFactory<Connection> factory = this.new ConnectionPoolFactory(URL, USER, PW);
-			conPool = new GenericObjectPool<Connection>(factory, MAX_ACTIVE, WHEN_EXAUSTED_ACTION, MAX_WAIT);
+			// Init the connection
+			try
+			{
+				IOUtil.executeMkDir(DatabaseManager.DATABASE_DIR);
+				getAdminConnection();
+			}
+			catch (SQLException e)
+			{
+				throw new Exception("Failed to connect to database", e);
+			}
 		}
-		catch (ClassNotFoundException e)
+		catch (Exception e)
 		{
-			ServerMain.logger.severe("ERROR: failed to load HSQLDB JDBC driver: " + DRIVER_CLASS);
-			throw e;
+			throw new Exception("DatabaseManager.<init> failed: " + e.getMessage(), e.getCause());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	// -- Public Methods --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public void shutdown()
+	public void closeConnection()
 	{
 		try
 		{
-			conPool.close();
+			if (con != null)
+			{
+				con.close();
+				con = null;
+			}
 		}
-		catch (Exception e)
+		catch (SQLException e)
 		{
+			logger.severe(e.toString());
 			e.printStackTrace();
 		}
 	}
@@ -112,108 +140,154 @@ public class DatabaseManager
 	// --------------------------------------------------------------------------------
 	// -- Private/Package Methods -----------------------------------------------------
 	// --------------------------------------------------------------------------------
-	// TODO: reduce visibilities to package
-	public Connection borrowConnection() throws NoSuchElementException, IllegalStateException, Exception
-	{
-		logger.entering("DatabaseManager", "borrowConnection");
-		logger.finest("Before borrowing: active/idling Connections:" + conPool.getNumActive() + "/" + conPool.getNumIdle());
-		Connection con = conPool.borrowObject();
-		logger.finest("After borrowing: active/idling Connections:" + conPool.getNumActive() + "/" + conPool.getNumIdle());
-		logger.exiting("DatabaseManager", "borrowConnection", con);
-		logger.severe("Test logger!");
-		return con;
-	}
-
-	public Connection newConnection() throws SQLException
+	public Connection getAdminConnection() throws SQLException
 	{
 		logger.entering("DatabaseManager", "newConnection");
-		Connection con = DriverManager.getConnection(URL, USER, PW);
-		logger.fine("bla");
+		if (con == null)
+		{
+			con = DriverManager.getConnection(URL, ADMIN, ADMIN_PW);
+			con.setAutoCommit(false);
+		}
+		logger.exiting("DatabaseManager", "newConnection", con);
 		return con;
 	}
 
 	// --------------------------------------------------------------------------------
-	public void returnConnection(Connection con) throws Exception
+	public void createTables(boolean drop) throws SQLException, IOException
 	{
-		logger.entering("DatabaseManager", "returnConnection", con);
-		logger.finest("Before returning: active/idling Connections:" + conPool.getNumActive() + "/" + conPool.getNumIdle());
-		conPool.returnObject(con);
-		logger.finest("After returning: active/idling Connections:" + conPool.getNumActive() + "/" + conPool.getNumIdle());
-		logger.exiting("DatabaseManager", "returnConnection");
+		logger.entering("DatabaseManager", "createTables");
+		if (drop)
+		{
+			executeStatementFromResource(SQL_STMTS_PATH + "DropTableUsers.sql", void.class);
+		}
+		executeStatementFromResource(SQL_STMTS_PATH + "CreateTableUsers.sql", void.class);
+		logger.exiting("DatabaseManager", "createTables");
 	}
 
 	// --------------------------------------------------------------------------------
-	public static void createTables()
+	public int registerUser(String login, String pw) throws SQLException, IOException
 	{
-
+		String sql = IOUtil.resourceToString(SQL_STMTS_PATH + "TmplInsertUser.sql");
+		sql = String.format(sql, login, "hashed" + pw);
+		return executeStatement(sql, int.class);
 	}
 
 	// --------------------------------------------------------------------------------
-	// -- Private Classes -------------------------------------------------------------
-	// --------------------------------------------------------------------------------
-	public class ConnectionPoolFactory implements PoolableObjectFactory<Connection>
+	public int putAttr(long id, String key, String newValue) throws IOException, SQLException
 	{
-		private final String	url;
-		private final String	user;
-		private final String	pw;
+		String sql = IOUtil.resourceToString(SQL_STMTS_PATH + "TmplInsertUser.sql");
+		sql = String.format(sql, key, newValue, id);
+		return executeStatement(sql, int.class);
+	}
 
-		public ConnectionPoolFactory(String url, String user, String pw)
+	// --------------------------------------------------------------------------------
+	public Map<String, String> getAllAttrs(long id) throws IOException, SQLException
+	{
+		String sql = IOUtil.resourceToString(SQL_STMTS_PATH + "TmplGetUserAttrs.sql");
+		sql = String.format(sql, "*", id);
+		ResultSet rs = executeStatement(sql, ResultSet.class);
+		if (rs.next())
 		{
-			this.url = url;
-			this.user = user;
-			this.pw = pw;
-		}
-
-		@Override
-		public Connection makeObject() throws Exception
-		{
-			logger.entering("DatabaseManager", "makeObject");
-			Connection con = DriverManager.getConnection(url, user, pw);
-			logger.exiting("DatabaseManager", "makeObject", con);
-			return con;
-		}
-
-		@Override
-		public void destroyObject(Connection con) throws Exception
-		{
-			logger.fine("Destroying Connection: " + con);
-			con.close();
-			con = null;
-		}
-
-		@Override
-		public boolean validateObject(Connection con)
-		{
-			logger.entering("DatabaseManager", "validateObject", con);
-			boolean valid = false;
-			try
+			ResultSetMetaData rsMd = rs.getMetaData();
+			int columnCount = rsMd.getColumnCount();
+			if (columnCount < 1)
+				return Collections.emptyMap();
+			Map<String, String> attrs = new HashMap<String, String>(columnCount);
+			for (int i = 1; i <= rsMd.getColumnCount(); i++)
 			{
-				valid = con.isValid(10);
+				attrs.put(rsMd.getColumnName(i), rs.getString(i));
 			}
-			catch (SQLException e)
+			if (rs.next())
+				throw new SQLException("Only one row should be returned!");
+			else
+				return attrs;
+		}
+		return Collections.emptyMap();
+	}
+
+	// --------------------------------------------------------------------------------
+	public String getAttr(long id, String key) throws IOException, SQLException
+	{
+		String sql = IOUtil.resourceToString(SQL_STMTS_PATH + "TmplGetUserAttrs.sql");
+		sql = String.format(sql, key, id);
+		ResultSet rs = executeStatement(sql, ResultSet.class);
+		if (rs.next())
+		{
+			if (rs.getMetaData().getColumnCount() > 1)
+				throw new SQLException("Only one column should be returned!");
+			String value = rs.getString(1);
+			if (rs.next())
+				throw new SQLException("Only one row should be returned!");
+			else
+				return value;
+		}
+		return null;
+	}
+
+	// TODO: reduce visibility to private
+	// --------------------------------------------------------------------------------
+	public <T> T executeStatementFromResource(String path, Class<T> returnType) throws SQLException, IOException
+	{
+		return executeStatement(IOUtil.resourceToString(path), returnType);
+	}
+
+	// --------------------------------------------------------------------------------
+	/**
+	 * @param sql
+	 *            The SQL statement.
+	 * @param returnType
+	 *            Void.class or void.class for executeStatement(sql). Integer.class or int.class for executeUpdate(sql). ResultSet.class for
+	 *            executeQuery(sql).
+	 * @return void, affectedRows or ResultSet
+	 * @throws SQLException
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T executeStatement(String sql, Class<T> returnType) throws SQLException
+	{
+		logger.entering("DatabaseManager", "executeStatement", sql);
+		Connection con = null;
+		try
+		{
+			con = getAdminConnection();
+			Statement stmt = con.createStatement();
+			if (returnType.equals(Void.class) || returnType.equals(void.class))
 			{
-				// obviously not valid
-				e.printStackTrace();
+				stmt.execute(sql);
+				con.commit();
+				logger.exiting("DatabaseManager", "executeStatement");
+				return null;
 			}
-			logger.exiting("DatabaseManager", "validateObject", valid);
-			return valid;
+			else if (returnType.equals(Integer.class) || returnType.equals(int.class))
+			{
+				Integer affectedRows = stmt.executeUpdate(sql);
+				con.commit();
+				logger.exiting("DatabaseManager", "executeStatement", affectedRows);
+				return (T) affectedRows;
+			}
+			else if (returnType.equals(ResultSet.class))
+			{
+				ResultSet set = stmt.executeQuery(sql);
+				con.commit();
+				logger.exiting("DatabaseManager", "executeStatement", set);
+				return (T) set;
+			}
+			else
+			{
+				throw new IllegalArgumentException("Operation for " + returnType + " not supported.");
+			}
+
 		}
-
-		@Override
-		public void activateObject(Connection con) throws Exception
+		catch (SQLException e)
 		{
-			logger.entering("DatabaseManager", "activateObject", con);
-			// TODO Auto-generated method stub
-		}
-
-		@Override
-		public void passivateObject(Connection con) throws Exception
-		{
-			logger.entering("DatabaseManager", "passivateObject", con);
-			// TODO Auto-generated method stub
-
+			if (con != null)
+			{
+				System.err.print("Transaction is being " + "rolled back due to:\n");
+				con.rollback();
+			}
+			throw e;
 		}
 	}
+
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------

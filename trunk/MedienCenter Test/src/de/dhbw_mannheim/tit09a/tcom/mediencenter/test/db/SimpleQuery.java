@@ -1,9 +1,6 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.db;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.NoSuchElementException;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.DatabaseManager;
@@ -12,25 +9,18 @@ public class SimpleQuery
 {
 	public static void main(String[] args) throws NoSuchElementException, IllegalStateException, Exception
 	{
-		Connection con = null;
 		DatabaseManager dbMan = null;
 		try
 		{
+			long start = System.currentTimeMillis();
 			dbMan = DatabaseManager.getInstance();
-			con = dbMan.borrowConnection();
-			Statement stmt = con.createStatement();
-
-			// stmt.executeUpdate(
-			// "INSERT INTO CUSTOMER VALUES(50,'Christian','Ullenboom','Immengarten 6','Hannover')" );
-
-			ResultSet rs = stmt.executeQuery("SELECT * FROM Customer");
-
-			while (rs.next())
-				System.out.printf("%s, %s %s%n", rs.getString(1), rs.getString(2), rs.getString(3));
-
-			rs.close();
-
-			stmt.close();
+			System.out.println("Gotten instance in " + (System.currentTimeMillis() - start));
+			start = System.currentTimeMillis() ;
+			System.out.println(dbMan.registerUser("max1", "pw"));
+			System.out.println("Registered in " + (System.currentTimeMillis() - start));
+			start = System.currentTimeMillis() ;
+			System.out.println(dbMan.registerUser("karo", "<3"));
+			System.out.println("Registered in " + (System.currentTimeMillis() - start));
 		}
 		catch (SQLException e)
 		{
@@ -38,11 +28,11 @@ public class SimpleQuery
 		}
 		finally
 		{
-			if (dbMan != null && con != null)
+			if (dbMan != null)
 			{
 				try
 				{
-					dbMan.returnConnection(con);
+					dbMan.closeConnection();
 				}
 				catch (Exception e)
 				{

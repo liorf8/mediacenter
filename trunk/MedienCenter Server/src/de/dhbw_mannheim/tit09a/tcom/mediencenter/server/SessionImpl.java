@@ -6,8 +6,8 @@ import java.util.Map;
 
 import javax.swing.JOptionPane;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.UserFiles.FileType;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.UserFiles.Role;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.FileManager.FileType;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.FileManager.Role;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
@@ -151,7 +151,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		try
 		{
 			boolean actuallyDeleted = false;
-			File fileOrDir = UserFiles.uriToUserFile(this, uri, FileType.FILE_OR_DIR, true);
+			File fileOrDir = FileManager.getInstance().uriToUserFile(this, uri, FileType.FILE_OR_DIR, true);
 			// Check args
 			if (IOUtil.isFileOrEmptyDir(fileOrDir))
 			{
@@ -184,8 +184,8 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		{
 			boolean actuallyRenamed = false;
 			// Check Arguments
-			MiscUtil.ensureValidString(newName, UserFiles.ILLEGAL_CHARS_IN_FILENAME);
-			File fileOrDir = UserFiles.uriToUserFile(this, uri, FileType.FILE_OR_DIR, true);
+			MiscUtil.ensureValidString(newName, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+			File fileOrDir = FileManager.getInstance().uriToUserFile(this, uri, FileType.FILE_OR_DIR, true);
 			File dest = new File(fileOrDir.getParent(), newName);
 			if (dest.exists())
 			{
@@ -216,8 +216,8 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		try
 		{
 			boolean actuallyCopied = false;
-			File srcFileOrDir = UserFiles.uriToUserFile(this, srcURI, FileType.FILE_OR_DIR, true);
-			File destDir = UserFiles.uriToUserFile(this, destDirURI, FileType.DIR, false);
+			File srcFileOrDir = FileManager.getInstance().uriToUserFile(this, srcURI, FileType.FILE_OR_DIR, true);
+			File destDir = FileManager.getInstance().uriToUserFile(this, destDirURI, FileType.DIR, false);
 			File destFileOrDir = new File(destDir, srcFileOrDir.getName());
 			if (srcFileOrDir.isDirectory())
 			{
@@ -247,8 +247,8 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		try
 		{
 			boolean actuallyMadeDir = false;
-			MiscUtil.ensureValidString(newDirName, UserFiles.ILLEGAL_CHARS_IN_FILENAME);
-			File parentDir = UserFiles.uriToUserFile(this, parentDirUri, FileType.DIR, false);
+			MiscUtil.ensureValidString(newDirName, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+			File parentDir = FileManager.getInstance().uriToUserFile(this, parentDirUri, FileType.DIR, false);
 			actuallyMadeDir = IOUtil.executeMkDir(new File(parentDir, newDirName));
 			return actuallyMadeDir;
 		}
@@ -269,8 +269,8 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	{
 		try
 		{
-			File dir = UserFiles.uriToUserFile(this, dirURI, FileType.DIR, false);
-			return UserFiles.listFileInfos(this, dir, UserFiles.getUserRootDir(user));
+			File dir = FileManager.getInstance().uriToUserFile(this, dirURI, FileType.DIR, false);
+			return FileManager.getInstance().listFileInfos(this, dir, FileManager.getInstance().getUserRootDir(user));
 		}
 		catch (IllegalArgumentException iae)
 		{
@@ -289,8 +289,8 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	{
 		try
 		{
-			MiscUtil.ensureValidString(filename, UserFiles.ILLEGAL_CHARS_IN_FILENAME);
-			File destDir = UserFiles.uriToUserFile(this, destDirUri, FileType.DIR, false);
+			MiscUtil.ensureValidString(filename, FileManager.ILLEGAL_CHARS_IN_FILENAME);
+			File destDir = FileManager.getInstance().uriToUserFile(this, destDirUri, FileType.DIR, false);
 			File destFile = new File(destDir, filename);
 			return Simon.prepareRawChannel(new FileReceiver(destFile, fileSize), this);
 		}

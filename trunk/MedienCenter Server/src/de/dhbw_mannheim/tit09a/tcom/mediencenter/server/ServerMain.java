@@ -3,13 +3,15 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.ServerUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NamedThreadPoolFactory;
 import de.root1.simon.Registry;
 import de.root1.simon.Simon;
 import de.root1.simon.SimonRegistryStatistics;
@@ -19,11 +21,11 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	// -- Static Variable(s) ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public final static Logger		logger			= Logger.getLogger(ServerMain.class.getName());
+	public static final Logger		logger			= Logger.getLogger(ServerMain.class.getName());
 	private static final Logger		invokeLogger	= Logger.getLogger("de.root1.simon.InvokeLogger");
-	public static Registry			registry;
-	public static boolean			isRunning;
-	public static DatabaseManager	dbMan;
+	private static Registry			registry;
+	private static boolean			isRunning;
+	private static ExecutorService	executor;		
 
 	public static enum Command
 	{
@@ -45,44 +47,76 @@ public class ServerMain
 		}
 	};
 
+	public static class WaitForUserInputTask implements Runnable
+	{
+		@Override
+		public void run()
+		{
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			while (!Thread.interrupted())
+			{
+				try
+				{
+					System.out.println("Type in a command " + Arrays.toString(Command.values()) + ":");
+					String input = br.readLine();
+
+					if (input.equals(Command.exit.toString()))
+						exit();
+					else if (input.equals(Command.restart.toString()))
+					{
+						restartServer();
+					}
+					else if (input.equals(Command.shutdown.toString()))
+						shutdownServer();
+					else if (input.equals(Command.start.toString()))
+						startServer();
+					else
+						printHelp();
+
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+
+		}
+
+	}
+
 	// --------------------------------------------------------------------------------
 	// -- Main Method -----------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public static void main(String[] args) throws Exception
+	public static void main(String[] args)
+	{
+		try
+		{
+			initServer();
+			startServer();
+		}
+		catch (Exception e1)
+		{
+			e1.printStackTrace();
+			exit();
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	// -- Constructors ----------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	public static void initServer() throws Exception
 	{
 		try
 		{
 			logger.setLevel(Level.ALL);
-			logger.addHandler(new FileHandler(ServerMain.class.getName()+"log", false));
+			logger.addHandler(new FileHandler(ServerMain.class.getName() + "log", false));
 			logger.info("ServerMain Logger started!");
 
 			invokeLogger.setLevel(Level.ALL);
 			invokeLogger.addHandler(new FileHandler("de.root1.simon.InvokeLogger.log", false));
 
-			// for testing purposes quickstart
-			startServer();
-
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			while (true)
-			{
-				System.out.println("Type in a command " + Arrays.toString(Command.values()) + ":");
-				String input = br.readLine();
-
-				if (input.equals(Command.exit.toString()))
-					exit();
-				else if (input.equals(Command.restart.toString()))
-				{
-					shutdownServer();
-					startServer();
-				}
-				else if (input.equals(Command.shutdown.toString()))
-					shutdownServer();
-				else if (input.equals(Command.start.toString()))
-					startServer();
-				else
-					printHelp();
-			}
-
+			executor = Executors.newSingleThreadExecutor(new NamedThreadPoolFactory("ServerMain"));
+			executor.execute(new WaitForUserInputTask());
 		}
 		catch (Exception e)
 		{
@@ -92,7 +126,7 @@ public class ServerMain
 	}
 
 	// --------------------------------------------------------------------------------
-	// -- Static Method(s) ------------------------------------------------------------
+	// -- Public Methods --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	public static void startServer() throws Exception
 	{
@@ -100,13 +134,12 @@ public class ServerMain
 		{
 			logger.info("Starting Server ...");
 
-			logger.finer("Creating directories ...");
-			IOUtil.executeMkDir(UserFiles.USER_FILES_DIR);
-			IOUtil.executeMkDir(DatabaseManager.DATABASE_DIR);
-
+			logger.finer("Initialize the FileManager ...");
+			FileManager.getInstance();
+			
 			logger.finer("Initialize the DatabaseManager ...");
-			dbMan = DatabaseManager.getInstance();
-
+			DatabaseManager.getInstance();
+			
 			logger.finer("Create the server object ...");
 			Server server = new ServerImpl();
 
@@ -141,6 +174,17 @@ public class ServerMain
 			registry.unbind(ServerImpl.BIND_NAME);
 			registry.stop();
 			isRunning = false;
+			
+			try
+			{
+				DatabaseManager.getInstance().closeConnection();
+			}
+			catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			logger.info("Server shut down!");
 		}
 		else
@@ -149,6 +193,12 @@ public class ServerMain
 		}
 	}
 
+	public static void restartServer() throws Exception
+	{
+		logger.info("Restarting Server ...");
+		shutdownServer();
+		startServer();
+	}
 	// --------------------------------------------------------------------------------
 	public static void exit()
 	{
@@ -156,6 +206,7 @@ public class ServerMain
 			shutdownServer();
 
 		logger.info("Exiting programm. Bye!");
+		executor.shutdownNow();
 		System.exit(0);
 	}
 
@@ -173,7 +224,9 @@ public class ServerMain
 		System.out.println(sb);
 		System.out.flush();
 	}
+
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------
+
 }
