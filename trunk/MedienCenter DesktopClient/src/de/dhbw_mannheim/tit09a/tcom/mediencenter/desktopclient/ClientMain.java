@@ -39,9 +39,9 @@ public class ClientMain
 			server.register("Donald Duck", "123");
 			System.out.println(Thread.currentThread() + ": Logging in ...");
 			Session session = server.login("Donald Duck", "123", clientCallbackImpl);
-			System.out.println(Arrays.toString(session.listFileInfos("")));
+			System.out.println(Arrays.toString(session.listFileInfos("").get()));
 			session.mkDir("Pictures", "neues_verzeichnis");
-			System.out.println(Arrays.toString(session.listFileInfos("Pictures")));
+			System.out.println(Arrays.toString(session.listFileInfos("Pictures").get()));
 			//session.copyFile("Pictures/txt.txt", "Videos/", true);
 			// System.out.println(Arrays.toString(mySession.listFiles("Pictures")));
 			//session.renameFile("Videos/meinedatei_copy2.txt", "meinedatei_copy2_renamed");
@@ -66,7 +66,7 @@ public class ClientMain
 	{
 		// get a RawChannel Token from server. This is needed to open the
 		// RawChannel
-		int token = session.openFileChannel(destDirUri, file.getName(), file.length());
+		int token = session.openFileChannel(destDirUri, file.getName(), file.length()).get();
 
 		// with the remote object and token, tell SIMON that you need a
 		// RawChannel

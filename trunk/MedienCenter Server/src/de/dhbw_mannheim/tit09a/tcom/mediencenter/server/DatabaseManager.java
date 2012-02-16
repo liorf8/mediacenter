@@ -98,7 +98,7 @@ public class DatabaseManager
 			// Create the Database directory
 			try
 			{
-				IOUtil.executeMkDirRecursively(DatabaseManager.DATABASE_DIR);
+				IOUtil.executeMkFullDirPath(DatabaseManager.DATABASE_DIR);
 			}
 			catch (IOException e)
 			{
@@ -160,6 +160,7 @@ public class DatabaseManager
 		{
 			logger.finer(String.format("Invoking DriverManager.getConnection(%s,%s,%s)", URL, CLIENT_USER, CLIENT_PW));
 			connection = DriverManager.getConnection(URL, CLIENT_USER, CLIENT_PW);
+			connection.setAutoCommit(false);
 		}
 		logger.exiting(CLASS_NAME, "getConnection", connection);
 		return connection;

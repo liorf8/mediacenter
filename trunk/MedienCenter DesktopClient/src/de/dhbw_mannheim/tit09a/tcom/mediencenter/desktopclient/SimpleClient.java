@@ -28,6 +28,7 @@ import javax.swing.JComboBox;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ReturnObj;
 import de.root1.simon.ClosedListener;
 import de.root1.simon.Lookup;
 import de.root1.simon.Simon;
@@ -246,6 +247,7 @@ public class SimpleClient
 		btnAction = new JButton("action");
 		btnAction.addActionListener(new ActionListener()
 		{
+			@SuppressWarnings("unused")
 			public void actionPerformed(ActionEvent e)
 			{
 				try
@@ -258,37 +260,47 @@ public class SimpleClient
 					{
 						server = (Server) nameLookup.lookup(Server.BIND_NAME);
 					}
+					ReturnObj<?> returnValue;
 					if (method.startsWith("Session"))
 					{
+
 						if (session == null)
 						{
-							logArea.append("LOGIN FIRST");
+							returnValue = new ReturnObj<Void>(ReturnObj.BAD_REQUEST, "LOGIN FIRST");
 						}
 						else
 						{
 							if (method.equals("Session.copyFile"))
 							{
-								logArea.append("Result: " + session.copyFile(args[0], args[1], Boolean.parseBoolean(args[2])));
+								returnValue = session.copyFile(args[0], args[1], Boolean.parseBoolean(args[2]));
 							}
 							else if (method.equals("Session.deleteFile"))
 							{
-								logArea.append("Result: " + session.deleteFile(args[0], Boolean.parseBoolean(args[1])));
+								returnValue = session.deleteFile(args[0]);
 							}
 							else if (method.equals("Session.mkDir"))
 							{
-								logArea.append("Result: " + session.mkDir(args[0], args[1]));
+								returnValue = session.mkDir(args[0], args[1]);
 							}
 							else if (method.equals("Session.renameFile"))
 							{
-								logArea.append("Result: " + session.renameFile(args[0], args[1]));
+								returnValue = session.renameFile(args[0], args[1]);
 							}
 							else if (method.equals("Session.listFileInfos"))
 							{
-								logArea.append("Result: " + Arrays.toString(session.listFileInfos(args[0])));
+								returnValue = session.listFileInfos(args[0]);
+							}
+							else if (method.equals("Session.changePw"))
+							{
+								returnValue = session.changePw(args[0], args[1]);
+							}
+							else if (method.equals("Session.changeLogin"))
+							{
+								returnValue = session.changeLogin(args[0], args[1]);
 							}
 							else
 							{
-								logArea.append("METHOD NOT SUPPORTED!");
+								returnValue = new ReturnObj<Void>(ReturnObj.NOT_FOUND, "Method not supported!");
 							}
 						}
 					}
@@ -296,42 +308,41 @@ public class SimpleClient
 					{
 						if (method.equals("Server.serverTime"))
 						{
-							logArea.append("Result: " + server.serverTime() + "\n");
+							returnValue = server.serverTime();
 						}
 						else if (method.equals("Server.login"))
 						{
-							// TODO:
+							// TODO: blabla
 							if (/* session == null */true)
 							{
-								Session temp = server.login(args[0], args[1], callback);
-								if (temp == null)
+								Session tmp = server.login(args[0], args[1], callback);
+								returnValue = new ReturnObj<Session>(tmp);
+								if (tmp == null)
 								{
 									logArea.append("Login not successfull!\n");
 								}
 								else
 								{
-									logArea.append("Result: " + (session = temp) + "\n");
+									session = tmp;
 									btnLogout.setEnabled(true);
 								}
 							}
 							else
 							{
+								returnValue = new ReturnObj<Session>(ReturnObj.BAD_REQUEST);
 								logArea.append("ALREADY LOGGED IN!");
 							}
 						}
 						else if (method.equals("Server.register"))
 						{
-							logArea.append("Result: " + server.register(args[0], args[1]));
-						}
-						else if (method.equals("Server.unregister"))
-						{
-							logArea.append("Result: " + server.unregister(args[0], args[1]));
+							returnValue = server.register(args[0], args[1]);
 						}
 						else
 						{
-							logArea.append("METHOD NOT SUPPORTED!");
+							returnValue = new ReturnObj<Void>(ReturnObj.NOT_FOUND, "Method not supported!");;
 						}
 					}
+					logArea.append("Result: "+returnValue.get() + " (" +returnValue.code()+": "+returnValue.message()+")\n\n");
 				}
 
 				catch (ArrayIndexOutOfBoundsException aiobe)

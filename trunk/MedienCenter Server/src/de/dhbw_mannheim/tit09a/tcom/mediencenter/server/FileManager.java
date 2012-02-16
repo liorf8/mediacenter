@@ -69,7 +69,7 @@ public class FileManager
 			// Make directory
 			try
 			{
-				IOUtil.executeMkDirRecursively(USER_FILES_DIR);
+				IOUtil.executeMkFullDirPath(USER_FILES_DIR);
 			}
 			catch (IOException e)
 			{
@@ -98,7 +98,7 @@ public class FileManager
 	}
 
 	// --------------------------------------------------------------------------------
-	File[] getUsersBasicDirs(String user)
+	File[] getUserBasicDirs(String user)
 	{
 		File[] basicDirs = new File[BASIC_DIRS.values().length];
 		int i = 0;
@@ -113,8 +113,8 @@ public class FileManager
 	// --------------------------------------------------------------------------------
 	void createUserDirs(String user) throws IllegalArgumentException, IOException, ServerException
 	{
-		IOUtil.executeMkDirRecursively(getUserRootDir(user));
-		IOUtil.executeMkDirs(getUsersBasicDirs(user));
+		IOUtil.executeMkFullDirPath(getUserRootDir(user));
+		IOUtil.executeMkFullDirsPaths(getUserBasicDirs(user));
 	}
 
 	// --------------------------------------------------------------------------------
@@ -192,7 +192,7 @@ public class FileManager
 							logger.finer(String.format("Access denied: File %s equals user's root dir!", file));
 						}
 						// users also cannot modify their basic dirs
-						for (File oneBasicDir : getUsersBasicDirs(user))
+						for (File oneBasicDir : getUserBasicDirs(user))
 						{
 							if (file.equals(oneBasicDir))
 							{

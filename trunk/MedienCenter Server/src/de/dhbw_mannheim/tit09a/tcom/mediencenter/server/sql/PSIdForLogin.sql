@@ -1,1 +1,1 @@
-SELECT id FROM Users WHERE login=?;
+SELECT id FROM Users WHERE login_lc=LCASE(?);

@@ -18,6 +18,7 @@ import org.apache.commons.codec.binary.Base64;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MiscUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ReturnObj;
 
 /**
  * Class for user authentification.
@@ -71,7 +72,6 @@ public class Authenticator
 	// --------------------------------------------------------------------------------
 	// -- Static Methods --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-
 	public static synchronized Authenticator getInstance() throws Exception
 	{
 		if (instance == null)
@@ -113,22 +113,25 @@ public class Authenticator
 	// --------------------------------------------------------------------------------
 	public long idForLogin(Connection con, String login) throws SQLException, IOException
 	{
+		logger.entering(CLASS_NAME, "idForLogin", new Object[] { con, login });
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try
 		{
 			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSIdForLogin.sql"));
 			ps.setString(1, login);
+			logger.finest("PreparedStatement: " + ps);
 			rs = ps.executeQuery();
+			logger.finest("ResultSet: " + rs);
+			long id = -1L;
 			if (rs.next())
 			{
-				long id;
 				id = rs.getLong(1);
 				if (rs.next())
 					throw new SQLException("Duplicate entry for user with login: " + login);
-				return id;
 			}
-			return -1L;
+			logger.exiting(CLASS_NAME, "idForLogin", id);
+			return id;
 		}
 		finally
 		{
@@ -140,6 +143,7 @@ public class Authenticator
 	// --------------------------------------------------------------------------------
 	public String loginForId(Connection con, long id) throws SQLException, IOException
 	{
+		logger.entering(CLASS_NAME, "loginForId", new Object[] { con, id });
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try
@@ -147,15 +151,16 @@ public class Authenticator
 			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSLoginForId.sql"));
 			ps.setLong(1, id);
 			rs = ps.executeQuery();
+			String login = null;
 			if (rs.next())
 			{
-				String login;
 				login = rs.getString(1);
 				if (rs.next())
-					throw new SQLException("Duplicate entry for user with login: " + login);
-				return login;
+					throw new SQLException("Duplicate entry for user with id: " + id);
+
 			}
-			return null;
+			logger.exiting(CLASS_NAME, "loginForId", login);
+			return login;
 		}
 		finally
 		{
@@ -173,70 +178,47 @@ public class Authenticator
 	// --------------------------------------------------------------------------------
 	public boolean userExists(Connection con, String login) throws SQLException, IOException
 	{
-		return (idForLogin(con, login) != -1L);
+		return (idForLogin(con, login) > 0L);
 	}
 
 	// --------------------------------------------------------------------------------
 	/**
-	 * Inserts a new user in the database
+	 * Changes the entry in the column <i>'pw'</i> to the <code>newPw</code> for the user specified by the id. Does an intern
+	 * <code>con.commit()</code>.
 	 * 
 	 * @param con
-	 *            An open connection to a databse
-	 * @param login
-	 *            The login of the user
-	 * @param pw
-	 *            The password of the user
-	 * @return Returns True if the user did not exist.
+	 * @param id
+	 * @param newPw
+	 * @param currentPw
+	 * @return An return code of the ones specified in {@link ReturnObj}.
 	 * @throws SQLException
-	 *             If the database is unavailable
-	 * @throws NoSuchAlgorithmException
-	 *             If the algorithm SHA-1 or the SecureRandom is not supported by the JVM
 	 * @throws IOException
-	 *             If the SQL statement file could not be loaded. successful
+	 * @throws NoSuchAlgorithmException
 	 */
-	public boolean insertUser(Connection con, String login, String pw) throws SQLException, NoSuchAlgorithmException, IOException
+	public short changePw(Connection con, long id, String newPw, String currentPw) throws SQLException, IOException, NoSuchAlgorithmException
 	{
-		logger.entering(CLASS_NAME, "insertUser", new Object[] { con, login, pw });
+		logger.entering(CLASS_NAME, "changePW", new Object[] { con, id, newPw, currentPw });
+		short returnCode = ReturnObj.SUCCESS;
 		PreparedStatement ps = null;
 		try
 		{
-			boolean didNotExist = false;
-			con.setAutoCommit(false);
-			if (MiscUtil.checkStringLength(login, 0, MAX_LENGTH) && MiscUtil.checkStringLength(pw, 0, MAX_LENGTH))
+			if (!authenticate(con, id, currentPw))
 			{
-				if (!userExists(con, login))
-				{
-					byte[] bSalt = generateSalt(RNG_ALGORITHM, SALT_LENGTH);
-					// Digest computation
-					byte[] bDigest = hash(MSG_DIGEST_ALGORITHM, ITERATIONS, pw, bSalt);
-					String sDigest = byteToBase64(bDigest);
-					String sSalt = byteToBase64(bSalt);
-					logger.finest("Digest: " + sDigest + "(" + sDigest.length() + ")");
-					logger.finest("Salt: " + sSalt + "(" + sSalt.length() + ")");
-
-					// Database query
-					ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSInsertUser.sql"));
-					ps.setString(1, login);
-					ps.setString(2, sDigest);
-					ps.setString(3, sSalt);
-					logger.finest("PreparedStatement: " + ps.toString());
-					int affectedRows = ps.executeUpdate();
-					logger.finest("affectedRows: " + affectedRows);
-					didNotExist = (affectedRows == 1);
-					con.commit();
-				}
-				else
-				{
-					logger.finer("User already exists: " + login);
-				}
+				returnCode = ReturnObj.ACCESS_DENIED;
 			}
 			else
 			{
-				logger.finer("login or pw null or empty or too long(" + MAX_LENGTH + "): " + login + ", " + pw);
+				// Database query
+				ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSChangePw.sql"));
+				ps.setString(1, newPw);
+				ps.setLong(2, id);
+				int affectedRows = ps.executeUpdate();
+				if (affectedRows != 1)
+					throw new SQLException("Change of password failed for id " + id + ": Affected Rows: " + affectedRows);
+				con.commit();
 			}
-
-			logger.exiting(CLASS_NAME, "insertUser", didNotExist);
-			return didNotExist;
+			logger.exiting(CLASS_NAME, "changePw", returnCode);
+			return returnCode;
 		}
 		catch (Exception e)
 		{
@@ -251,8 +233,147 @@ public class Authenticator
 			else
 			{
 				e.printStackTrace();
-				return false;
+				return ReturnObj.INTERNAL_SERVER_ERROR;
 			}
+		}
+		finally
+		{
+			IOUtil.close(ps);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	/**
+	 * Changes the entry in the column <i>'login'</i> for the user specified by the id. Does an intern <code>con.commit()</code>.
+	 * 
+	 * @param con
+	 * @param id
+	 * @param newLogin
+	 * @param pw
+	 * @return An return code of the ones specified in {@link ReturnObj}.
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws NoSuchAlgorithmException
+	 */
+	public short changeLogin(Connection con, long id, String newLogin, String pw) throws SQLException, IOException, NoSuchAlgorithmException
+	{
+		logger.entering(CLASS_NAME, "changeLogin", new Object[] { con, id, newLogin, pw });
+		short returnCode = ReturnObj.SUCCESS;
+		PreparedStatement ps = null;
+		try
+		{
+			if (!authenticate(con, id, pw))
+			{
+				returnCode = ReturnObj.ACCESS_DENIED;
+			}
+			else
+			{
+				if (userExists(con, newLogin))
+				{
+					returnCode = ReturnObj.CONFLICT;
+				}
+				else
+				{
+					// Database query
+					ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSChangeLogin.sql"));
+					ps.setString(1, newLogin);
+					ps.setLong(2, id);
+					int affectedRows = ps.executeUpdate();
+					if (affectedRows != 1)
+						throw new SQLException("Change of login failed for id " + id + ": Affected Rows: " + affectedRows);
+					con.commit();
+				}
+			}
+			logger.exiting(CLASS_NAME, "changePW", returnCode);
+			return returnCode;
+
+		}
+		catch (Exception e)
+		{
+			System.err.println("Rolling back due to: " + e.getClass().getName() + ": " + e.getMessage());
+			con.rollback();
+			if (e instanceof SQLException)
+				throw (SQLException) e;
+			else if (e instanceof IOException)
+				throw (IOException) e;
+			else if (e instanceof NoSuchAlgorithmException)
+				throw (NoSuchAlgorithmException) e;
+			else
+			{
+				e.printStackTrace();
+				return ReturnObj.INTERNAL_SERVER_ERROR;
+			}
+		}
+		finally
+		{
+			IOUtil.close(ps);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	/**
+	 * Inserts a new user in the database. <b>IMPORTANT: Makes no intern commit.</b> You have to call <code>con.commit()</code> yourself afterwards.
+	 * 
+	 * @param con
+	 *            An open connection to a database.
+	 * @param login
+	 *            The login of the user.
+	 * @param pw
+	 *            The password of the user.
+	 * @return The id of the new user (<code>new {@link ReturnObj}(id)<Long></code>) or <code>new {@link ReturnObj}({@link ReturnObj#CONFLICT}, msg)<Long></code> if the user already
+	 *         exists.
+	 * @throws SQLException
+	 *             If the database is unavailable or anything bad happens.
+	 * @throws NoSuchAlgorithmException
+	 *             If the Message Digest algorithm {@link Authenticator#MSG_DIGEST_ALGORITHM} or the Random Number Generator algorithm
+	 *             {@link Authenticator#RNG_ALGORITHM} are not supported by the JVM.
+	 * @throws IOException
+	 *             If the SQL statement file could not be loaded successfully.
+	 */
+	public ReturnObj<Long> insertUser(Connection con, String login, String pw) throws SQLException, NoSuchAlgorithmException, IOException
+	{
+		logger.entering(CLASS_NAME, "insertUser", new Object[] { con, login, pw });
+		PreparedStatement ps = null;
+		try
+		{
+			ReturnObj<Long> returnValue;
+			long id;
+			id = idForLogin(con, login);
+			if (id > 0)
+			{
+				String msg = "User already exists: " + login;
+				logger.finer(msg);
+				returnValue = new ReturnObj<Long>(ReturnObj.CONFLICT, msg);
+			}
+			// User with this login does not exist
+			else
+			{
+				byte[] bSalt = generateSalt(RNG_ALGORITHM, SALT_LENGTH);
+				// Digest computation
+				byte[] bDigest = hash(MSG_DIGEST_ALGORITHM, ITERATIONS, pw, bSalt);
+				String sDigest = byteToURLSafeBase64(bDigest);
+				String sSalt = byteToURLSafeBase64(bSalt);
+				logger.finest("Digest: " + sDigest + "(" + sDigest.length() + ")");
+				logger.finest("Salt: " + sSalt + "(" + sSalt.length() + ")");
+
+				// Database query
+				ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSInsertUser.sql"));
+				ps.setString(1, login);
+				ps.setString(2, sDigest);
+				ps.setString(3, sSalt);
+				logger.finest("PreparedStatement: " + ps.toString());
+				int affectedRows = ps.executeUpdate();
+				logger.finest("affectedRows: " + affectedRows);
+				if (affectedRows != 1)
+					throw new SQLException("Insert failed for " + login + ". Affected rows: " + affectedRows);
+				id = idForLogin(con, login);
+				if (id < 1)
+					throw new SQLException("Insert failed for " + login + ". Illegal ID returned: " + id);
+				returnValue = new ReturnObj<Long>(id);
+			}
+
+			logger.exiting(CLASS_NAME, "insertUser", returnValue);
+			return returnValue;
 		}
 		finally
 		{
@@ -267,8 +388,8 @@ public class Authenticator
 	 * 
 	 * @param con
 	 *            An open connection to a database
-	 * @param login
-	 *            The login of the user
+	 * @param id
+	 *            The id of the user
 	 * @param pw
 	 *            The password of the user
 	 * @return Returns true if the user is authenticated, false otherwise
@@ -277,9 +398,9 @@ public class Authenticator
 	 * @throws NoSuchAlgorithmException
 	 *             If the algorithm SHA-1 is not supported by the JVM
 	 */
-	public boolean authenticate(Connection con, String login, String pw) throws SQLException, NoSuchAlgorithmException
+	public boolean authenticate(Connection con, long id, String pw) throws SQLException, NoSuchAlgorithmException
 	{
-		logger.entering(CLASS_NAME, "authenticate", new Object[] { con, login, pw });
+		logger.entering(CLASS_NAME, "authenticate", new Object[] { con, id, pw });
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try
@@ -287,18 +408,18 @@ public class Authenticator
 			boolean authenticated = false;
 			boolean userExist = true;
 			// INPUT VALIDATION
-			if (!MiscUtil.checkStringLength(login, 0, MAX_LENGTH) || !MiscUtil.checkStringLength(pw, 0, MAX_LENGTH))
+			if (!MiscUtil.checkStringLength(pw, 0, MAX_LENGTH))
 			{
-				logger.finer("login or pw null or empty or too long(" + MAX_LENGTH + "): " + login + ", " + pw);
+				logger.finer("User does not exist. pw null, empty or too long(" + MAX_LENGTH + "): " + pw);
 				// TIME RESISTANT ATTACK
 				// Computation time is equal to the time needed by a legitimate user
 				userExist = false;
-				login = "";
+				id = -1L;
 				pw = "";
 			}
 
-			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSSelectPwAndSalt.sql"));
-			ps.setString(1, login);
+			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSSelectPwSalt.sql"));
+			ps.setLong(1, id);
 			logger.finest("PreparedStatement: " + ps.toString());
 			rs = ps.executeQuery();
 			String sDigest, sSalt;
@@ -309,18 +430,18 @@ public class Authenticator
 				// DATABASE VALIDATION
 				if (sDigest == null || sSalt == null)
 				{
-					throw new SQLException("Database inconsistent: Salt or Digested Password altered for login: " + login);
+					throw new SQLException("Database inconsistent: Salt or Digested Password altered for id: " + id);
 				}
 				if (rs.next())
 				{ // Should not happen, because login is the primary key
-					throw new SQLException("Database inconsistent: Two user with the same login: " + login);
+					throw new SQLException("Database inconsistent: Two user with the same id: " + id);
 				}
 			}
 			else
 			{
 				// TIME RESISTANT ATTACK (Even if the user does not exist the
 				// Computation time is equal to the time needed for a legitimate user)
-				logger.finer("User did not exist: " + login);
+				logger.finer("User did not exist: " + id);
 				sDigest = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000==";
 				sSalt = "00000000000=";
 				userExist = false;
@@ -332,7 +453,7 @@ public class Authenticator
 
 			// Compute the new DIGEST
 			byte[] proposedDigest = hash(MSG_DIGEST_ALGORITHM, ITERATIONS, pw, bSalt);
-			String sProposedDigest = byteToBase64(proposedDigest);
+			String sProposedDigest = byteToURLSafeBase64(proposedDigest);
 			logger.finest("Proposed Digest: " + sProposedDigest + "(" + sProposedDigest.length() + ")");
 
 			authenticated = Arrays.equals(proposedDigest, bDigest) && userExist;
@@ -399,15 +520,15 @@ public class Authenticator
 
 	// --------------------------------------------------------------------------------
 	/**
-	 * From a byte[] returns a base 64 representation
+	 * From a byte[] returns a url safe base 64 representation
 	 * 
 	 * @param data
 	 *            byte[]
 	 * @return String
 	 */
-	private static String byteToBase64(byte[] data)
+	private static String byteToURLSafeBase64(byte[] data)
 	{
-		return Base64.encodeBase64String(data);
+		return Base64.encodeBase64URLSafeString(data);
 	}
 
 	// --------------------------------------------------------------------------------
@@ -419,6 +540,12 @@ public class Authenticator
 		byte[] bSalt = new byte[length];
 		random.nextBytes(bSalt);
 		return bSalt;
+	}
+
+	// --------------------------------------------------------------------------------
+	public static String generatePw(String algorithm, int length) throws NoSuchAlgorithmException
+	{
+		return byteToURLSafeBase64(generateSalt(algorithm, length));
 	}
 
 	// --------------------------------------------------------------------------------
