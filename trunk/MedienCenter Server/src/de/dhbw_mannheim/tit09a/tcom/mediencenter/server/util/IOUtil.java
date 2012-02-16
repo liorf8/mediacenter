@@ -16,24 +16,17 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Stack;
-import java.util.regex.Pattern;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
 
 public class IOUtil
 {
 	private IOUtil()
 	{
 
-	}
-
-	public static String omitRoot(String filePath, String rootPath)
-	{
-		return filePath.replaceFirst(Pattern.quote(rootPath), "");
-	}
-
-	public static String concatToRoot(String rootPath, String filePath)
-	{
-		return rootPath + File.separator + filePath;
 	}
 
 	/**
@@ -62,23 +55,81 @@ public class IOUtil
 		return file.list().length == 0;
 	}
 
-	public static boolean deleteDir(File dir, boolean deleteNonEmptyDir) throws IOException
+	public static List<File> listAllFiles(File file)
 	{
-		if (IOUtil.isFileOrEmptyDir(dir))
+		if (file.isDirectory())
 		{
-			IOUtil.executeDelete(dir);
-			return true;
+			List<File> allFiles = new ArrayList<File>();
+			Deque<File> allDirs = new ArrayDeque<File>();
+			allDirs.push(file);
+			while (!allDirs.isEmpty())
+			{
+				File[] files = file.listFiles();
+				if (files != null) // .lnk files return null
+				{
+					for (File oneFile : file.listFiles())
+					{
+						// System.out.println("Found " + oneFile);
+						allFiles.add(oneFile);
+
+						if (oneFile.isDirectory())
+						{
+							// System.out.println("Found dir " + oneFile);
+							allDirs.push(oneFile);
+						}
+					}
+				}
+				file = allDirs.poll();
+			}
+			return allFiles;
+		}
+		return Collections.emptyList();
+	}
+
+	public static long fullFileSize(File file) throws IOException
+	{
+		long fullFileSize = file.length();
+		if (file.isDirectory())
+		{
+			for(File oneFile : listAllFiles(file))
+			{
+				fullFileSize += oneFile.length();
+			}
+		}
+		return fullFileSize;
+	}
+
+	public static int deleteAllFiles(File file) throws IOException
+	{
+		int deletedFiles = 0;
+		if (file.isDirectory())
+		{
+			List<File> allFiles = listAllFiles(file);
+			// delete all non directories...
+
+			for (File oneFile : allFiles)
+			{
+				if (!oneFile.isDirectory())
+				{
+					executeDelete(oneFile);
+					allFiles.remove(oneFile);
+					deletedFiles++;
+				}
+			}
+			// delete all other files (directories)
+			for (File oneFile : allFiles)
+			{
+				executeDelete(oneFile);
+				deletedFiles++;
+			}
 		}
 		else
 		{
-			if (deleteNonEmptyDir)
-			{
-				System.out.println("Deletion of non empty directories is not supported yet!");
-				return false;
-				// later return true; (when is implemented)
-			}
-			return false;
+			executeDelete(file);
+			deletedFiles++;
 		}
+
+		return deletedFiles;
 	}
 
 	public static void ensureExists(File file) throws IOException
@@ -117,27 +168,6 @@ public class IOUtil
 			throw new IOException("Could not delete: " + file.getAbsolutePath());
 	}
 
-	// TODO: do with LIFO-Queue instead of Stack
-	public static int executeMkDirRecursively(File dir) throws IOException
-	{
-		if(dir.exists())
-			return 0;
-		Stack<File> parentFilesToCreate = new Stack<File>();
-		parentFilesToCreate.push(dir);
-		while(!dir.getParentFile().exists())
-		{
-			parentFilesToCreate.push(dir.getParentFile());
-			dir = dir.getParentFile();
-		}
-		int createdDirs=0;
-		while(!parentFilesToCreate.isEmpty())
-		{
-			executeMkDir(parentFilesToCreate.pop());
-			createdDirs++;
-		}
-		return createdDirs;
-	}
-	
 	public static boolean executeMkDir(File dir) throws IOException
 	{
 		if (!dir.exists())
@@ -149,11 +179,39 @@ public class IOUtil
 		return false;
 	}
 
+	public static int executeMkFullDirPath(File dir) throws IOException
+	{
+		if (dir.exists())
+			return 0;
+		Deque<File> parentFilesToCreate = new ArrayDeque<File>();
+		parentFilesToCreate.push(dir);
+		while (!dir.getParentFile().exists())
+		{
+			parentFilesToCreate.push(dir.getParentFile());
+			dir = dir.getParentFile();
+		}
+		int createdDirs = 0;
+		while (!parentFilesToCreate.isEmpty())
+		{
+			executeMkDir(parentFilesToCreate.pop());
+			createdDirs++;
+		}
+		return createdDirs;
+	}
+
 	public static void executeMkDirs(File[] dirs) throws IOException
 	{
 		for (File oneDir : dirs)
 		{
 			IOUtil.executeMkDir(oneDir);
+		}
+	}
+
+	public static void executeMkFullDirsPaths(File[] dirs) throws IOException
+	{
+		for (File oneDir : dirs)
+		{
+			IOUtil.executeMkFullDirPath(oneDir);
 		}
 	}
 
@@ -174,7 +232,7 @@ public class IOUtil
 		if (closeable != null)
 			closeable.close();
 	}
-	
+
 	public static void close(Connection con)
 	{
 		if (con != null)
@@ -187,7 +245,7 @@ public class IOUtil
 			{}
 		}
 	}
-	
+
 	public static void close(Statement ps)
 	{
 		if (ps != null)
@@ -213,7 +271,6 @@ public class IOUtil
 			{}
 		}
 	}
-
 
 	public static void executeFileCopy(File src, File dest) throws IOException
 	{
@@ -304,12 +361,11 @@ public class IOUtil
 			return "";
 		}
 	}
-	
 
 	// --------------------------------------------------------------------------------
 	public static String resourceToString(String path) throws IOException
 	{
 		return convertStreamToString(IOUtil.class.getResourceAsStream(path));
 	}
-	
+
 }

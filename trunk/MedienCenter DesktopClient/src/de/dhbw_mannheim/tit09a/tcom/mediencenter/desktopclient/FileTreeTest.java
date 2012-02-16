@@ -164,6 +164,6 @@ public class FileTreeTest
 	public static FileInfo[] getChildren(FileInfo parent) throws ServerException
 	{
 		// System.out.println("Asking for Children of " +parent);
-		return session.listFileInfos(parent.getURIPath());
+		return session.listFileInfos(parent.getURIPath()).get();
 	}
 }

@@ -14,6 +14,6 @@ public class MkDirRecursivelyTest
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		System.out.println(IOUtil.executeMkDirRecursively(new File("C:\\Users\\Max\\ich\\bin\\du")));
+		System.out.println(IOUtil.executeMkFullDirPath(new File("C:\\Users\\mhertram\\ich\\bin\\du")));
 	}
 }

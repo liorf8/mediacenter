@@ -132,7 +132,7 @@ public class ServerMain
 			invokeLogger.addHandler(new FileHandler("de.root1.simon.InvokeLogger.log", false));
 
 			// Make Server dir
-			IOUtil.executeMkDirRecursively(SERVER_DIR);
+			IOUtil.executeMkFullDirPath(SERVER_DIR);
 
 			// Init the Managers
 			logger.finer("Initialize the FileManager ...");

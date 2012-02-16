@@ -28,4 +28,11 @@ public class MiscUtil
 			return false;
 		return true;
 	}
+	
+	public static boolean checkLongRange(long l, long lowerLimit, long upperLimit)
+	{
+		if (l < lowerLimit || l > upperLimit)
+			return false;
+		return true;
+	}
 }

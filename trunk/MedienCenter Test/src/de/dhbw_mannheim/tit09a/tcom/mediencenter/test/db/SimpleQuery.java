@@ -17,17 +17,18 @@ public class SimpleQuery
 		
 		try
 		{
-
-			long start = System.currentTimeMillis();
+			long start;
+			start = System.currentTimeMillis();
 			dbMan = DatabaseManager.getInstance();
 			System.out.println("Gotten instance in " + (System.currentTimeMillis() - start));
 
 			Connection con = dbMan.getConnection();
-			System.out.println(Authenticator.getInstance().userExists(con, login));
-			boolean inserted = Authenticator.getInstance().insertUser(con, login, pw);
-			System.out.println(inserted);
-			
-			System.out.println(Authenticator.getInstance().userExists(con, login));
+			start = System.currentTimeMillis();
+			for(int i=0; i<100; i++)
+			{
+				System.out.println("id:" +Authenticator.getInstance().insertUser(con, login+i, pw));
+			}
+			System.out.println("New users in " + (System.currentTimeMillis() - start));
 		}
 		catch (SQLException e)
 		{
@@ -48,6 +49,5 @@ public class SimpleQuery
 
 			}
 		}
-		System.out.println(Authenticator.getInstance().userExists(dbMan.getConnection(), login));
 	}
 }

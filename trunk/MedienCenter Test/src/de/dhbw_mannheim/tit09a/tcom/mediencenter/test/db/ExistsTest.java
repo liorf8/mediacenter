@@ -11,9 +11,9 @@ public class ExistsTest
 	 */
 	public static void main(String[] args) throws Exception
 	{
-		System.out.println(Authenticator.getInstance().userExists(DatabaseManager.getInstance().getConnection(), "Max"));
+		System.out.println(Authenticator.getInstance().userExists(DatabaseManager.getInstance().getConnection(), "Max1"));
 		
-		System.out.println(Authenticator.getInstance().authenticate(DatabaseManager.getInstance().getConnection(), "Max", "pw"));
+		System.out.println(Authenticator.getInstance().authenticate(DatabaseManager.getInstance().getConnection(), 99, "pw"));
 	}
 
 }
