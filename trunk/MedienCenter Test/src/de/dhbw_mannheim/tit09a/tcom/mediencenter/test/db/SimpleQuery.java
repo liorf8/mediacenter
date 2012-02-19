@@ -4,8 +4,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.Authenticator;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.UserManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.DatabaseManager;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.Manager;
 
 public class SimpleQuery
 {
@@ -19,14 +20,14 @@ public class SimpleQuery
 		{
 			long start;
 			start = System.currentTimeMillis();
-			dbMan = DatabaseManager.getInstance();
+			dbMan = Manager.getManager(DatabaseManager.class);
 			System.out.println("Gotten instance in " + (System.currentTimeMillis() - start));
 
 			Connection con = dbMan.getConnection();
 			start = System.currentTimeMillis();
 			for(int i=0; i<100; i++)
 			{
-				System.out.println("id:" +Authenticator.getInstance().insertUser(con, login+i, pw));
+				System.out.println("id:" +Manager.getManager(UserManager.class).insertUser(con, login+i, pw));
 			}
 			System.out.println("New users in " + (System.currentTimeMillis() - start));
 		}

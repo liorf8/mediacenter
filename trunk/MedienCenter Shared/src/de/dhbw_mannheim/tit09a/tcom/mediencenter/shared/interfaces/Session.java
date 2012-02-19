@@ -1,25 +1,30 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
+import java.nio.file.FileSystemException;
+import java.rmi.ServerException;
+import java.util.List;
+
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ReturnObj;
 
 public interface Session
 {
-	public ReturnObj<Void> changePw(String currentPw, String newPw) throws IllegalArgumentException, ServerException;
+	public void changeLogin(String pw, String newLogin) throws ServerException;
+
+	public void changePw(String currentPw, String newPw) throws ServerException;
+
+	public List<FileInfo> listFileInfos(String dirUri) throws ServerException, FileSystemException;
+
+	public void createDir(String parentDirUri, String dirName) throws FileSystemException, ServerException;
 	
-	public ReturnObj<Void> changeLogin(String pw, String newLogin) throws IllegalArgumentException, ServerException;
+	public void renameFile(String uri, String newName) throws FileSystemException, ServerException;
 	
-	public ReturnObj<Void> copyFile(String srcUri, String destDirUri, boolean replace) throws IllegalArgumentException, ServerException;
+	public int copyFile(String srcUri, String targetDirUri, boolean replace) throws FileSystemException, ServerException;
 
-	public ReturnObj<Void> deleteFile(String uri) throws IllegalArgumentException, ServerException;
+	public int moveFile(String srcUri, String targetDirUri, boolean replace) throws FileSystemException, ServerException;
+	
+	public int deleteFile(String uri, boolean deleteNotEmptyDir) throws FileSystemException, ServerException;
 
-	public ReturnObj<FileInfo[]> listFileInfos(String dirUri) throws IllegalArgumentException, ServerException;
+	public int prepareRawChannel(String targetDirUri, String filename, long fileSize) throws FileSystemException, ServerException;
 
-	public ReturnObj<Void> mkDir(String parentDirUri, String newDirName) throws IllegalArgumentException, ServerException;
-
-	public ReturnObj<Integer> openFileChannel(String destDirUri, String filename, long fileSize) throws IllegalArgumentException, ServerException;
-
-	public ReturnObj<Void> renameFile(String uri, String newName) throws IllegalArgumentException, ServerException;
-
+	public void downloadFile(String uri) throws FileSystemException, ServerException;
 }

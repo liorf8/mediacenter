@@ -1,18 +1,16 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 
+import java.rmi.ServerException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JOptionPane;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.AuthenticationException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MiscUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ReturnObj;
 import de.root1.simon.Simon;
 import de.root1.simon.annotation.SimonRemote;
 
@@ -44,7 +42,7 @@ public class ServerImpl implements Server
 	boolean removeUserSession(SessionImpl userSession)
 	{
 		boolean existed = userSessions.remove(userSession);
-		ServerMain.logger.info("Removed " + userSession + " from sessionlist. " + userSessions.size() + " user(s) are online.");
+		ServerMain.MAIN_LOGGER.info("Removed " + userSession + " from sessionlist. " + userSessions.size() + " user(s) are online.");
 		return existed;
 	}
 
@@ -52,19 +50,59 @@ public class ServerImpl implements Server
 	// -- Public Method(s) ------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Long> serverTime() throws ServerException
+	public long serverTime() throws ServerException
 	{
 		try
 		{
-			return new ReturnObj<Long>(System.currentTimeMillis());
+			return System.currentTimeMillis();
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public long register(String login, String pw) throws ServerException
+	{
+		try
+		{
+			long id = -1L;
+			Connection con = Manager.getManager(DatabaseManager.class).getConnection();
+			NFileManager fileMan = Manager.getManager(NFileManager.class);
+			try
+			{
+				// Insert user if does not exist
+				id = Manager.getManager(UserManager.class).insertUser(con, login, pw);
+
+				// Create User's Dirs
+				fileMan.createUserDirs(id);
+
+				con.commit(); // IMPORTANT! Is not done inside insertUser()!
+				return id;
+			}
+			catch (Exception e)
+			{
+				ServerMain.MAIN_LOGGER.error("Rolling back...");
+				con.rollback();
+				throw e;
+			}
+		}
+		catch (IllegalArgumentException e)
+		{
+			ServerMain.MAIN_LOGGER.info("User "+login+" caused throw of:", e);
+			throw e;
+		}
+		catch (Throwable t)
+		{
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + login + " caught exception", t);
+			throw new ServerException(t.toString());
+		}
+	}
+	
 	// --------------------------------------------------------------------------------
 	/*
 	 * Here Return<Session> cannot be used, because it leads to NotSerializableException: de.root1.simon.SimonProxy. You have to return the
@@ -76,28 +114,26 @@ public class ServerImpl implements Server
 	 * de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback)
 	 */
 	@Override
-	public Session login(String login, String pw, ClientCallback callback) throws IllegalArgumentException, ServerException
+	public Session login(String login, String pw, ClientCallback callback) throws ServerException
 	{
 		try
 		{
-			MiscUtil.ensureValidString(login, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			MiscUtil.ensureValidString(pw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-
-			Connection con = DatabaseManager.getInstance().getConnection();
-			Authenticator auth = Authenticator.getInstance();
+			Connection con = Manager.getManager(DatabaseManager.class).getConnection();
+			UserManager userMan = Manager.getManager(UserManager.class);
 
 			// Get id. Can result in -1L if user not found
-			long id = auth.idForLogin(con, login);
-			ServerMain.logger.fine("Id: " + id);
+			long id = userMan.idForLogin(con, login);
+			ServerMain.MAIN_LOGGER.debug("Id: " + id);
 
 			// Authenticate the user
-			if (!auth.authenticate(con, id, pw))
+			if (!userMan.authenticate(con, id, pw))
 			{
-				String msg = "Login and password combination incorrect!";
-				// return new Return<Session>(Return.ACCESS_DENIED, msg);
-				callback.message(msg, JOptionPane.WARNING_MESSAGE);
-				return null;
+				throw new AuthenticationException(login, pw);
 			}
+			
+			// Get the not exact login (user can login with Max or max or MAX or ...)
+			// TODO: get the exact login with the id (idForLogin())
+			login = userMan.loginForId(con, id);
 
 			// Check if user is already logged in and log out if not on the same client.
 			for (SessionImpl otherSession : userSessions)
@@ -110,7 +146,6 @@ public class ServerImpl implements Server
 					{
 						String msg = String.format("User %s (ID: %d) already logged in on your computer (%s). Please logout first.", login, id,
 								Simon.getRemoteInetSocketAddress(callback));
-						// return new Return<Session>(Return.CONFLICT, msg);
 						callback.message(msg, JOptionPane.WARNING_MESSAGE);
 						return null;
 					}
@@ -128,66 +163,40 @@ public class ServerImpl implements Server
 			// If everything was correct: Create Session
 			SessionImpl session = new SessionImpl(this, id, login, callback);
 			userSessions.add(session);
-			ServerMain.logger.info("Session created for " + session + ". Now " + userSessions.size() + " user(s) are online.");
+			ServerMain.MAIN_LOGGER.info("Session created for " + session + ". Now " + userSessions.size() + " user(s) are online.");
 			callback.message("Successfully logged in " + login + "!", JOptionPane.INFORMATION_MESSAGE);
-			// return new Return<Session>(session);
 			return session;
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User "+login+" caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + login + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Long> register(String login, String pw) throws IllegalArgumentException, ServerException
+	public void resetPw(String login) throws ServerException
 	{
 		try
 		{
-			// Check preconditions
-			MiscUtil.ensureValidString(login, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			MiscUtil.checkStringLength(login, 1, Authenticator.MAX_LENGTH);
-			
-			MiscUtil.ensureValidString(pw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			MiscUtil.checkStringLength(pw, 1, Authenticator.MAX_LENGTH);
+			Manager.getManager(UserManager.class).resetPw(Manager.getManager(DatabaseManager.class).getConnection(), login);
 
-			// Insert user if does not exist
-			ReturnObj<Long> returnValue;
-			Connection con = DatabaseManager.getInstance().getConnection();
-			Authenticator auth = Authenticator.getInstance();
-			try
-			{
-				// Insert in Database
-				returnValue = auth.insertUser(con, login, pw);
-
-				// Create User's Dirs
-				FileManager.getInstance().createUserDirs(login);
-				con.commit(); // IMPORTANT! Is not done inside insertUser()!
-				return returnValue;
-			}
-			catch (Exception e)
-			{
-				System.err.println("Rolling back due to: " + e.getClass().getName() + ": " + e.getMessage());
-				con.rollback();
-				System.err.println("Deleting directories of " + login);
-				IOUtil.deleteAllFiles(FileManager.getInstance().getUserRootDir(login));
-				throw e;
-			}
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User "+login+" caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + login + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 

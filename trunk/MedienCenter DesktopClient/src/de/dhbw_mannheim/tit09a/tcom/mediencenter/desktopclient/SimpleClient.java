@@ -22,13 +22,13 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.JComboBox;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ReturnObj;
 import de.root1.simon.ClosedListener;
 import de.root1.simon.Lookup;
 import de.root1.simon.Simon;
@@ -43,7 +43,7 @@ public class SimpleClient
 	private static ClientCallbackImpl	callback;
 	public JFrame						frame;
 	private JTextField					txtFldArgs;
-	private JComboBox					comboBox;
+	private JComboBox<String>			comboBox;
 	private JButton						btnAction;
 	private JTextArea					logArea;
 	private JButton						btnLogout;
@@ -136,9 +136,10 @@ public class SimpleClient
 				{
 					nameLookup.release(server);
 					server = null;
+					session = null;
 				}
 				else
-					System.err.println("lookup or server == null");
+					System.err.println("lookup or server == null" + nameLookup + "," + server);
 				System.exit(0);
 			}
 		});
@@ -177,7 +178,7 @@ public class SimpleClient
 	{
 		final Method[] sessionMethods = Session.class.getMethods();
 		final Method[] serverMethods = Server.class.getMethods();
-		List<String> methodNames = new ArrayList<String>(sessionMethods.length + serverMethods.length);
+		List<String> methodNames = new ArrayList<>(sessionMethods.length + serverMethods.length);
 		for (Method method : sessionMethods)
 		{
 			methodNames.add("Session." + method.getName());
@@ -188,7 +189,7 @@ public class SimpleClient
 		}
 		Collections.sort(methodNames);
 
-		comboBox = new JComboBox();
+		comboBox = new JComboBox<String>();
 		for (String methodName : methodNames)
 		{
 			comboBox.addItem(methodName);
@@ -260,89 +261,99 @@ public class SimpleClient
 					{
 						server = (Server) nameLookup.lookup(Server.BIND_NAME);
 					}
-					ReturnObj<?> returnValue;
+					Object returnValue;
 					if (method.startsWith("Session"))
 					{
-
 						if (session == null)
-						{
-							returnValue = new ReturnObj<Void>(ReturnObj.BAD_REQUEST, "LOGIN FIRST");
-						}
+							returnValue = "LOGIN FIRST";
 						else
 						{
-							if (method.equals("Session.copyFile"))
+							switch (method)
 							{
-								returnValue = session.copyFile(args[0], args[1], Boolean.parseBoolean(args[2]));
-							}
-							else if (method.equals("Session.deleteFile"))
-							{
-								returnValue = session.deleteFile(args[0]);
-							}
-							else if (method.equals("Session.mkDir"))
-							{
-								returnValue = session.mkDir(args[0], args[1]);
-							}
-							else if (method.equals("Session.renameFile"))
-							{
-								returnValue = session.renameFile(args[0], args[1]);
-							}
-							else if (method.equals("Session.listFileInfos"))
-							{
-								returnValue = session.listFileInfos(args[0]);
-							}
-							else if (method.equals("Session.changePw"))
-							{
-								returnValue = session.changePw(args[0], args[1]);
-							}
-							else if (method.equals("Session.changeLogin"))
-							{
-								returnValue = session.changeLogin(args[0], args[1]);
-							}
-							else
-							{
-								returnValue = new ReturnObj<Void>(ReturnObj.NOT_FOUND, "Method not supported!");
+								case "Session.changeLogin":
+									session.changeLogin(args[0], args[1]);
+									returnValue = "void";
+									break;
+								case "Session.changePw":
+									session.changePw(args[0], args[1]);
+									returnValue = "void";
+									break;
+								case "Session.copyFile":
+									returnValue = session.copyFile(args[0], args[1], Boolean.parseBoolean(args[2]));
+									break;
+								case "Session.deleteFile":
+									returnValue = session.deleteFile(args[0], Boolean.parseBoolean(args[1]));
+									break;
+								case "Session.downloadFile":
+									session.downloadFile(args[0]);
+									returnValue = "void";
+									break;
+								case "Session.listFileInfos":
+									returnValue = (session.listFileInfos(args[0]));
+									break;
+								case "Session.createDir":
+									session.createDir(args[0], args[1]);
+									returnValue = "void";
+									break;
+								case "Session.moveFile":
+									session.moveFile(args[0], args[1], Boolean.parseBoolean(args[2]));
+									returnValue = "void";
+									break;
+								case "Session.prepareRawChannel":
+									returnValue = session.prepareRawChannel(args[0], args[1], Long.parseLong(args[2]));
+									break;
+								case "Session.renameFile":
+									session.renameFile(args[0], args[1]);
+									returnValue = "void";
+									break;
+								default:
+									returnValue = "Method not supported!";
 							}
 						}
 					}
 					else
 					{
-						if (method.equals("Server.serverTime"))
+						switch (method)
 						{
-							returnValue = server.serverTime();
-						}
-						else if (method.equals("Server.login"))
-						{
-							// TODO: blabla
-							if (/* session == null */true)
-							{
-								Session tmp = server.login(args[0], args[1], callback);
-								returnValue = new ReturnObj<Session>(tmp);
-								if (tmp == null)
+							case "Server.login":
+								// TODO: blabla
+								if (/* session == null */true)
 								{
-									logArea.append("Login not successfull!\n");
+									Session tmp = server.login(args[0], args[1], callback);
+									if (tmp == null)
+									{
+										returnValue = "null";
+										logArea.append("Login not successfull!\n");
+									}
+									else
+									{
+										returnValue = tmp.toString();
+										session = tmp;
+										btnLogout.setEnabled(true);
+									}
 								}
 								else
 								{
-									session = tmp;
-									btnLogout.setEnabled(true);
+									returnValue = "ALREADY LOGGED IN!";
 								}
-							}
-							else
-							{
-								returnValue = new ReturnObj<Session>(ReturnObj.BAD_REQUEST);
-								logArea.append("ALREADY LOGGED IN!");
-							}
-						}
-						else if (method.equals("Server.register"))
-						{
-							returnValue = server.register(args[0], args[1]);
-						}
-						else
-						{
-							returnValue = new ReturnObj<Void>(ReturnObj.NOT_FOUND, "Method not supported!");;
+								break;
+							case "Server.register":
+								returnValue = server.register(args[0], args[1]);
+								break;
+							case "Server.resetPw":
+								server.resetPw(args[0]);
+								returnValue = "void";
+								break;
+							case "Server.serverTime":
+								returnValue = new Date(server.serverTime());
+								break;
+
+							default:
+								returnValue = "Method not supported!";
+
 						}
 					}
-					logArea.append("Result: "+returnValue.get() + " (" +returnValue.code()+": "+returnValue.message()+")\n\n");
+					logArea.append("Result: " + returnValue + "\n\n");
 				}
 
 				catch (ArrayIndexOutOfBoundsException aiobe)

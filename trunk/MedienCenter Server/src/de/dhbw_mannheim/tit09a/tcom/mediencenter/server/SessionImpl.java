@@ -1,17 +1,16 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 
-import java.io.File;
 import java.io.Serializable;
+import java.nio.file.FileSystemException;
+import java.nio.file.Path;
+import java.rmi.ServerException;
+import java.util.List;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.FileManager.FileType;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.FileManager.Role;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.NFileManager.FileType;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.FileInfo;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MiscUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ReturnObj;
 import de.root1.simon.Simon;
 import de.root1.simon.SimonUnreferenced;
 import de.root1.simon.annotation.SimonRemote;
@@ -32,7 +31,6 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	private final ServerImpl		server;
 	private final ClientCallback	callback;
 	private final String			sessionId;
-	private final Role				role;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructor(s) --------------------------------------------------------------
@@ -44,7 +42,6 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		this.login = login;
 		this.callback = callback;
 		this.sessionId = "default_session_id";
-		this.role = Role.USER;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -74,219 +71,238 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	}
 
 	// --------------------------------------------------------------------------------
-	Role getRole()
-	{
-		return role;
-	}
-
-	// --------------------------------------------------------------------------------
 	// -- Public Method(s) ------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	// Overriding SimonUnreferenced
 	@Override
 	public void unreferenced()
 	{
-		ServerMain.logger.fine(Thread.currentThread() + ": Unreferenced: " + login + "@" + this);
+		ServerMain.MAIN_LOGGER.debug(Thread.currentThread() + ": Unreferenced: " + this);
 		server.removeUserSession(this);
 	}
 
 	// Overriding Session
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Void> changePw(String newPw, String currentPw) throws IllegalArgumentException, ServerException
+	public void changeLogin(String newLogin, String pw) throws ServerException
 	{
 		try
 		{
-			MiscUtil.ensureValidString(newPw, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			short returnCode = Authenticator.getInstance().changePw(DatabaseManager.getInstance().getConnection(), id, newPw, currentPw);
-			return new ReturnObj<Void>(returnCode);
+			Manager.getManager(UserManager.class).changeLogin(Manager.getManager(DatabaseManager.class).getConnection(), id, newLogin, pw);
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Void> changeLogin(String newLogin, String pw) throws IllegalArgumentException, ServerException
+	public void changePw(String newPw, String currentPw) throws ServerException
 	{
 		try
 		{
-			MiscUtil.ensureValidString(newLogin, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			short returnCode = Authenticator.getInstance().changeLogin(DatabaseManager.getInstance().getConnection(), id, newLogin, pw);
-			return new ReturnObj<Void>(returnCode);
+			Manager.getManager(UserManager.class).changePw(Manager.getManager(DatabaseManager.class).getConnection(), id, newPw, currentPw);
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
-		}
-
-	}
-
-	// --------------------------------------------------------------------------------
-	@Override
-	public ReturnObj<Void> deleteFile(String uri) throws IllegalArgumentException, ServerException
-	{
-		try
-		{
-			File fileOrDir = FileManager.getInstance().uriToUserFile(this, uri, FileType.FILE_OR_DIR, true);
-			// Check args
-			int filesDeleted = IOUtil.deleteAllFiles(fileOrDir);
-			return new ReturnObj<Void>(ReturnObj.SUCCESS, "Deleted " +filesDeleted+ "files.");
-		}
-		catch (IllegalArgumentException iae)
-		{
-			throw iae;
-		}
-		catch (Throwable e)
-		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Void> renameFile(String uri, String newName) throws IllegalArgumentException, ServerException
+	public int deleteFile(String uri, boolean deleteNotEmptyDir) throws FileSystemException, ServerException
+	{
+		try
+		{
+			Path fileOrDir = Manager.getManager(NFileManager.class).uriStringToPath(this, uri, FileType.FILE_OR_DIR, true);
+			return NIOUtil.delete(fileOrDir, deleteNotEmptyDir);
+		}
+		catch (IllegalArgumentException | FileSystemException e)
+		{
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
+		}
+		catch (Throwable t)
+		{
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public void renameFile(String uri, String newName) throws FileSystemException, ServerException
 	{
 		try
 		{
 			// Check Arguments
-			MiscUtil.ensureValidString(newName, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			File fileOrDir = FileManager.getInstance().uriToUserFile(this, uri, FileType.FILE_OR_DIR, true);
-			File dest = new File(fileOrDir.getParent(), newName);
-			if (dest.exists())
-			{
-				return new ReturnObj<Void>(null, ReturnObj.CONFLICT, "A file with this name already exists: " + uri + "/" + newName);
-			}
-			else
-			{
-				IOUtil.executeRenameTo(fileOrDir, dest);
-			}
-			return new ReturnObj<Void>(null, ReturnObj.SUCCESS, null);
+			Path fileOrDir = Manager.getManager(NFileManager.class).uriStringToPath(this, uri, FileType.FILE_OR_DIR, true);
+			NIOUtil.rename(fileOrDir, newName);
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException | FileSystemException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
+		}
+	}
+
+	@Override
+	public int moveFile(String srcUri, String targetDirUri, boolean replace) throws FileSystemException, ServerException
+	{
+		try
+		{
+			NFileManager fileMan = Manager.getManager(NFileManager.class);
+			Path srcFileOrDir = fileMan.uriStringToPath(this, srcUri, FileType.FILE_OR_DIR, true);
+			Path targetDir = fileMan.uriStringToPath(this, targetDirUri, FileType.DIR, false);
+			return NIOUtil.copyMove(srcFileOrDir, targetDir, replace, false);
+		}
+		catch (IllegalArgumentException | FileSystemException e)
+		{
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
+		}
+		catch (Throwable t)
+		{
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Void> copyFile(String srcURI, String destDirURI, boolean replace) throws IllegalArgumentException, ServerException
+	public int copyFile(String srcUri, String targetDirUri, boolean replace) throws FileSystemException, ServerException
 	{
 		try
 		{
-			boolean actuallyCopied;
-			File srcFileOrDir = FileManager.getInstance().uriToUserFile(this, srcURI, FileType.FILE_OR_DIR, true);
-			File destDir = FileManager.getInstance().uriToUserFile(this, destDirURI, FileType.DIR, false);
-			File destFileOrDir = new File(destDir, srcFileOrDir.getName());
-			if (srcFileOrDir.isDirectory())
-			{
-				throw new IllegalArgumentException("Copy of directories not supported yet!");
-			}
-			else
-			{
-				actuallyCopied = IOUtil.copyFile(srcFileOrDir, destFileOrDir, replace);
-			}
-			return new ReturnObj<Void>(actuallyCopied ? ReturnObj.SUCCESS : ReturnObj.SUCCESS_NOT_REPLACED);
+			NFileManager fileMan = Manager.getManager(NFileManager.class);
+			Path srcFileOrDir = fileMan.uriStringToPath(this, srcUri, FileType.FILE_OR_DIR, true);
+			Path targetDir = fileMan.uriStringToPath(this, targetDirUri, FileType.DIR, false);
+			return NIOUtil.copyMove(srcFileOrDir, targetDir, replace, false);
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException | FileSystemException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Void> mkDir(String parentDirUri, String newDirName) throws IllegalArgumentException, ServerException
+	public void createDir(String parentDirUri, String dirName) throws FileSystemException, ServerException
 	{
 		try
 		{
-			boolean actuallyMadeDir;
-			MiscUtil.ensureValidString(newDirName, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			File parentDir = FileManager.getInstance().uriToUserFile(this, parentDirUri, FileType.DIR, false);
-			actuallyMadeDir = IOUtil.executeMkDir(new File(parentDir, newDirName));
-			return new ReturnObj<Void>(actuallyMadeDir ? ReturnObj.SUCCESS : ReturnObj.SUCCESS_NOT_REPLACED);
+			Path parentDir = Manager.getManager(NFileManager.class).uriStringToPath(this, parentDirUri, FileType.DIR, false);
+			NIOUtil.createDir(parentDir, dirName);
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException | FileSystemException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<FileInfo[]> listFileInfos(String dirURI) throws IllegalArgumentException, ServerException
+	public List<FileInfo> listFileInfos(String dirURI) throws FileSystemException, ServerException
 	{
 		try
 		{
-			File dir = FileManager.getInstance().uriToUserFile(this, dirURI, FileType.DIR, false);
-			return new ReturnObj<FileInfo[]>(FileManager.getInstance().listFileInfos(this, dir, FileManager.getInstance().getUserRootDir(login)));
+			NFileManager fileMan = Manager.getManager(NFileManager.class);
+			Path dir = fileMan.uriStringToPath(this, dirURI, FileType.DIR, false);
+			return fileMan.listFileInfos(this, dir);
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException | FileSystemException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public ReturnObj<Integer> openFileChannel(String destDirUri, String filename, long fileSize) throws IllegalArgumentException, ServerException
+	public int prepareRawChannel(String destDirUri, String filename, long fileSize) throws FileSystemException, ServerException
 	{
 		try
 		{
-			MiscUtil.ensureValidString(filename, FileManager.ILLEGAL_CHARS_IN_FILENAME);
-			File destDir = FileManager.getInstance().uriToUserFile(this, destDirUri, FileType.DIR, false);
-			File destFile = new File(destDir, filename);
-			return new ReturnObj<Integer>(Simon.prepareRawChannel(new FileReceiver(destFile, fileSize), this));
+			NFileManager fileMan = Manager.getManager(NFileManager.class);
+			Path destDir = fileMan.uriStringToPath(this, destDirUri, FileType.DIR, false);
+			Path destFile = destDir.resolve(filename);
+
+			return Simon.prepareRawChannel(fileMan.new FileReceiver(destFile, fileSize), this);
 		}
-		catch (IllegalArgumentException iae)
+		catch (IllegalArgumentException | FileSystemException e)
 		{
-			throw iae;
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
 		}
-		catch (Throwable e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			throw new ServerException(e.getClass().getName() + ": " + e.getMessage());
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public void downloadFile(String uri) throws FileSystemException, ServerException
+	{
+		try
+		{
+			NFileManager fileMan = Manager.getManager(NFileManager.class);
+			Path file = fileMan.uriStringToPath(this, uri, FileType.FILE, true);
+			fileMan.sendFile(callback, file);
+		}
+		catch (IllegalArgumentException | FileSystemException e)
+		{
+			ServerMain.MAIN_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
+		}
+		catch (Throwable t)
+		{
+			ServerMain.MAIN_LOGGER.error("Invocation by user " + this + " caught exception", t);
+			throw new ServerException(t.toString());
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 	public String toString()
 	{
-		return String.format("SessionImpl[%d,%s,%s,%s]", id, login, role.toString(), Simon.getRemoteInetSocketAddress(callback));
+		return String.format("SessionImpl[%d,%s,%s]", id, login, Simon.getRemoteInetSocketAddress(callback));
 	}
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------

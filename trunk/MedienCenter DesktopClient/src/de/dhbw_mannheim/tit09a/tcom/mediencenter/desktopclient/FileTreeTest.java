@@ -3,6 +3,8 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient;
 import java.awt.BorderLayout;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.nio.file.FileSystemException;
+import java.rmi.ServerException;
 import java.util.Date;
 
 import javax.swing.JFrame;
@@ -18,7 +20,6 @@ import javax.swing.tree.TreeModel;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui.FileInfoTreeModel;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui.FileInfoTreeRenderer;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
@@ -161,9 +162,9 @@ public class FileTreeTest
 		info.setText(text);
 	}
 
-	public static FileInfo[] getChildren(FileInfo parent) throws ServerException
+	public static FileInfo[] getChildren(FileInfo parent) throws ServerException, IllegalArgumentException, FileSystemException
 	{
 		// System.out.println("Asking for Children of " +parent);
-		return session.listFileInfos(parent.getURIPath()).get();
+		return (FileInfo[]) session.listFileInfos(parent.getURIPath()).toArray();
 	}
 }
