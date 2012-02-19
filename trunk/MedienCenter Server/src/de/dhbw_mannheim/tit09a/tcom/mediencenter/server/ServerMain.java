@@ -8,7 +8,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.ServerUtil;
@@ -25,17 +27,16 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	// os: C:\\Users\\mhertram\\MedienCenter
 	// max: C:\\Users\\Max\\MedienCenter
-	private static final String		CLASS_NAME		= ServerMain.class.getName();
-	
-	static final File				SERVER_DIR		= new File("C:\\Users\\Max\\MedienCenter\\");
+	private static final String						CLASS_NAME		= ServerMain.class.getName();
 
-	public static final Logger		logger			= Logger.getLogger(CLASS_NAME);
-	private static final Logger		invokeLogger	= Logger.getLogger("de.root1.simon.InvokeLogger");
-	private static Registry			registry;
-	private static boolean			isRunning;
-	private static boolean			isInitialized;
-	private static ExecutorService	executor;
+	static final File								SERVER_DIR		= new File("C:\\Users\\Max\\MedienCenter\\");
 
+	public static final Logger						MAIN_LOGGER		= LoggerFactory.getLogger(CLASS_NAME);
+	private static final java.util.logging.Logger	invokeLogger	= java.util.logging.Logger.getLogger("de.root1.simon.InvokeLogger");
+	private static Registry							registry;
+	private static boolean							isRunning;
+	private static boolean							isInitialized;
+	private static ExecutorService					executor;
 
 	public static enum Command
 	{
@@ -87,6 +88,7 @@ public class ServerMain
 					e.printStackTrace();
 				}
 			}
+			System.out.println(this.getClass().getSimpleName() +" interrupted!");
 		}
 	}
 
@@ -101,14 +103,15 @@ public class ServerMain
 		}
 		catch (Exception e1)
 		{
-			e1.printStackTrace();
 			try
 			{
+				System.err.println("Caught exception when starting. Exiting...");
 				exit();
 			}
-			catch (Exception e)
+			catch (Exception exitExc)
 			{
-				e.printStackTrace();
+				System.err.println("Caught exception when exiting. System.exit(1)");
+				exitExc.printStackTrace();
 				System.exit(1);
 			}
 		}
@@ -121,13 +124,14 @@ public class ServerMain
 	{
 		if (isInitialized == false)
 		{
-			logger.info("Initializing Server ...");
+			MAIN_LOGGER.info("Initializing Server ...");
 			long start = System.currentTimeMillis();
 
 			// Initialize Logging
-			logger.setLevel(Level.ALL);
-			logger.addHandler(new FileHandler(CLASS_NAME + ".log", false));
-			logger.info(CLASS_NAME + " Logger started!");
+			java.util.logging.Logger julogger = java.util.logging.Logger.getLogger(CLASS_NAME);
+			julogger.setLevel(Level.ALL);
+			julogger.addHandler(new FileHandler(CLASS_NAME + ".log", false));
+			MAIN_LOGGER.info(CLASS_NAME + " Logger started!");
 			invokeLogger.setLevel(Level.ALL);
 			invokeLogger.addHandler(new FileHandler("de.root1.simon.InvokeLogger.log", false));
 
@@ -135,18 +139,18 @@ public class ServerMain
 			IOUtil.executeMkFullDirPath(SERVER_DIR);
 
 			// Init the Managers
-			logger.finer("Initialize the FileManager ...");
-			FileManager.getInstance();
-			logger.finer("Initialize the DatabaseManager ...");
-			DatabaseManager.getInstance();
-			logger.finer("Initialize the Authenticator ...");
-			Authenticator.getInstance();
+			MAIN_LOGGER.debug("Initialize the FileManager ...");
+			Manager.getManager(FileManager_deprecated.class);
+			MAIN_LOGGER.debug("Initialize the DatabaseManager ...");
+			Manager.getManager(DatabaseManager.class);
+			MAIN_LOGGER.debug("Initialize the Authenticator ...");
+			Manager.getManager(UserManager.class);
 
 			// Start the UserInputListener
 			executor = Executors.newSingleThreadExecutor(new NamedThreadPoolFactory("ServerMain"));
 			executor.execute(new UserInputListenerTask());
 
-			logger.info("Server initialized (" + (System.currentTimeMillis() - start) + "ms)!");
+			MAIN_LOGGER.info("Server initialized (" + (System.currentTimeMillis() - start) + "ms)!");
 			isInitialized = true;
 		}
 		else
@@ -165,25 +169,26 @@ public class ServerMain
 
 		if (!isRunning)
 		{
-			logger.info("Starting Server ...");
+			MAIN_LOGGER.info("Starting Server ...");
 			long start = System.currentTimeMillis();
 
 			// DatabaseManager
-			DatabaseManager.getInstance().connect();
+			DatabaseManager dbMan = Manager.getManager(DatabaseManager.class);
+			dbMan.connect();
 
 			// FileManager
 			// Nothing to do yet
 
-			logger.finer("Create the server object ...");
+			MAIN_LOGGER.debug("Create the server object ...");
 			Server server = new ServerImpl();
 
-			logger.finer("Create the Simon registry @ Port " + Server.REGISTRY_PORT + " ...");
+			MAIN_LOGGER.debug("Create the Simon registry @ Port " + Server.REGISTRY_PORT + " ...");
 			registry = Simon.createRegistry(Server.REGISTRY_PORT);
 
-			logger.finer("Bind the server object (" + server + ") as '" + Server.BIND_NAME + "' to the registry (" + registry + ")...");
+			MAIN_LOGGER.debug("Bind the server object (" + server + ") as '" + Server.BIND_NAME + "' to the registry (" + registry + ")...");
 			registry.bind(Server.BIND_NAME, server);
 
-			logger.info("Server up and running (" + (System.currentTimeMillis() - start) + "ms)!");
+			MAIN_LOGGER.info("Server up and running (" + (System.currentTimeMillis() - start) + "ms)!");
 			isRunning = true;
 		}
 		else
@@ -197,12 +202,12 @@ public class ServerMain
 	{
 		if (isRunning)
 		{
-			logger.info("Shutting down Server ...");
+			MAIN_LOGGER.info("Shutting down Server ...");
 			long start = System.currentTimeMillis();
 
 			SimonRegistryStatistics stats = registry.getStatistics();
-			logger.info(ServerUtil.remoteStatsToString(stats));
-			logger.info(ServerUtil.registryStatsToString(stats));
+			MAIN_LOGGER.info(ServerUtil.remoteStatsToString(stats));
+			MAIN_LOGGER.info(ServerUtil.registryStatsToString(stats));
 
 			// some mechanism to shutdown the server should be placed here
 			// this should include the following command:
@@ -210,12 +215,13 @@ public class ServerMain
 			registry.stop();
 
 			// Database Manager
-			DatabaseManager.getInstance().disConnect();
+			DatabaseManager dbMan = Manager.getManager(DatabaseManager.class);
+			dbMan.disConnect();
 
 			// FileManager
 			// Nothing to do yet
 
-			logger.info("Server shut down (" + (System.currentTimeMillis() - start) + "ms)!");
+			MAIN_LOGGER.info("Server shut down (" + (System.currentTimeMillis() - start) + "ms)!");
 			isRunning = false;
 		}
 		else
@@ -227,28 +233,28 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	public static synchronized void restart() throws Exception
 	{
-		logger.info("Restarting Server ...");
+		MAIN_LOGGER.info("Restarting Server ...");
 		long start = System.currentTimeMillis();
 		shutdown();
 		start();
-		logger.info("Server restarted (" + (System.currentTimeMillis() - start) + "ms)!");
+		MAIN_LOGGER.info("Server restarted (" + (System.currentTimeMillis() - start) + "ms)!");
 	}
 
 	// --------------------------------------------------------------------------------
 	public static synchronized void exit() throws Exception
 	{
-		logger.info("Exiting programm ...");
+		MAIN_LOGGER.info("Exiting programm ...");
 		long start = System.currentTimeMillis();
 
 		if (isRunning)
 			shutdown();
 
-		logger.info("Shutting down " + UserInputListenerTask.class.getSimpleName() + " ...");
+		MAIN_LOGGER.info("Shutting down " + UserInputListenerTask.class.getSimpleName() + " ...");
 		if (executor != null)
 			executor.shutdownNow(); // interrupts the task
 		// this was the last thread alive, so the ServerMain will exit
 
-		logger.info("Auf Wiedersehen (" + (System.currentTimeMillis() - start) + "ms)!");
+		MAIN_LOGGER.info("Auf Wiedersehen (" + (System.currentTimeMillis() - start) + "ms)!");
 	}
 
 	// --------------------------------------------------------------------------------

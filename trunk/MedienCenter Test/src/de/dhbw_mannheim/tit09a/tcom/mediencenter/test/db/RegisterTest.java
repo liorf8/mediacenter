@@ -1,8 +1,8 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.db;
 
 import java.net.UnknownHostException;
+import java.rmi.ServerException;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.root1.simon.Lookup;
 import de.root1.simon.Simon;

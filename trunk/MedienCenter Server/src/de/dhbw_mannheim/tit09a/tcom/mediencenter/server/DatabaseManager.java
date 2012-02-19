@@ -7,18 +7,15 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.logging.FileHandler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
 
-public class DatabaseManager
+public class DatabaseManager extends Manager
 {
 	// --------------------------------------------------------------------------------
 	// -- Static Variable(s) ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private static final String	CLASS_NAME		= DatabaseManager.class.getName();
 	// SQL scripts
 	public static final String	SQL_STMTS_PATH	= "/de/dhbw_mannheim/tit09a/tcom/mediencenter/server/sql/";
 
@@ -39,80 +36,60 @@ public class DatabaseManager
 
 	// User
 	// TODO: use the User user for user activities, not the DBA!
-	private static final String		CLIENT_USER	= "SA";
-	private static final String		CLIENT_PW	= "";
-
-	private static DatabaseManager	instance;
-
-	// --------------------------------------------------------------------------------
-	// -- Static Methods --------------------------------------------------------------
-	// --------------------------------------------------------------------------------
-	public static synchronized DatabaseManager getInstance() throws Exception
-	{
-		if (instance == null)
-			instance = new DatabaseManager();
-		return instance;
-	}
+	private static final String	CLIENT_USER	= "SA";
+	private static final String	CLIENT_PW	= "";
 
 	// --------------------------------------------------------------------------------
 	// -- Instance Variable(s) --------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private Connection		connection;
-	private final Logger	logger	= Logger.getLogger(CLASS_NAME);
+	private Connection			connection;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructor(s) --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private DatabaseManager() throws Exception
+	DatabaseManager() throws Exception
 	{
+		super();
+	}
+
+	@Override
+	protected void init() throws Exception
+	{
+		// Fix for: Sadly the logger of HSQL sets global Formatter.
+		// So only warning and severe messages are displayed in a shortened format.
+		// And all loggers initialized before this command never log anything more.
+		System.setProperty("hsqldb.reconfig_logging", "false");
+		initLogging(Level.ALL);
+
+		// Check if HSQLDB driver class exists
 		try
 		{
-			// Initialize logging
-			try
-			{
-				System.setProperty("hsqldb.reconfig_logging", "false");
-				// Fix for: Sadly the logger of HSQL sets global Formatter.
-				// So only warning and severe messages are displayed in a shortened format.
-				// And all loggers initialized before this command never log anything more.
-				logger.setLevel(Level.ALL);
-				logger.addHandler(new FileHandler(CLASS_NAME + ".log", false));
-				logger.info(CLASS_NAME + " Logger started!");
-			}
-			catch (IOException e)
-			{
-				throw new Exception("Could not establish logging", e);
-			}
-
-			// Check if HSQLDB driver class exists
-			try
-			{
-				logger.finer("Loading driver class " + DRIVER_CLASS);
-				Class.forName(DRIVER_CLASS);
-				logger.fine("Loading driver class " + DRIVER_CLASS + " successfull");
-			}
-			catch (ClassNotFoundException e)
-			{
-				throw new Exception("Failed to load HSQLDB JDBC driver: " + DRIVER_CLASS, e);
-			}
-
-			// Create the Database directory
-			try
-			{
-				IOUtil.executeMkFullDirPath(DatabaseManager.DATABASE_DIR);
-			}
-			catch (IOException e)
-			{
-				throw new Exception("Failed create the directory", e);
-			}
-
-			// Initial connect
-			connect();
+			logger.trace("Loading driver class " + DRIVER_CLASS);
+			Class.forName(DRIVER_CLASS);
 		}
-		catch (Exception e)
+		catch (ClassNotFoundException e)
 		{
-			disConnect();
-			throw new Exception(this.getClass().getSimpleName() + " <init> failed: " + e.getMessage(), e.getCause());
+			throw new Exception("Failed to load HSQLDB JDBC driver: " + DRIVER_CLASS, e);
 		}
+
+		// Create the Database directory
+		try
+		{
+			IOUtil.executeMkFullDirPath(DatabaseManager.DATABASE_DIR);
+		}
+		catch (IOException e)
+		{
+			throw new Exception("Failed create the directory", e);
+		}
+
+		// Initial connect
+		connect();
+	}
+
+	@Override
+	protected void rollbackInit() throws Exception
+	{
+		disConnect();
 	}
 
 	// --------------------------------------------------------------------------------
@@ -155,27 +132,27 @@ public class DatabaseManager
 	// --------------------------------------------------------------------------------
 	public Connection getConnection() throws SQLException
 	{
-		logger.entering(CLASS_NAME, "getConnection");
+		logger.debug("ENTRY");
 		if (connection == null)
 		{
-			logger.finer(String.format("Invoking DriverManager.getConnection(%s,%s,%s)", URL, CLIENT_USER, CLIENT_PW));
+			logger.debug(String.format("Invoking DriverManager.getConnection(%s,%s,%s)", URL, CLIENT_USER, CLIENT_PW));
 			connection = DriverManager.getConnection(URL, CLIENT_USER, CLIENT_PW);
 			connection.setAutoCommit(false);
 		}
-		logger.exiting(CLASS_NAME, "getConnection", connection);
+		logger.debug("EXIT {}", connection);
 		return connection;
 	}
 
 	// --------------------------------------------------------------------------------
 	public void createTables(boolean drop) throws SQLException, IOException
 	{
-		logger.entering(CLASS_NAME, "createTables", drop);
+		logger.debug("ENTRY {}", drop);
 		if (drop)
 		{
 			executeStatement(IOUtil.resourceToString(SQL_STMTS_PATH + "DropTableUsers.sql"), void.class);
 		}
 		executeStatement(IOUtil.resourceToString(SQL_STMTS_PATH + "CreateTableUsers.sql"), void.class);
-		logger.exiting(CLASS_NAME, "createTables");
+		logger.debug("EXIT");
 	}
 
 	// TODO: reduce visibility to private
@@ -192,7 +169,7 @@ public class DatabaseManager
 	@SuppressWarnings("unchecked")
 	public <T> T executeStatement(String sql, Class<T> returnType) throws SQLException
 	{
-		logger.entering(CLASS_NAME, "executeStatement", sql);
+		logger.debug("ENTRY {} {}", new Object[] { sql, returnType });
 		Connection con = null;
 		try
 		{
@@ -222,7 +199,7 @@ public class DatabaseManager
 			{
 				throw new IllegalArgumentException("Operation for " + returnType + " not supported.");
 			}
-			logger.exiting(CLASS_NAME, "executeStatement", returnObj);
+			logger.debug("EXIT {}", returnObj);
 			return returnObj;
 
 		}

@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.DatabaseManager;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.Manager;
 
 public class SelectUsers
 {
@@ -14,12 +15,13 @@ public class SelectUsers
 	 */
 	public static void main(String[] args) throws Exception
 	{
+		DatabaseManager dbMan = null;
 		try
 		{
 			long start;
 
 			start = System.currentTimeMillis();
-			DatabaseManager dbMan = DatabaseManager.getInstance();
+			dbMan = Manager.getManager(DatabaseManager.class);
 			System.out.println("Gotten instance in " + (System.currentTimeMillis() - start) + "ms");
 
 			start = System.currentTimeMillis();
@@ -44,7 +46,8 @@ public class SelectUsers
 		}
 		finally
 		{
-			DatabaseManager.getInstance().disConnect();
+			if(dbMan != null)
+				dbMan.disConnect();
 		}
 
 	}
