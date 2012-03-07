@@ -1,7 +1,7 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote;
 
 import java.net.InetSocketAddress;
-import java.rmi.ServerException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +62,7 @@ public class ServerImpl implements Server
 		try
 		{
 			long id = -1L;
-			Connection con = DatabaseManager.getInstance().getConnection();
+			Connection con = DatabaseManager.getInstance().getClientConnection();
 			NFileManager fileMan = NFileManager.getInstance();
 			try
 			{
@@ -99,7 +99,7 @@ public class ServerImpl implements Server
 	{
 		try
 		{
-			Connection con = DatabaseManager.getInstance().getConnection();
+			Connection con = DatabaseManager.getInstance().getClientConnection();
 			UserManager userMan = UserManager.getInstance();
 
 			// Get id. Can result in -1L if user not found
@@ -148,7 +148,7 @@ public class ServerImpl implements Server
 	{
 		try
 		{
-			UserManager.getInstance().resetPw(DatabaseManager.getInstance().getConnection(), login);
+			UserManager.getInstance().resetPw(DatabaseManager.getInstance().getClientConnection(), login);
 		}
 		catch (IllegalArgumentException e)
 		{

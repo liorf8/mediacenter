@@ -1,6 +1,6 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.filetransfer;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.TimeValue;
 
 public class TimeValueTest
 {

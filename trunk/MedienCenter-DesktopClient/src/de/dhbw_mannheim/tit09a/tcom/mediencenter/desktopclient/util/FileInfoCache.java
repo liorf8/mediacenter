@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util;
 
 import java.nio.file.Path;
 import java.util.LinkedList;

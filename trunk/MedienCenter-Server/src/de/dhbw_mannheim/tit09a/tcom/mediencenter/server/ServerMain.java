@@ -3,6 +3,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -17,9 +18,9 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.UserManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.VlcManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote.ServerImpl;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.ServerUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 import de.root1.simon.Registry;
 import de.root1.simon.Simon;
 import de.root1.simon.SimonRegistryStatistics;
@@ -92,9 +93,9 @@ public class ServerMain
 			initLogging(Level.ALL, Level.ALL);
 
 			// Make Server directory
-			SERVER_LOGGER.info("Creating server directory @ {} ...", SERVER_PATH);
-			NIOUtil.createAllDirs(SERVER_PATH);
-
+			NIOUtil.createDirs(SERVER_PATH);
+			SERVER_LOGGER.info("Server directory @ {}", SERVER_PATH);
+			
 			// Initialize the UserInputListener
 			userInputListenerThread = new Thread(new UserInputListenerTask(), UserInputListenerTask.class.getSimpleName());
 
@@ -118,23 +119,24 @@ public class ServerMain
 				synchronized (this)
 				{
 					isRunning = true;
-					SERVER_LOGGER.info("Starting {}", CLASS_NAME);
+					SERVER_LOGGER.info("Starting {} ...", CLASS_NAME);
 					long start = System.currentTimeMillis();
 
 					// Simon
 					Server server = new ServerImpl();
-					SERVER_LOGGER.info("Creating SIMON registry @ {}:{} ...", Server.IP, Server.REGISTRY_PORT);
-					registry = Simon.createRegistry(Server.REGISTRY_PORT);
-
-					SERVER_LOGGER.info("Binding server object {} as '{}' to registry ...", server, Server.BIND_NAME);
+					
+					registry = Simon.createRegistry(InetAddress.getByName(Server.IP), Server.REGISTRY_PORT);
+					SERVER_LOGGER.info("SIMON registry @ {}:{}", Server.IP, Server.REGISTRY_PORT);
+					
 					registry.bind(Server.BIND_NAME, server);
-
+					SERVER_LOGGER.info("Bound {} as '{}' to registry", server, Server.BIND_NAME);
+					
 					// Managers
 					SERVER_LOGGER.info("Starting Managers ...");
 					DatabaseManager.getInstance().start();
 					NFileManager.getInstance().start();
-					UserManager.getInstance().start();
 					VlcManager.getInstance().start();
+					UserManager.getInstance().start();
 
 					// Finally start the UserInputListener
 					if (!userInputListenerThread.isAlive())
@@ -166,15 +168,15 @@ public class ServerMain
 			synchronized (this)
 			{
 				isRunning = false;
-				SERVER_LOGGER.info("Shutting down {}", CLASS_NAME);
+				SERVER_LOGGER.info("Shutting down {} ...", CLASS_NAME);
 				long start = System.currentTimeMillis();
 
 				// Shut down the managers
-				SERVER_LOGGER.info("Shutting down Managers");
-				DatabaseManager.getInstance().shutdown();
+				SERVER_LOGGER.info("Shutting down Managers ...");
 				NFileManager.getInstance().shutdown();
 				UserManager.getInstance().shutdown();
 				VlcManager.getInstance().shutdown();
+				DatabaseManager.getInstance().shutdown();
 
 				// Shut down Simon Registry
 				SERVER_LOGGER.info("Shutting down SIMON");
@@ -200,7 +202,7 @@ public class ServerMain
 	{
 		synchronized (this)
 		{
-			SERVER_LOGGER.info("Restarting {}", CLASS_NAME);
+			SERVER_LOGGER.info("Restarting {} ...", CLASS_NAME);
 			long start = System.currentTimeMillis();
 
 			shutdown();

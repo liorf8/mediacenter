@@ -1,22 +1,24 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote;
 
-import java.awt.Color;
 import java.io.Serializable;
 import java.nio.file.FileSystemException;
 import java.nio.file.Path;
-import java.rmi.ServerException;
+import java.util.Arrays;
+
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 
 import uk.co.caprica.vlcj.mrl.HttpMrl;
 import uk.co.caprica.vlcj.mrl.RtpMrl;
 import uk.co.caprica.vlcj.mrl.RtspMrl;
+import uk.co.caprica.vlcj.player.MediaMeta;
 import uk.co.caprica.vlcj.player.headless.HeadlessMediaPlayer;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager.FileType;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.VlcManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.ServerUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.RemoteMediaMeta;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamMediaPlayer;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 import de.root1.simon.SimonUnreferenced;
 import de.root1.simon.annotation.SimonRemote;
 
@@ -33,16 +35,17 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 	// --------------------------------------------------------------------------------
 	private final SessionImpl			session;
 	private final HeadlessMediaPlayer	headlessPlayer;
-	private String						mrlForClient;
+	private String						streamTarget		= "";
 
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public StreamMediaPlayerImpl(SessionImpl session, HeadlessMediaPlayer headlessPlayer, String protocol, int port) throws Exception
+	public StreamMediaPlayerImpl(SessionImpl session) throws Exception
 	{
-		this.headlessPlayer = headlessPlayer;
+		this.headlessPlayer = VlcManager.getInstance().buildHeadlessPlayer();
 		this.session = session;
-		mrlForClient = setStreamTarget(protocol, port);
+
+		setAndGetStreamTarget(DEFAULT_PROTOCOL, DEFAULT_PORT);
 		// headlessPlayer.addMediaPlayerEventListener(new StreamMediaPlayerEventListener());
 	}
 
@@ -55,9 +58,8 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 		ServerMain.INVOKE_LOGGER.info("Unreferenced {}", this);
 		try
 		{
-			saveElapsedTime();
-			headlessPlayer.stop();
-			VlcManager.getInstance().returnPlayer(headlessPlayer);
+			saveElapsedTimeAndStop();
+			VlcManager.getInstance().releasePlayer(headlessPlayer);
 		}
 		catch (Exception e)
 		{
@@ -66,48 +68,87 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 	}
 
 	// --------------------------------------------------------------------------------
-	public String getMrlForClient()
+	public String getStreamTarget()
 	{
-		return mrlForClient;
+		return streamTarget;
+	}
+
+	public void setTranscodeOptions()
+	{
+
+	}
+
+	public void setTranscode(boolean doTranscode)
+	{
+
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public String setStreamTarget(String protocol, int port) throws ServerException
+	public String setAndGetStreamTarget(String protocol, int port, String vCodec, String aCodec, int vKBitRate, int aKBitRate, boolean audioSync,
+			boolean deinterlace) throws ServerException
 	{
 		try
 		{
-			String mrlForClient;
-			synchronized (headlessPlayer)
-			{
-				// stop playback
-				headlessPlayer.stop();
+			boolean transcode = true;
+			if (vCodec == null && aCodec == null)
+				transcode = false;
 
-				String clientHost = SessionImpl.getClientInetSocketAddress(session).getHostString();
-				String[] mediaOptions;
-				switch (protocol)
-				{
-					case "http":
+			protocol = protocol.toLowerCase();
+
+			String clientHost = SessionImpl.getClientInetSocketAddress(session).getHostString();
+			String[] mediaOptions;
+			String tmpStreamTarget;
+
+			switch (protocol)
+			{
+				case "http":
+					if (transcode)
+						mediaOptions = new String[] { formatHttpStream(clientHost, port, vCodec, aCodec, vKBitRate, aKBitRate, audioSync, deinterlace) };
+					else
 						mediaOptions = new String[] { formatHttpStream(clientHost, port) };
-						mrlForClient = new HttpMrl().host(clientHost).port(port).value();
-						break;
-					case "rtp":
+
+					tmpStreamTarget = new HttpMrl().host(clientHost).port(port).value();
+					break;
+
+				case "rtp":
+					if (transcode)
+					{
+						mediaOptions = new String[] {
+								formatRtpStream(clientHost, port, vCodec, aCodec, vKBitRate, aKBitRate, audioSync, deinterlace), ":no-sout-rtp-sap",
+								":no-sout-standard-sap", ":sout-all", ":sout-keep" };
+					}
+					else
+					{
 						mediaOptions = new String[] { formatRtpStream(clientHost, port), ":no-sout-rtp-sap", ":no-sout-standard-sap", ":sout-all",
 								":sout-keep" };
-						mrlForClient = new RtpMrl().multicastAddress(clientHost).port(port).value();
-						break;
-					case "rtsp":
-						mediaOptions = new String[] { formatRtspStream(clientHost, port, DEFAULT_RTSP_PATH), ":no-sout-rtp-sap",
-								":no-sout-standard-sap", ":sout-all", ":sout-keep" };
-						mrlForClient = new RtspMrl().host(clientHost).port(port).path(StreamMediaPlayer.DEFAULT_RTSP_PATH).value();
-						break;
-					default:
-						throw new UnsupportedOperationException("The protocol '" + protocol + "' is not supported! Valid are http, rtp, rtsp.");
-				}
-				headlessPlayer.setStandardMediaOptions(mediaOptions);
+					}
+
+					tmpStreamTarget = new RtpMrl().multicastAddress(clientHost).port(port).value();
+					break;
+
+				case "rtsp":
+					if (transcode)
+						throw new UnsupportedOperationException("Transcoding over RTSP not supported!");
+
+					mediaOptions = new String[] { formatRtspStream(clientHost, port, DEFAULT_RTSP_PATH), ":no-sout-rtp-sap", ":no-sout-standard-sap",
+							":sout-all", ":sout-keep" };
+					tmpStreamTarget = new RtspMrl().host(clientHost).port(port).path(StreamMediaPlayer.DEFAULT_RTSP_PATH).value();
+					break;
+
+				default:
+					throw new UnsupportedOperationException("The protocol '" + protocol + "' is not supported! Valid are http, rtp, rtsp.");
+			}
+			headlessPlayer.setStandardMediaOptions(mediaOptions);
+
+			synchronized (streamTarget)
+			{
+				streamTarget = tmpStreamTarget;
 			}
 
-			return mrlForClient;
+			ServerMain.INVOKE_LOGGER.info("{} set mediaOptions: {}, streamTarge: {}", new Object[] { session, Arrays.toString(mediaOptions),
+					streamTarget });
+			return streamTarget;
 		}
 		catch (Throwable t)
 		{
@@ -117,24 +158,49 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public void play() throws ServerException
+	public String setAndGetStreamTarget(String protocol, int port) throws ServerException
 	{
 		try
 		{
-			System.out.println("mrl: " + headlessPlayer.mrl());
-			System.out.println("isPlayable: " + headlessPlayer.isPlayable());
+			return setAndGetStreamTarget(protocol, port, null, null, -1, -1, false, false);
+		}
+		catch (Throwable t)
+		{
+			throw ServerUtil.logUserThrowable(this.toString(), t);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public boolean play() throws ServerException
+	{
+		try
+		{
+			// if playing
+			if (headlessPlayer.isPlaying())
+				return true;
+
+			// if paused
 			if (headlessPlayer.isPlayable())
 			{
 				headlessPlayer.play();
+				return true;
 			}
+			// if stopped or no media yet
 			else
 			{
-				if (headlessPlayer.mrl() != null)
+				try
+				{
 					startMedia(headlessPlayer.mrl());
-				else
-					ServerMain.INVOKE_LOGGER.warn("mrl = null");
+					return true;
+				}
+				// is thrown if no media yet
+				catch (java.lang.IllegalStateException ise)
+				{
+					ServerMain.INVOKE_LOGGER.warn(ise.toString());
+					return false;
+				}
 			}
-
 		}
 		catch (Throwable t)
 		{
@@ -149,9 +215,10 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 		try
 		{
 			Path absolutePath = NFileManager.getInstance().toValidatedAbsoluteServerPath(session, path, FileType.FILE, false);
-			String mrl = absolutePath.toUri().toString();
+
+			String mrl = NIOUtil.pathToUri(absolutePath);
 			startMedia(mrl);
-			ServerMain.INVOKE_LOGGER.info("Streaming {} to {} ", new Object[] { mrl, session });
+			ServerMain.INVOKE_LOGGER.info("Streaming {} to {} ({})", new Object[] { mrl, streamTarget, session });
 		}
 		catch (FileSystemException e)
 		{
@@ -167,12 +234,11 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public void stop() throws ServerException
+	public synchronized void stop() throws ServerException
 	{
 		try
 		{
-			saveElapsedTime();
-			headlessPlayer.stop();
+			saveElapsedTimeAndStop();
 		}
 		catch (Throwable t)
 		{
@@ -203,6 +269,13 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 
 	// --------------------------------------------------------------------------------
 	@Override
+	public void setTime(long time) throws ServerException
+	{
+		headlessPlayer.setTime(time);
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
 	public float getPosition()
 	{
 		return headlessPlayer.getPosition();
@@ -224,7 +297,7 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public RemoteMediaMeta getMediaMeta()
+	public MediaMeta getRemoteMediaMeta()
 	{
 		// no media available
 		if (!headlessPlayer.isPlayable())
@@ -237,44 +310,106 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 
 	public void doSth()
 	{
-
+		// headlessPlayer.
 	}
 
 	// --------------------------------------------------------------------------------
 	// -- Private Methods -------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private static String formatHttpStream(String serverAddress, int serverPort)
+	private static String formatHttpStream(String dstHost, int dstPort)
 	{
 		StringBuilder sb = new StringBuilder(60);
 		sb.append(":sout=#duplicate{dst=std{access=http,mux=ts,");
 		sb.append("dst=");
-		sb.append(serverAddress);
+		sb.append(dstHost);
 		sb.append(':');
-		sb.append(serverPort);
+		sb.append(dstPort);
 		sb.append("}}");
 		return sb.toString();
 	}
 
 	// --------------------------------------------------------------------------------
-	private static String formatRtpStream(String serverAddress, int serverPort)
+	private static String formatHttpStream(String dstHost, int dstPort, String vCodec, String aCodec, int vKBitRate, int aKBitRate,
+			boolean audioSync, boolean deinterlace)
+	{
+		StringBuilder sb = new StringBuilder(150);
+		sb.append(":sout=#transcode{");
+		sb.append("vcodec=");
+		sb.append(vCodec != null ? vCodec : "");
+		sb.append(",acodec=");
+		sb.append(aCodec != null ? aCodec : "");
+		sb.append(",vb=");
+		sb.append(vKBitRate > 1 ? vKBitRate + "" : "");
+		sb.append(",ab=");
+		sb.append(aKBitRate > 1 ? aKBitRate + "" : "");
+		if (audioSync)
+			sb.append(",audio-sync");
+		if (deinterlace)
+			sb.append(",deinterlace");
+		sb.append("}:standard{access=http,mux=ts");
+		sb.append(",dst=");
+		sb.append(dstHost);
+		sb.append(':');
+		sb.append(dstPort);
+		sb.append("}");
+		return sb.toString();
+
+		// codecs: http://wiki.videolan.org/Codec
+		// e.g.: vcodec: h264, mp4v acodec: mpga, mp3, a52 (DolbyDig)
+	}
+
+	// --------------------------------------------------------------------------------
+	private static String formatRtpStream(String dstHost, int dstPort)
 	{
 		StringBuilder sb = new StringBuilder(60);
 		sb.append(":sout=#rtp{dst=");
-		sb.append(serverAddress);
+		sb.append(dstHost);
 		sb.append(",port=");
-		sb.append(serverPort);
+		sb.append(dstPort);
 		sb.append(",mux=ts}");
 		return sb.toString();
 	}
 
 	// --------------------------------------------------------------------------------
-	private static String formatRtspStream(String serverAddress, int serverPort, String path)
+	private static String formatRtpStream(String dstHost, int dstPort, String vCodec, String aCodec, int vKBitRate, int aKBitRate, boolean audioSync,
+			boolean deinterlace)
+	{
+		if (vCodec == null)
+			vCodec = "";
+		if (aCodec == null)
+			aCodec = "";
+
+		StringBuilder sb = new StringBuilder(150);
+		sb.append(":sout=#transcode{");
+		sb.append("vcodec=");
+		sb.append(vCodec != null ? vCodec : "");
+		sb.append(",acodec=");
+		sb.append(aCodec != null ? aCodec : "");
+		sb.append(",vb=");
+		sb.append(vKBitRate > 1 ? vKBitRate + "" : "");
+		sb.append(",ab=");
+		sb.append(aKBitRate > 1 ? aKBitRate + "" : "");
+		if (audioSync)
+			sb.append(",audio-sync");
+		if (deinterlace)
+			sb.append(",deinterlace");
+		sb.append("}:rtp{mux=ts");
+		sb.append(",dst=");
+		sb.append(dstHost);
+		sb.append(",port=");
+		sb.append(dstPort);
+		sb.append("}");
+		return sb.toString();
+	}
+
+	// --------------------------------------------------------------------------------
+	private static String formatRtspStream(String dstHost, int dstPort, String path)
 	{
 		StringBuilder sb = new StringBuilder(60);
 		sb.append(":sout=#rtp{sdp=rtsp://@");
-		sb.append(serverAddress);
+		sb.append(dstHost);
 		sb.append(':');
-		sb.append(serverPort);
+		sb.append(dstPort);
 		sb.append(path);
 		sb.append("}");
 		return sb.toString();
@@ -285,26 +420,17 @@ public class StreamMediaPlayerImpl implements StreamMediaPlayer, Serializable, S
 	{
 		if (!headlessPlayer.startMedia(mrl))
 			throw new Exception("Media starting failed because of error: " + mrl);
-
-		System.out.println("startMedia(): " + headlessPlayer.isPlaying());
-		headlessPlayer.setMarqueeText("VLCJ is quite good");
-		headlessPlayer.setMarqueeSize(60);
-		headlessPlayer.setMarqueeOpacity(70);
-		headlessPlayer.setMarqueeColour(Color.green);
-		headlessPlayer.setMarqueeTimeout(3000);
-		headlessPlayer.setMarqueeLocation(300, 400);
-		headlessPlayer.enableMarquee(true);
 	}
 
 	// --------------------------------------------------------------------------------
-	private void saveElapsedTime() throws Exception
+	private void saveElapsedTimeAndStop() throws Exception
 	{
 		if (headlessPlayer.isPlayable())
-			VlcManager.getInstance().saveElapsedTime(headlessPlayer.mrl(), headlessPlayer.getTime());
+			NFileManager.getInstance().saveElapsedTime(headlessPlayer.mrl(), headlessPlayer.getTime());
 		else
-		{
-			System.out.println("saveElapsedTime(): No media available!");
-		}
+			ServerMain.INVOKE_LOGGER.warn("Did not save elapsed time. No media available!");
+
+		headlessPlayer.stop();
 	}
 
 	// --------------------------------------------------------------------------------

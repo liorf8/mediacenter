@@ -1,30 +1,22 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
-
 public class SQLCreateTables
 {
 	public static void main(String[] args) throws Exception
 	{
 		createTables(true);
 	}
-	
+
 	public static void createTables(boolean drop) throws Exception
 	{
-		DatabaseManager dbMan = null;
-		try
+		if (drop)
 		{
-			dbMan = DatabaseManager.getInstance();
-			if (drop)
-			{
-				dbMan.executeStatementAsDBA(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "DropTableUsers.sql"), void.class);
-			}
-			dbMan.executeStatementAsDBA(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "CreateTableUsers.sql"), void.class);
+			DatabaseManager.executeStatementAsDBA(DatabaseManager.getSQL("DropTableUsers.sql"), void.class);
+			DatabaseManager.executeStatementAsDBA(DatabaseManager.getSQL("DropTableMedia.sql"), void.class);
 		}
-		finally
-		{
-			if (dbMan != null)
-				dbMan.shutdown();
-		}
+		DatabaseManager.executeStatementAsDBA(DatabaseManager.getSQL("CreateTableUsers.sql"), void.class);
+		DatabaseManager.executeStatementAsDBA(DatabaseManager.getSQL("CreateTableMedia.sql"), void.class);
+		
+		System.out.println("done");
 	}
 }

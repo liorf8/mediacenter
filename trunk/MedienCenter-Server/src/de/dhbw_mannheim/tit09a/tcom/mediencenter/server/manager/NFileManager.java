@@ -3,8 +3,8 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -17,25 +17,32 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote.SessionImpl;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.NotRegularFileException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.PathFileInfo;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.SimpleFileReceiver;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.PathFileInfo;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.TimeValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ProgressUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
 import de.root1.simon.RawChannel;
-import de.root1.simon.RawChannelDataListener;
 import de.root1.simon.Simon;
 
 public class NFileManager extends Manager
@@ -53,6 +60,11 @@ public class NFileManager extends Manager
 		DIR, FILE, FILE_OR_DIR;
 	}
 
+	public static final byte			VALIDATED		= 0;
+	public static final byte			NO_SUCH_FILE	= 1;
+	public static final byte			NOT_DIRECTORY	= 2;
+	public static final byte			NOT_FILE		= 3;
+
 	public volatile static NFileManager	instance;
 
 	// --------------------------------------------------------------------------------
@@ -65,7 +77,10 @@ public class NFileManager extends Manager
 			synchronized (NFileManager.class)
 			{
 				if (instance == null)
+				{
 					instance = new NFileManager();
+					instance.start();
+				}
 			}
 		}
 		return instance;
@@ -74,7 +89,8 @@ public class NFileManager extends Manager
 	// --------------------------------------------------------------------------------
 	// -- Instance Variables ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public final Path	userFilesPath;
+	private final Path			userFilesPath;
+	private Map<String, Long>	elapsedTimeMap;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
@@ -84,8 +100,8 @@ public class NFileManager extends Manager
 		super(Level.ALL);
 
 		userFilesPath = ServerMain.SERVER_PATH.resolve("USER_FILES");
-
-		NIOUtil.createAllDirs(userFilesPath);
+		NIOUtil.createDirs(userFilesPath);
+		logger.info("User files @ {}", userFilesPath);
 	}
 
 	// --------------------------------------------------------------------------------
@@ -111,52 +127,66 @@ public class NFileManager extends Manager
 	// --------------------------------------------------------------------------------
 	public void createUserDirs(long id) throws IOException
 	{
-		NIOUtil.createDir(userFilesPath, id + "");
 		for (BasicDir oneDir : BasicDir.values())
 		{
-			NIOUtil.createDir(getUserRootPath(id), oneDir.toString());
+			NIOUtil.createDirs(getUserRootPath(id).resolve(oneDir.toString()));
 		}
 	}
 
 	// --------------------------------------------------------------------------------
-	public Path toValidatedAbsoluteServerPath(Session session, String uri, FileType expectedFileType, boolean needsWriteAccess)
+	public Path toValidatedAbsoluteServerPath(Session session, String relativeUserPath, FileType expectedFileType, boolean needsWriteAccess)
 			throws FileSystemException
 	{
-		logger.debug("ENTRY {} {} {} {}", new Object[] { session, uri, expectedFileType, needsWriteAccess });
+		logger.debug("ENTRY {} {} {} {}", new Object[] { session, relativeUserPath, expectedFileType, needsWriteAccess });
 
-		Path userFile = toAbsoluteServerPath(Paths.get(uri), session.getId());
-		logger.debug("userFile: {}", userFile);
+		Path absolutePath = toAbsoluteServerPath(Paths.get(relativeUserPath), session.getId());
+		logger.debug("absolutePath: {}", absolutePath);
 
 		// Check if user can access
-		if (!grantAccess(session, userFile, needsWriteAccess))
+		if (!grantAccess(session, absolutePath, needsWriteAccess))
 		{
 			if (needsWriteAccess)
-				throw new AccessDeniedException(uri, null, "write");
+				throw new AccessDeniedException(relativeUserPath, null, "write");
 			else
-				throw new AccessDeniedException(uri, null, "read");
+				throw new AccessDeniedException(relativeUserPath, null, "read");
 		}
 
 		// Check if file type equals expected file type
-		switch (validateFileType(userFile, expectedFileType))
+		switch (validateFileType(absolutePath, expectedFileType))
 		{
-			case 1:
-				throw new NoSuchFileException(uri);
-			case 2:
-				throw new NotDirectoryException(uri);
-			case 3:
-				throw new NotRegularFileException(uri);
+			case NO_SUCH_FILE:
+				throw new NoSuchFileException(relativeUserPath);
+			case NOT_DIRECTORY:
+				throw new NotDirectoryException(relativeUserPath);
+			case NOT_FILE:
+				throw new NotRegularFileException(relativeUserPath);
 		}
 
-		logger.debug("EXIT {}", userFile);
-		return userFile;
+		logger.debug("EXIT {}", absolutePath);
+		return absolutePath;
 	}
 
 	// --------------------------------------------------------------------------------
 	public List<FileInfo> listFileInfos(SessionImpl session, Path dir) throws IOException
 	{
-		ListFileInfosVisitor visitor = this.new ListFileInfosVisitor(session, dir);
+		ListFileInfosVisitor visitor = this.new ListFileInfosVisitor(session);
 		Files.walkFileTree(dir, EnumSet.noneOf(FileVisitOption.class), 1, visitor);
 		return visitor.getFileInfos();
+	}
+
+	// --------------------------------------------------------------------------------
+	public void saveElapsedTime(String mrl, long time)
+	{
+		logger.trace("{}=>{}", mrl, time);
+		elapsedTimeMap.put(mrl, time);
+	}
+
+	// --------------------------------------------------------------------------------
+	public long getElapsedTime(String mrl)
+	{
+		Long time = elapsedTimeMap.get(mrl);
+		logger.trace("{}={}", mrl, time);
+		return time == null ? -1L : time;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -165,15 +195,18 @@ public class NFileManager extends Manager
 	@Override
 	protected void onStart() throws Exception
 	{
-		// No resources to obtain.
-
+		elapsedTimeMap = Collections.synchronizedMap(readElapsedTimeFromDatabase(DatabaseManager.getInstance().getClientConnection()));
 	}
 
 	// --------------------------------------------------------------------------------
 	@Override
 	protected void onShutdown() throws Exception
 	{
-		// No resources to free.
+		if (elapsedTimeMap != null)
+		{
+			saveElapsedTimeToDatabase(DatabaseManager.getInstance().getClientConnection(), elapsedTimeMap);
+			elapsedTimeMap.clear();
+		}
 	}
 
 	// --------------------------------------------------------------------------------
@@ -210,21 +243,21 @@ public class NFileManager extends Manager
 	 */
 	private byte validateFileType(Path path, FileType expectedFileType)
 	{
-		logger.debug("ENTRY {} {}", new Object[] { path, expectedFileType });
+		logger.debug("checking {} {}", new Object[] { path, expectedFileType });
 		if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS))
-			return 1;
+			return NO_SUCH_FILE;
 		switch (expectedFileType)
 		{
 			case DIR:
 				if (!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS))
-					return 2;
+					return NOT_DIRECTORY;
 				break;
 			case FILE:
 				if (!NIOUtil.isRegularFile(path))
-					return 3;
+					return NOT_FILE;
 				break;
 		}
-		return 0;
+		return VALIDATED;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -240,7 +273,7 @@ public class NFileManager extends Manager
 	 */
 	private boolean grantAccess(Session session, Path path, boolean needsWriteAccess)
 	{
-		logger.debug("ENTRY {} {} {}", new Object[] { session, path, needsWriteAccess });
+		logger.debug("checking {} {} {}", new Object[] { session, path, needsWriteAccess });
 		if (!isWithinUserRoot(path, session.getId()))
 		{
 			logger.trace("Read access denied: isWithinUserRoot = false");
@@ -270,12 +303,10 @@ public class NFileManager extends Manager
 	{
 		private List<FileInfo>		infos	= null;
 		private final SessionImpl	session;
-		private final Path			parent;
 
-		public ListFileInfosVisitor(SessionImpl session, Path parent)
+		public ListFileInfosVisitor(SessionImpl session)
 		{
 			this.session = session;
-			this.parent = parent;
 		}
 
 		@Override
@@ -283,17 +314,12 @@ public class NFileManager extends Manager
 		{
 			if (infos == null)
 				infos = new ArrayList<>();
-			infos.add(new PathFileInfo(file, getUserRootPath(session.getId()), NIOUtil.probeContentType(file), attrs, grantAccess(session, file, true)));
-			return FileVisitResult.CONTINUE;
-		}
 
-		@Override
-		public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
-		{
-			if (infos == null)
-				infos = new ArrayList<>();
-			if (!dir.equals(parent)) // do not add the parent directory
-				infos.add(new PathFileInfo(dir, getUserRootPath(session.getId()), NIOUtil.probeContentType(dir), attrs, grantAccess(session, dir, true)));
+			PathFileInfo fi = new PathFileInfo(toRelativeUserPath(file, session.getId()), NIOUtil.probeContentType(file), attrs, grantAccess(session, file, true));
+			// Set the elapsed time if the mrl exists in map, otherwise -1L is returned
+			fi.setElapsedTime(getElapsedTime(NIOUtil.pathToUri(file)));
+			infos.add(fi);
+			
 			return FileVisitResult.CONTINUE;
 		}
 
@@ -345,64 +371,128 @@ public class NFileManager extends Manager
 	}
 
 	// --------------------------------------------------------------------------------
-	public class FileReceiver implements RawChannelDataListener
+	public class FileReceiver extends SimpleFileReceiver
 	{
-		private final Path			dest;
-		private final long			fileSize;
-		private WritableByteChannel	wbc;
-		private long				start;
+		private long	start;
+		private long	totalBytesWritten;
 
-		public FileReceiver(Path dest, long fileSize) throws IOException
+		public FileReceiver(Path dest, long fileSize, ExistOption option) throws FileAlreadyExistsException
 		{
-			logger.debug("ENTRY {} {}", dest, fileSize);
-			if (Files.exists(dest, LinkOption.NOFOLLOW_LINKS))
-			{
-				dest = NIOUtil.autoRename(dest);
-				logger.debug("Renamed to {}", dest);
-			}
-			if (fileSize == 0L)
-				throw new IllegalArgumentException("fileSize == 0. No data will be uploaded."); // TODO
-			this.fileSize = fileSize;
-			this.dest = dest;
+			super(dest, fileSize, option);
 		}
 
-		public void write(ByteBuffer data)
+		protected void onStarted(Path dest, long fileSize)
 		{
-			try
-			{
-				if (start <= 0)
-				{
-					start = System.currentTimeMillis();
-					logger.debug("Starting upload of {}", dest);
-					this.wbc = Files.newByteChannel(dest, EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE));
-				}
-				wbc.write(data);
-			}
-			catch (IOException ex)
-			{
-				ex.printStackTrace();
-			}
+			start = System.currentTimeMillis();
+			logger.debug("Starting upload of {}", dest);
 		}
 
-		public void close()
+		@Override
+		protected void onWritten(Path dest, int bytesWritten)
 		{
-			try
+			totalBytesWritten += bytesWritten;
+		}
+
+		@Override
+		protected void onClosed(Path dest)
+		{
+			if (logger.isDebugEnabled())
 			{
 				long duration = System.currentTimeMillis() - start;
-				if (logger.isDebugEnabled())
-					logger.debug(
-							"Successfully uploaded {} ({}) in {} -> {}/s)",
-							new Object[] { dest, ByteValue.bytesToString(fileSize), TimeValue.formatMillis(duration, true, false),
-									ByteValue.bytesToString((long) ProgressUtil.speed(fileSize, duration)) });
-				if (wbc != null)
+				logger.debug(
+						"Successfully uploaded {} ({}) in {} -> {}/s)",
+						new Object[] { dest, ByteValue.bytesToString(totalBytesWritten), TimeValue.formatMillis(duration, true, false),
+								ByteValue.bytesToString((long) ProgressUtil.speed(totalBytesWritten, duration)) });
+			}
+
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	// -- Private Methods -------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	private Map<String, Long> readElapsedTimeFromDatabase(Connection con) throws SQLException, IOException
+	{
+		Statement st = null;
+		ResultSet rs = null;
+		try
+		{
+			String sql = DatabaseManager.getSQL("PSSelectMedia.sql");
+			st = con.createStatement();
+			rs = st.executeQuery(sql);
+			HashMap<String, Long> map = new HashMap<>();
+			while (rs.next())
+			{
+				map.put(rs.getString("mrl"), rs.getLong("elapsed_time"));
+			}
+			logger.info("Read elapsedTimes: {}", map);
+			return map;
+		}
+		finally
+		{
+			DatabaseManager.close(st);
+			DatabaseManager.close(rs);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	private void saveElapsedTimeToDatabase(Connection con, Map<String, Long> elapsedTimeMap) throws SQLException, IOException
+	{
+		logger.info("Saving elapsedTimes: {}", elapsedTimeMap);
+
+		if (elapsedTimeMap.isEmpty())
+			return;
+
+		PreparedStatement psUpdate = null;
+		PreparedStatement psInsert = null;
+		try
+		{
+			psUpdate = con.prepareStatement(DatabaseManager.getSQL("PSUpdateMedia.sql"));
+
+			for (Map.Entry<String, Long> oneEntry : elapsedTimeMap.entrySet())
+			{
+				// Update
+				psUpdate.setLong(1, oneEntry.getValue());
+				psUpdate.setString(2, oneEntry.getKey());
+				logger.trace("psUpdate: {}", psUpdate);
+
+				int affectedRows = psUpdate.executeUpdate();
+				// If 0 rows were affected, the mrl was not inserted yet.
+				// Insert
+				if (affectedRows == 0)
 				{
-					wbc.close();
+					logger.info("Entry did not exist yet. Inserting {}={}", oneEntry.getKey(), oneEntry.getValue());
+
+					// Initializing the Prepared Statement
+					if (psInsert == null)
+						psInsert = con.prepareStatement(DatabaseManager.getSQL("PSInsertMedia.sql"));
+
+					psInsert.setString(1, oneEntry.getKey());
+					psInsert.setLong(2, oneEntry.getValue());
+					logger.trace("psInsert: {}", psInsert);
+
+					affectedRows = psInsert.executeUpdate();
+					if (affectedRows != 1)
+						throw new SQLException("Unexpected affectedRows on insert for " + oneEntry + ": " + affectedRows);
+				}
+				else if (affectedRows != 1)
+				{
+					throw new SQLException("Unexpected affectedRows on update for " + oneEntry + ": " + affectedRows);
 				}
 			}
-			catch (IOException ex)
-			{
-				ex.printStackTrace();
-			}
+
+			con.commit();
+		}
+		catch (Exception e)
+		{
+			logger.warn("Rolling back due to: " + e.toString());
+			DatabaseManager.rollback(con);
+			throw e;
+		}
+		finally
+		{
+			DatabaseManager.close(psUpdate);
+			DatabaseManager.close(psInsert);
 		}
 	}
 

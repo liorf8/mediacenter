@@ -18,12 +18,13 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeModel;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui.FileInfoTreeModel;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui.FileInfoTreeRenderer;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui.FileInfoTreeModel_alt;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui.FileInfoTreeRenderer_alt;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
 import de.root1.simon.Lookup;
 import de.root1.simon.Simon;
 
@@ -49,7 +50,7 @@ public class FileTreeTest
 			server = (Server) nameLookup.lookup(Server.BIND_NAME);
 
 			// create a callback object
-			ClientCallbackImpl clientCallbackImpl = new ClientCallbackImpl(frame);
+			DefaultClientCallback clientCallbackImpl = new DefaultClientCallback(frame);
 
 			// use the serverobject as it would exist on your local machine
 			server.register("Donald Duck", "daisy");
@@ -122,9 +123,9 @@ public class FileTreeTest
 					frame.setLayout(new BorderLayout());
 
 					// File homeDir = FileSystemView.getFileSystemView().getHomeDirectory();
-					TreeModel model = new FileInfoTreeModel();
+					TreeModel model = new FileInfoTreeModel_alt(session);
 					JTree tree = new JTree(model);
-					tree.setCellRenderer(new FileInfoTreeRenderer("Donald Duck"));
+					tree.setCellRenderer(new FileInfoTreeRenderer_alt(session));
 					tree.addTreeSelectionListener(new TreeSelectionListener()
 					{
 						@Override

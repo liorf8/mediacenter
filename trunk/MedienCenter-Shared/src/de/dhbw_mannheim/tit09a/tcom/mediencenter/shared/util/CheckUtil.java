@@ -5,9 +5,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class MiscUtil
+public class CheckUtil
 {
-	private MiscUtil()
+	private CheckUtil()
 	{
 
 	}

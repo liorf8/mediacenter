@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util;
 
 import java.io.IOException;
 import java.nio.file.CopyOption;
@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
 public class NIOUtil
 
 {
@@ -37,6 +39,45 @@ public class NIOUtil
 	public static String probeContentType(Path path) throws IOException
 	{
 		return Files.probeContentType(path);
+	}
+
+	// --------------------------------------------------------------------------------
+	public static String pathToUri(Path path)
+	{
+		return path.toUri().toString();
+	}
+
+	// --------------------------------------------------------------------------------
+	public static Path uriToPath(String mrl)
+	{
+		return Paths.get(mrl);
+	}
+
+	// --------------------------------------------------------------------------------
+	public static boolean isStreamable(String contentType)
+	{
+		if (contentType == null)
+			return false;
+
+		if (contentType.startsWith("audio") || contentType.startsWith("video"))
+			return true;
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------------
+	public static boolean isReadableImage(String contentType)
+	{
+		if (contentType == null)
+			return false;
+
+		for (String mimeType : ImageIO.getReaderMIMETypes())
+		{
+			if (contentType.equals(mimeType))
+				return true;
+		}
+
+		return false;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -156,11 +197,12 @@ public class NIOUtil
 	}
 
 	// --------------------------------------------------------------------------------
-	public static Path createAllDirs(Path dir) throws IOException
+	public static Path createDirs(Path dir) throws IOException
 	{
 		return Files.createDirectories(dir, new FileAttribute<?>[0]);
 	}
 
+	// --------------------------------------------------------------------------------
 	public static int copy(Path src, Path targetDir, boolean replace) throws IOException
 	{
 		CopyOption[] copyOptions;
@@ -232,7 +274,9 @@ public class NIOUtil
 	}
 
 	// --------------------------------------------------------------------------------
-	public static long fileTreeSize(Path dir) throws IOException
+	// -- Protected Methods -----------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	static long fileTreeSize(Path dir) throws IOException
 	{
 		if (!Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS))
 			return dir.toFile().length();
@@ -251,7 +295,7 @@ public class NIOUtil
 	 * @return
 	 * @throws IOException
 	 */
-	public static List<Path> listChildren(Path dir, int maxDepth) throws IOException
+	static List<Path> listChildren(Path dir, int maxDepth) throws IOException
 	{
 		ListChildrenVisitor visitor = new ListChildrenVisitor(dir);
 		Files.walkFileTree(dir, EnumSet.noneOf(FileVisitOption.class), maxDepth, visitor);
@@ -460,7 +504,7 @@ public class NIOUtil
 		String name = path.normalize().toString();
 		while (Files.exists(path, LinkOption.NOFOLLOW_LINKS))
 		{
-			if (name.indexOf('.') > 0) // has file ending
+			if (name.indexOf('.') > 0) // has file suffix (e.g. *.jpg)
 				path = Paths
 						.get(name.substring(0, name.lastIndexOf('.')) + " (" + (i++) + ")" + name.substring(name.lastIndexOf('.'), name.length()));
 			else

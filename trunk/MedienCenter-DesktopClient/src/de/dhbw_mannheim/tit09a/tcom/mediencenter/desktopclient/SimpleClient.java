@@ -29,6 +29,7 @@ import javax.swing.JComboBox;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
 import de.root1.simon.ClosedListener;
 import de.root1.simon.Lookup;
 import de.root1.simon.Simon;
@@ -40,7 +41,7 @@ public class SimpleClient
 	private static Server				server;
 	private static Session				session;
 	private static Lookup				nameLookup;
-	private static ClientCallbackImpl	callback;
+	private static DefaultClientCallback	callback;
 	public static JFrame						frame;
 	private JTextField					txtFldArgs;
 	private JComboBox<String>			comboBox;
@@ -74,7 +75,7 @@ public class SimpleClient
 				System.out.println("Closed!");
 			}
 		});
-		callback = new ClientCallbackImpl(frame);
+		callback = new DefaultClientCallback(frame);
 
 		EventQueue.invokeLater(new Runnable()
 		{

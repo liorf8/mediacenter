@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 
 public class BenchmarkGetSize
 {
@@ -13,6 +13,7 @@ public class BenchmarkGetSize
 	 * @param args
 	 * @throws IOException 
 	 */
+	@SuppressWarnings("deprecation")
 	public static void main(String[] args) throws IOException
 	{
 		Path path = Paths.get("C:\\Users\\Max\\Downloads\\himym.avi");

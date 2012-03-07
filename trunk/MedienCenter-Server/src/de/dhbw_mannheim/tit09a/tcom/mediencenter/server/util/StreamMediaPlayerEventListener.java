@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import uk.co.caprica.vlcj.binding.internal.libvlc_media_t;

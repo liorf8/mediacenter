@@ -2,7 +2,8 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.test.nio;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
+
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 
 public class NewFileManagerTest
 {

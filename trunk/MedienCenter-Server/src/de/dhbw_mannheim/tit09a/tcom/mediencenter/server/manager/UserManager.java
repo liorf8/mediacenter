@@ -17,8 +17,7 @@ import org.apache.commons.codec.binary.Base64;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.AuthenticationException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.KeyAlreadyExistsException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.KeyDoesNotExistException;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MiscUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.CheckUtil;
 
 /**
  * Class for user authentification.
@@ -88,7 +87,10 @@ public class UserManager extends Manager
 			synchronized (UserManager.class)
 			{
 				if (instance == null)
+				{
 					instance = new UserManager();
+					instance.start();
+				}
 			}
 		}
 		return instance;
@@ -130,7 +132,7 @@ public class UserManager extends Manager
 		ResultSet rs = null;
 		try
 		{
-			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSIdForLogin.sql"));
+			ps = con.prepareStatement(DatabaseManager.getSQL("PSSelectIdForLogin.sql"));
 			ps.setString(1, login);
 			logger.debug("PreparedStatement: {}", ps);
 			rs = ps.executeQuery();
@@ -160,7 +162,7 @@ public class UserManager extends Manager
 		ResultSet rs = null;
 		try
 		{
-			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSLoginForId.sql"));
+			ps = con.prepareStatement(DatabaseManager.getSQL("PSSelectLoginForId.sql"));
 			ps.setLong(1, id);
 			rs = ps.executeQuery();
 			String login = null;
@@ -269,7 +271,7 @@ public class UserManager extends Manager
 		try
 		{
 			// Input validation
-			MiscUtil.ensureValidString(newLogin, VALID_USERNAME);
+			CheckUtil.ensureValidString(newLogin, VALID_USERNAME);
 			if (!authenticate(con, id, pw))
 				throw new AuthenticationException(id + "", pw);
 
@@ -280,7 +282,7 @@ public class UserManager extends Manager
 				throw new KeyAlreadyExistsException("A user named " + newLogin + " already exists");
 
 			// Database query
-			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSChangeLogin.sql"));
+			ps = con.prepareStatement(DatabaseManager.getSQL("PSUpdateLogin.sql"));
 			ps.setString(1, newLogin);
 			ps.setLong(2, id);
 			int affectedRows = ps.executeUpdate();
@@ -320,15 +322,18 @@ public class UserManager extends Manager
 	 *             {@link UserManager#RNG_ALGORITHM} are not supported by the JVM.
 	 * @throws IOException
 	 *             If the SQL statement file could not be loaded successfully.
+	 * @throws KeyAlreadyExistsException
+	 *             If the login already exists.
 	 */
-	public long insertUser(Connection con, String login, String pw) throws SQLException, NoSuchAlgorithmException, IOException
+	public long insertUser(Connection con, String login, String pw) throws SQLException, NoSuchAlgorithmException, IOException,
+			KeyAlreadyExistsException
 	{
 		logger.debug("ENTER {} {} {}", new Object[] { con, login, pw });
 		PreparedStatement ps = null;
 		try
 		{
 			// Input validation
-			MiscUtil.ensureValidString(login, UserManager.VALID_USERNAME);
+			CheckUtil.ensureValidString(login, UserManager.VALID_USERNAME);
 
 			// Get the id for the login
 			long id;
@@ -338,14 +343,14 @@ public class UserManager extends Manager
 
 			// Compute digest and get generated salt
 			byte[] bSalt = generateByteArray(SALT_LENGTH);
-			byte[] bDigest = hash(pw, bSalt);
-			String digest = byteToURLSafeBase64(bDigest);
+			byte[] bHash = hash(pw, bSalt);
+			String hash = byteToURLSafeBase64(bHash);
 			String salt = byteToURLSafeBase64(bSalt);
 
 			// Database query
-			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSInsertUser.sql"));
+			ps = con.prepareStatement(DatabaseManager.getSQL("PSInsertUser.sql"));
 			ps.setString(1, login);
-			ps.setString(2, digest);
+			ps.setString(2, hash);
 			ps.setString(3, salt);
 			logger.trace("PreparedStatement: {}" + ps);
 			int affectedRows = ps.executeUpdate();
@@ -403,17 +408,17 @@ public class UserManager extends Manager
 			}
 
 			// Get the stored digest and salt
-			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSSelectPwSalt.sql"));
+			ps = con.prepareStatement(DatabaseManager.getSQL("PSSelectPwSalt.sql"));
 			ps.setLong(1, id);
 			logger.debug("PreparedStatement: {}", ps);
 			rs = ps.executeQuery();
-			String storedDigest, storedSalt;
+			String storedHash, storedSalt;
 			if (rs.next())
 			{
-				storedDigest = rs.getString("PW");
+				storedHash = rs.getString("PW");
 				storedSalt = rs.getString("SALT");
 				// DATABASE VALIDATION
-				if (storedDigest == null || storedSalt == null)
+				if (storedHash == null || storedSalt == null)
 					throw new SQLException("Database inconsistent: Salt or Digested Password altered for id: " + id);
 
 				// Should not happen, because login is the primary key
@@ -425,26 +430,26 @@ public class UserManager extends Manager
 				// TIME RESISTANT ATTACK (Even if the user does not exist the
 				// computation time is equal to the time needed for a legitimate user)
 				logger.debug("User did not exist: {}", id);
-				storedDigest = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+				storedHash = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 				storedSalt = "00000000000";
 				userExist = false;
 			}
-			byte[] bStoredDigest = base64ToByte(storedDigest);
+			byte[] bStoredHash = base64ToByte(storedHash);
 			byte[] bStoredSalt = base64ToByte(storedSalt);
 
 			// Compute the new digest
-			byte[] bProposedDigest = hash(pw, bStoredSalt);
+			byte[] bProposedHash = hash(pw, bStoredSalt);
 
 			if (logger.isDebugEnabled())
 			{
-				logger.debug("storedDigest: {} ({})", storedDigest, storedDigest.length());
+				logger.debug("storedHash: {} ({})", storedHash, storedHash.length());
 				logger.debug("storedSalt: {} ({})", storedSalt, storedSalt.length());
-				String proposedDigest = byteToURLSafeBase64(bProposedDigest);
-				logger.debug("Proposed Digest: {} ({})", proposedDigest, proposedDigest.length());
+				String proposedHash = byteToURLSafeBase64(bProposedHash);
+				logger.debug("proposedHash: {} ({})", proposedHash, proposedHash.length());
 			}
 
 			// Check for equality
-			authenticated = Arrays.equals(bProposedDigest, bStoredDigest) && userExist;
+			authenticated = Arrays.equals(bProposedHash, bStoredHash) && userExist;
 			logger.debug("EXIT {}", authenticated);
 			return authenticated;
 		}
@@ -487,18 +492,18 @@ public class UserManager extends Manager
 	 */
 	private byte[] hash(String pw, byte[] salt) throws NoSuchAlgorithmException, UnsupportedEncodingException
 	{
-		logger.debug("ENTER {} {} {}", new Object[] { pw, Arrays.toString(salt) });
+		logger.debug("ENTER {} {}", pw, Arrays.toString(salt));
 		MessageDigest digest = MessageDigest.getInstance(MSG_DIGEST_ALGORITHM);
 		digest.reset();
 		digest.update(salt);
-		byte[] input = digest.digest(pw.getBytes(CHARSET_NAME));
+		byte[] hash = digest.digest(pw.getBytes(CHARSET_NAME));
 		for (int i = 0; i < ITERATIONS; i++)
 		{
 			digest.reset();
-			input = digest.digest(input);
+			hash = digest.digest(hash);
 		}
-		logger.debug("EXIT {}", input);
-		return input;
+		logger.debug("EXIT {}", hash);
+		return hash;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -556,7 +561,7 @@ public class UserManager extends Manager
 			String salt = byteToURLSafeBase64(bSalt);
 
 			// Database query
-			ps = con.prepareStatement(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "PSSetPwSalt.sql"));
+			ps = con.prepareStatement(DatabaseManager.getSQL("PSUpdatePwSalt.sql"));
 			ps.setString(1, digest);
 			ps.setString(2, salt);
 			ps.setLong(3, id);

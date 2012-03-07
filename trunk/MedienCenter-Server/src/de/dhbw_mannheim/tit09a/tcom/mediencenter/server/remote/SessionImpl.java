@@ -3,8 +3,9 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.rmi.ServerException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -12,14 +13,14 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.DatabaseManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.UserManager;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.VlcManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager.FileType;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.NIOUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.ServerUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamMediaPlayer;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.SimpleFileReceiver.ExistOption;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 import de.root1.simon.Simon;
 import de.root1.simon.SimonUnreferenced;
 import de.root1.simon.annotation.SimonRemote;
@@ -115,7 +116,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	{
 		try
 		{
-			UserManager.getInstance().changeLogin(DatabaseManager.getInstance().getConnection(), id, newLogin, pw);
+			UserManager.getInstance().changeLogin(DatabaseManager.getInstance().getClientConnection(), id, newLogin, pw);
 		}
 		catch (IllegalArgumentException e)
 		{
@@ -134,7 +135,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	{
 		try
 		{
-			UserManager.getInstance().changePw(DatabaseManager.getInstance().getConnection(), id, newPw, currentPw);
+			UserManager.getInstance().changePw(DatabaseManager.getInstance().getClientConnection(), id, newPw, currentPw);
 		}
 		catch (IllegalArgumentException e)
 		{
@@ -149,11 +150,11 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public int deleteFile(String uri, boolean deleteNotEmptyDir) throws FileSystemException, ServerException
+	public int deleteFile(String Path, boolean deleteNotEmptyDir) throws FileSystemException, ServerException
 	{
 		try
 		{
-			Path fileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, uri, FileType.FILE_OR_DIR, true);
+			Path fileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, Path, FileType.FILE_OR_DIR, true);
 			return NIOUtil.delete(fileOrDir, deleteNotEmptyDir);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
@@ -169,12 +170,12 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public String renameFile(String uri, String newName) throws FileSystemException, ServerException
+	public String renameFile(String Path, String newName) throws FileSystemException, ServerException
 	{
 		try
 		{
 			// Check Arguments
-			Path fileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, uri, FileType.FILE_OR_DIR, true);
+			Path fileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, Path, FileType.FILE_OR_DIR, true);
 			return NFileManager.getInstance().toRelativeUserPath(NIOUtil.rename(fileOrDir, newName), id).toString();
 		}
 		catch (IllegalArgumentException | FileSystemException e)
@@ -188,13 +189,14 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		}
 	}
 
+	// --------------------------------------------------------------------------------
 	@Override
-	public int moveFile(String srcUri, String targetDirUri, boolean replace) throws FileSystemException, ServerException
+	public int moveFile(String srcPath, String targetDirPath, boolean replace) throws FileSystemException, ServerException
 	{
 		try
 		{
-			Path srcFileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, srcUri, FileType.FILE_OR_DIR, true);
-			Path targetDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, targetDirUri, FileType.DIR, false);
+			Path srcFileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, srcPath, FileType.FILE_OR_DIR, true);
+			Path targetDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, targetDirPath, FileType.DIR, false);
 			return NIOUtil.move(srcFileOrDir, targetDir, replace);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
@@ -210,12 +212,12 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public int copyFile(String srcUri, String targetDirUri, boolean replace) throws FileSystemException, ServerException
+	public int copyFile(String srcPath, String targetDirPath, boolean replace) throws FileSystemException, ServerException
 	{
 		try
 		{
-			Path srcFileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, srcUri, FileType.FILE_OR_DIR, true);
-			Path targetDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, targetDirUri, FileType.DIR, false);
+			Path srcFileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, srcPath, FileType.FILE_OR_DIR, true);
+			Path targetDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, targetDirPath, FileType.DIR, false);
 			return NIOUtil.copy(srcFileOrDir, targetDir, replace);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
@@ -231,11 +233,11 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public String createDir(String parentDirUri, String dirName) throws FileSystemException, ServerException
+	public String createDir(String parentDirPath, String dirName) throws FileSystemException, ServerException
 	{
 		try
 		{
-			Path parentDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, parentDirUri, FileType.DIR, false);
+			Path parentDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, parentDirPath, FileType.DIR, false);
 			return NFileManager.getInstance().toRelativeUserPath(NIOUtil.createDir(parentDir, dirName), id).toString();
 		}
 		catch (IllegalArgumentException | FileSystemException e)
@@ -251,11 +253,11 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public List<FileInfo> listFileInfos(String dirURI) throws FileSystemException, ServerException
+	public List<FileInfo> listFileInfos(String dirPath) throws FileSystemException, ServerException
 	{
 		try
 		{
-			Path dir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, dirURI, FileType.DIR, false);
+			Path dir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, dirPath, FileType.DIR, false);
 			return NFileManager.getInstance().listFileInfos(this, dir);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
@@ -271,15 +273,15 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public int prepareRawChannel(String destDirUri, String filename, long fileSize) throws FileSystemException, ServerException
+	public int prepareRawChannel(String destDirPath, String filename, long fileSize) throws FileSystemException, ServerException
 	{
 		try
 		{
 			NFileManager fileMan = NFileManager.getInstance();
-			Path destDir = fileMan.toValidatedAbsoluteServerPath(this, destDirUri, FileType.DIR, false);
+			Path destDir = fileMan.toValidatedAbsoluteServerPath(this, destDirPath, FileType.DIR, false);
 			Path destFile = destDir.resolve(filename);
 
-			return Simon.prepareRawChannel(fileMan.new FileReceiver(destFile, fileSize), this);
+			return Simon.prepareRawChannel(fileMan.new FileReceiver(destFile, fileSize, ExistOption.AUTO_RENAME), this);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
 		{
@@ -294,12 +296,12 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public void downloadFile(String uri) throws FileSystemException, ServerException
+	public void downloadFile(String path) throws FileSystemException, ServerException
 	{
 		try
 		{
 			NFileManager fileMan = NFileManager.getInstance();
-			Path file = fileMan.toValidatedAbsoluteServerPath(this, uri, FileType.FILE, true);
+			Path file = fileMan.toValidatedAbsoluteServerPath(this, path, FileType.FILE, false);
 			fileMan.sendFile(callback, file);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
@@ -312,17 +314,40 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 			throw ServerUtil.logUserThrowable(this.toString(), t);
 		}
 	}
+	
+
+	@Override
+	public byte[] getFileBytes(String path) throws FileSystemException, ServerException
+	{
+		try
+		{
+			Path file = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, path, FileType.FILE, false);
+			return Files.readAllBytes(file);
+		}
+		catch (IllegalArgumentException | FileSystemException e)
+		{
+			ServerMain.INVOKE_LOGGER.info("User " + this + " caused throw of:", e);
+			throw e;
+		}
+		catch (Throwable t)
+		{
+			throw ServerUtil.logUserThrowable(this.toString(), t);
+		}
+	}
+
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public StreamMediaPlayer getRemoteMediaPlayer(String protocol, int port) throws NoSuchElementException, ServerException
+	public synchronized StreamMediaPlayer getRemoteMediaPlayer() throws NoSuchElementException, ServerException
 	{
 		try
 		{
 			if (streamPlayer == null)
 			{
-				streamPlayer = new StreamMediaPlayerImpl(this, VlcManager.getInstance().borrowPlayer(), protocol, port);
+				streamPlayer = new StreamMediaPlayerImpl(this);
+				
 			}
+
 			return streamPlayer;
 		}
 		catch (NoSuchElementException nse)

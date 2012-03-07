@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingWorker;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.TimeValue;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ProgressUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.test.util.IntervalPropertyChangeListener;
 
 public class ReadInputStreamTask extends SwingWorker<Long, Map<Integer, String>>

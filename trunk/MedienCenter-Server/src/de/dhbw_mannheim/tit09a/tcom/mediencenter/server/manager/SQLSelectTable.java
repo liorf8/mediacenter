@@ -3,22 +3,25 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 
-
-public class SQLSelectUsers
+public class SQLSelectTable
 {
+	public static enum Table
+	{
+		Users, Media
+	};
+
 	public static void main(String[] args) throws Exception
 	{
-		selectUsers();
+		selectUsers(Table.Media);
 	}
-	
-	public static void selectUsers() throws Exception
+
+	public static void selectUsers(Table table) throws Exception
 	{
 		ResultSet rs = null;
-		DatabaseManager dbMan = null;
 		try
 		{
-			dbMan = DatabaseManager.getInstance();
-			rs = dbMan.executeStatementAsDBA("SELECT * FROM Users", ResultSet.class);
+			String sql = "SELECT * FROM " + table;
+			rs = DatabaseManager.executeStatementAsDBA(sql, ResultSet.class);
 			ResultSetMetaData rsMd = rs.getMetaData();
 			for (int i = 1; i <= rsMd.getColumnCount(); i++)
 			{
@@ -37,9 +40,6 @@ public class SQLSelectUsers
 		finally
 		{
 			DatabaseManager.close(rs);
-			if (dbMan != null)
-				dbMan.shutdown();
 		}
 	}
-
 }
