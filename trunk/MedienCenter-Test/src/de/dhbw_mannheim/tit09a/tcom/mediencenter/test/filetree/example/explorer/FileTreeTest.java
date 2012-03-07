@@ -18,43 +18,44 @@ import javax.swing.border.Border;
 public class FileTreeTest
 {
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) throws Exception
-    {
-	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-	final JFrame f = new JFrame("Datei auswählen");
-	f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-	final FileTree chooser = new FileTree();
-	chooser.setFileFilter(FileTree.ACCEPT_ALL_FILTER);
-	JScrollPane scrp = new JScrollPane(chooser);
-	Border empty = BorderFactory.createEmptyBorder(5, 5, 2, 5);
-	scrp.setBorder(BorderFactory.createCompoundBorder(empty, scrp.getBorder()));
-
-	JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-	bottom.add(new JButton(new AbstractAction("OK")
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) throws Exception
 	{
-	    private static final long serialVersionUID = -5534161705609979615L;
+		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		final JFrame f = new JFrame("Datei auswählen");
+		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-	    public void actionPerformed(ActionEvent e)
-	    {
-		File file = chooser.getSelectedFile();
-		String s = "'" + file + "'";
-		if (file == null) s = "nix";
-		JOptionPane.showMessageDialog(f, "Es wurde " + s + " selektiert.");
-		f.dispose();
-	    }
+		final FileTree chooser = new FileTree();
+		chooser.setFileFilter(FileTree.ACCEPT_ALL_FILTER);
+		JScrollPane scrp = new JScrollPane(chooser);
+		Border empty = BorderFactory.createEmptyBorder(5, 5, 2, 5);
+		scrp.setBorder(BorderFactory.createCompoundBorder(empty, scrp.getBorder()));
 
-	}));
+		JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		bottom.add(new JButton(new AbstractAction("OK")
+		{
+			private static final long	serialVersionUID	= -5534161705609979615L;
 
-	f.add(scrp);
-	f.add(bottom, BorderLayout.SOUTH);
+			public void actionPerformed(ActionEvent e)
+			{
+				File file = chooser.getSelectedFile();
+				String s = "'" + file + "'";
+				if (file == null)
+					s = "nix";
+				JOptionPane.showMessageDialog(f, "Es wurde " + s + " selektiert.");
+				f.dispose();
+			}
 
-	f.setSize(300, 400);
-	f.setLocationRelativeTo(null);
-	f.setVisible(true);
-    }
+		}));
+
+		f.add(scrp);
+		f.add(bottom, BorderLayout.SOUTH);
+
+		f.setSize(300, 400);
+		f.setLocationRelativeTo(null);
+		f.setVisible(true);
+	}
 
 }

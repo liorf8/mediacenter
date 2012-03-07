@@ -2,7 +2,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui;
 
 import javax.swing.JLabel;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.TimeValue;
 
 
 public class TimeLabel extends JLabel

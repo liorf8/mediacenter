@@ -1,0 +1,1 @@
+INSERT INTO Media (mrl, elapsed_time) VALUES (?,?);

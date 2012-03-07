@@ -21,15 +21,15 @@ public abstract class Manager
 	// --------------------------------------------------------------------------------
 	public static void shutdownManager(Manager man) throws Exception
 	{
-		if(man != null)
+		if (man != null)
 			man.shutdown();
 	}
-	
+
 	// --------------------------------------------------------------------------------
 	// -- Instance Variables ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	protected final Logger		logger				= LoggerFactory.getLogger(getClass().getName());
-	protected boolean			isRunning;
+	protected Logger	logger;
+	protected boolean	isRunning;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
@@ -39,78 +39,64 @@ public abstract class Manager
 		onBeforeSuperInit();
 
 		// Initialize Logger
+		logger = LoggerFactory.getLogger(getClass());
 		java.util.logging.Logger juLogger = java.util.logging.Logger.getLogger(getClass().getName());
 		if (MANAGERS_LOG_LVL == null)
 			juLogger.setLevel(logLvl);
 		else
 			juLogger.setLevel(MANAGERS_LOG_LVL);
 		juLogger.addHandler(new FileHandler(getClass().getName() + ".log", false));
-		logger.info("{} Logger started", this);
+		logger.debug("{} Logger started", this);
 	}
 
 	// --------------------------------------------------------------------------------
 	// -- Public Methods --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public final boolean isRunning()
+	public synchronized final boolean isRunning()
 	{
 		return isRunning;
 	}
 
 	// --------------------------------------------------------------------------------
-	public final void start() throws Exception
+	public synchronized final void start() throws Exception
 	{
-		synchronized (this)
+		if (!isRunning)
 		{
-			if (!isRunning)
-			{
-				isRunning = true;
-				long start = System.currentTimeMillis();
-				logger.debug("Starting {}", this);
-				onStart();
-				logger.info("Started {} in {}ms", this, (System.currentTimeMillis() - start));
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------------
-	public final void shutdown() throws Exception
-	{
-		synchronized (this)
-		{
-			if (isRunning)
-			{
-				isRunning = false;
-				long start = System.currentTimeMillis();
-				logger.debug("Shutting down {}", this);
-				onShutdown();
-				logger.info("Shut down {} in {}ms", this, (System.currentTimeMillis() - start));
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------------
-	public final void restart() throws Exception
-	{
-		synchronized (this)
-		{
+			isRunning = true;
 			long start = System.currentTimeMillis();
-			logger.debug("Restarting {}", this);
-			shutdown();
-			start();
-			logger.info("Restarted {} in {}ms", this, (System.currentTimeMillis() - start));
+			logger.debug("Starting {} ...", this.getClass().getSimpleName());
+			onStart();
+			logger.info("Started {} in {}ms", this.getClass().getSimpleName(), (System.currentTimeMillis() - start));
 		}
+	}
+
+	// --------------------------------------------------------------------------------
+	public synchronized final void shutdown() throws Exception
+	{
+		if (isRunning)
+		{
+			isRunning = false;
+			long start = System.currentTimeMillis();
+			logger.debug("Shutting down {} ...", this.getClass().getSimpleName());
+			onShutdown();
+			logger.info("Shut down {} in {}ms", this.getClass().getSimpleName(), (System.currentTimeMillis() - start));
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	public synchronized final void restart() throws Exception
+	{
+		long start = System.currentTimeMillis();
+		logger.debug("Restarting {} ...", this.getClass().getSimpleName());
+		shutdown();
+		start();
+		logger.info("Restarted {} in {}ms", this.getClass().getSimpleName(), (System.currentTimeMillis() - start));
 	}
 
 	// --------------------------------------------------------------------------------
 	public final Logger getLogger()
 	{
 		return logger;
-	}
-
-	// --------------------------------------------------------------------------------
-	public String toString()
-	{
-		return getClass().getSimpleName();
 	}
 
 	// --------------------------------------------------------------------------------
@@ -123,7 +109,7 @@ public abstract class Manager
 
 	// --------------------------------------------------------------------------------
 	/**
-	 * May be overwritten by extending classes.
+	 * May be overwritten by extending classes to execute code before the initialization of this class.
 	 * 
 	 * @throws Exception
 	 */

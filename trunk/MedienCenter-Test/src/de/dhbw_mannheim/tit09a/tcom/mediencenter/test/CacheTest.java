@@ -3,8 +3,8 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.test;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.FileInfoCache;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.PathFileInfo;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.FileInfoCache;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.PathFileInfo;
 
 public class CacheTest
 {

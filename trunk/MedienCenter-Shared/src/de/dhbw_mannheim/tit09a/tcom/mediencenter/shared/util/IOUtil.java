@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util;
 
 import java.io.BufferedReader;
 
@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
 
 public class IOUtil
 {
@@ -42,16 +43,29 @@ public class IOUtil
 		}
 		else
 		{
+			System.err.println("!!! InputStream was " + is);
 			return "";
 		}
 	}
 
 	// --------------------------------------------------------------------------------
-	public static String resourceToString(String path) throws IOException
+	/**
+	 * @param clazz The class which ClassLoader has access to the resource.
+	 * @param uri
+	 * @return
+	 * @throws IOException
+	 */
+	public static String resourceToString(Class<?> clazz, URI uri) throws IOException
 	{
-		return convertStreamToString(IOUtil.class.getResourceAsStream(path));
+		return resourceToString(clazz, uri.getPath());
 	}
-	
+
+	// --------------------------------------------------------------------------------
+	private static String resourceToString(Class<?> clazz, String path) throws IOException
+	{
+		return convertStreamToString(clazz.getResourceAsStream(path));
+	}
+
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
 	// --------------------------------------------------------------------------------

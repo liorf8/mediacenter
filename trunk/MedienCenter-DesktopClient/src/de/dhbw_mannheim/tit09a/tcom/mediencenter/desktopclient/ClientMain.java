@@ -1,6 +1,7 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
 import de.root1.simon.Lookup;
 import de.root1.simon.exceptions.EstablishConnectionFailed;
 
@@ -19,8 +20,8 @@ public class ClientMain
 			nameLookup = Simon.createNameLookup(Server.IP, Server.REGISTRY_PORT);
 			server = (Server) nameLookup.lookup(Server.BIND_NAME);
 			
-			server.login("Max", "pw", new ClientCallbackImpl(null));
-			server.login("Karo", "pw", new ClientCallbackImpl(null));
+			server.login("Max", "pw", new DefaultClientCallback(null));
+			server.login("Karo", "pw", new DefaultClientCallback(null));
 			while(true)
 			{
 				

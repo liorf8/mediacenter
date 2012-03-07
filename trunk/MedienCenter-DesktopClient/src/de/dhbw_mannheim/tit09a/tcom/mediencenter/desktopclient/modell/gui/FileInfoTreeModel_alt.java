@@ -5,23 +5,30 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.FileTreeTest;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.PathFileInfo;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.PathFileInfo;
 
 import java.nio.file.FileSystemException;
-import java.nio.file.Paths;
-import java.rmi.ServerException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
+import java.util.List;
 
-public class FileInfoTreeModel implements TreeModel
+public class FileInfoTreeModel_alt implements TreeModel
 {
 	private EventListenerList	listeners	= new EventListenerList();
+
+	private final Session		session;
+
+	public FileInfoTreeModel_alt(Session session)
+	{
+		this.session = session;
+	}
 
 	@Override
 	public Object getRoot()
 	{
 		System.out.println("getRoot()");
-		return new PathFileInfo(Paths.get(""), "root", true, 0L, System.currentTimeMillis(), true);
+		return new PathFileInfo("", "root_dir", true, 0L, System.currentTimeMillis(), true);
 	}
 
 	@Override
@@ -35,13 +42,13 @@ public class FileInfoTreeModel implements TreeModel
 	public Object getChild(Object parent, int index)
 	{
 		System.out.printf("getChild( %s, %d )%n", parent, index);
-
 		try
 		{
-			FileInfo[] children = FileTreeTest.getChildren((FileInfo) parent);
-			if (children == null)
+			String path = ((FileInfo) parent).getPath();
+			List<FileInfo> children = session.listFileInfos(path);
+			if (children.isEmpty())
 				return null;
-			return children[index];
+			return children.get(index);
 		}
 		catch (ServerException | IllegalArgumentException | FileSystemException e)
 		{
@@ -57,10 +64,11 @@ public class FileInfoTreeModel implements TreeModel
 		System.out.printf("getChildCount( %s )%n", parent);
 		try
 		{
-			FileInfo[] children = FileTreeTest.getChildren((FileInfo) parent);
-			if (children == null)
+			String path = ((FileInfo) parent).getPath();
+			List<FileInfo> children = session.listFileInfos(path);
+			if (children.isEmpty())
 				return 0;
-			return children.length;
+			return children.size();
 		}
 		catch (ServerException | IllegalArgumentException | FileSystemException e)
 		{
@@ -76,11 +84,12 @@ public class FileInfoTreeModel implements TreeModel
 
 		try
 		{
-			FileInfo[] children = FileTreeTest.getChildren((FileInfo) parent);
 			FileInfo childFileInfo = (FileInfo) child;
-			for (int i = 0; i < children.length; i++)
+			String path = ((FileInfo) parent).getPath();
+			List<FileInfo> children = session.listFileInfos(path);
+			for (int i = 0; i < children.size(); i++)
 			{
-				if (children[i].equals(childFileInfo))
+				if (children.get(i).equals(childFileInfo))
 				{
 					return i;
 				}

@@ -1,6 +1,6 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util;
 
-import java.rmi.ServerException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import de.root1.simon.SimonRegistryStatistics;

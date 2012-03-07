@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc;
 
 import java.text.DecimalFormat;
 
@@ -55,27 +55,6 @@ public class ByteValue
 		}
 	}
 
-	private long	bytes;
-
-	public ByteValue(long bytes)
-	{
-		this.bytes = bytes;
-	}
-
-	public void setBytes(long bytes)
-	{
-		this.bytes = bytes;
-	}
-
-	public long getBytes()
-	{
-		return this.bytes;
-	}
-
-	public float getBytes(ByteUnit unit)
-	{
-		return bytesToByteUnit(this.bytes, unit);
-	}
 
 	public static float bytesToByteUnit(long bytes, ByteUnit unit)
 	{
@@ -122,6 +101,29 @@ public class ByteValue
 		{
 			return bytesToByteUnitString(bytes, ByteUnit.BYTE, abbr);
 		}
+	}
+
+	
+	private long	bytes;
+
+	public ByteValue(long bytes)
+	{
+		this.bytes = bytes;
+	}
+
+	public void setBytes(long bytes)
+	{
+		this.bytes = bytes;
+	}
+
+	public long getBytes()
+	{
+		return this.bytes;
+	}
+
+	public float getBytes(ByteUnit unit)
+	{
+		return bytesToByteUnit(this.bytes, unit);
 	}
 
 	public String toString()

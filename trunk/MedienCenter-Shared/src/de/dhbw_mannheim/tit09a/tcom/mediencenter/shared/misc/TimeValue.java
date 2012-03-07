@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc;
 
 import java.util.concurrent.TimeUnit;
 

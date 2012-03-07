@@ -1,15 +1,14 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc;
 
 import java.awt.Component;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 
@@ -18,24 +17,23 @@ import javax.swing.SwingUtilities;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ByteValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.SimpleFileReceiver.ExistOption;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.ProgressUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
 import de.root1.simon.RawChannel;
-import de.root1.simon.RawChannelDataListener;
 import de.root1.simon.Simon;
 import de.root1.simon.annotation.SimonRemote;
+import de.root1.simon.exceptions.SimonException;
 
 // mark this class as a remote class and export all methods known in ClientCallbackInterface
 @SimonRemote(value = { ClientCallback.class })
-public class ClientCallbackImpl implements ClientCallback
+public class DefaultClientCallback implements ClientCallback
 {
-
 	@SuppressWarnings("unused")
 	private static final long	serialVersionUID	= 1L;
 
-	private final Component parentComponent;
-	public ClientCallbackImpl(Component parentComponent)
+	private final Component		parentComponent;
+
+	public DefaultClientCallback(Component parentComponent)
 	{
 		this.parentComponent = parentComponent;
 	}
@@ -53,9 +51,9 @@ public class ClientCallbackImpl implements ClientCallback
 		});
 	}
 
-	public int prepareRawChannel(String filename, long fileSize)
+	public int prepareRawChannel(String filename, long fileSize) throws SimonException, FileAlreadyExistsException
 	{
-		return Simon.prepareRawChannel(this.new FileReceiver(new File(filename), fileSize), this);
+		return Simon.prepareRawChannel(this.new FileReceiver(Paths.get(filename), fileSize, ExistOption.AUTO_RENAME), this);
 	}
 
 	// --------------------------------------------------------------------------------
@@ -96,57 +94,38 @@ public class ClientCallbackImpl implements ClientCallback
 		}
 	}
 
-	public class FileReceiver implements RawChannelDataListener
+	// --------------------------------------------------------------------------------
+	public class FileReceiver extends SimpleFileReceiver
 	{
-		private FileChannel	fc;
-		private long		fileSize;
-		private File		dest;
-		private long		start;
-
-		FileReceiver(File dest, long fileSize)
+		public FileReceiver(Path dest, long fileSize, ExistOption option) throws FileAlreadyExistsException
 		{
-			this.fileSize = fileSize;
-			this.dest = dest;
+			super(dest, fileSize, option);
 		}
 
-		public void write(ByteBuffer data)
+		private long	totalBytesWritten;
+		private long	start;
+
+		@Override
+		protected void onStarted(Path dest, long fileSize)
 		{
-			try
-			{
-				if (start <= 0)
-				{
-					start = System.currentTimeMillis();
-					System.out.println("Starting download of " + dest);
-					this.fc = new FileOutputStream(dest).getChannel();
-				}
-				fc.write(data);
-				System.out.println(data);
-			}
-			catch (IOException ex)
-			{
-				ex.printStackTrace();
-			}
+			start = System.currentTimeMillis();
+			System.out.println(dest + " started: " + ByteValue.bytesToString(fileSize));
 		}
 
-		public void close()
+		@Override
+		protected void onWritten(Path dest, int bytesWritten)
 		{
-			try
-			{
-				long duration = System.currentTimeMillis() - start;
-				System.out.println(String.format("Successfully downloaded %s (%s) in %s -> %s/s)", dest, ByteValue.bytesToString(fileSize),
-						TimeValue.formatMillis(duration, true, false), ByteValue.bytesToString((long) ProgressUtil.speed(fileSize, duration))));
-				fc.close();
-			}
-			catch (IOException ex)
-			{
-				ex.printStackTrace();
-			}
+			totalBytesWritten += bytesWritten;
+			System.out.println(dest + " written: " + bytesWritten);
 		}
-	}
 
-	@Override
-	public int getStreamingPort()
-	{
-		return 5555;
+		@Override
+		protected void onClosed(Path dest)
+		{
+			long duration = System.currentTimeMillis() - start;
+			System.out.println(String.format("%s successfully downloaded (%s in %s -> %s/s)", dest, ByteValue.bytesToString(totalBytesWritten),
+					TimeValue.formatMillis(duration, true, false), ByteValue.bytesToString((long) ProgressUtil.speed(totalBytesWritten, duration))));
+		}
+
 	}
 }

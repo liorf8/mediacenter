@@ -5,100 +5,158 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
 
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.UIManager;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 
 import com.sun.jna.NativeLibrary;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.gui.FileInfoTree;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamMediaPlayer;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.TimeValue;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
 import de.root1.simon.ClosedListener;
 import de.root1.simon.Lookup;
 import de.root1.simon.Simon;
+import de.root1.simon.exceptions.EstablishConnectionFailed;
+import de.root1.simon.exceptions.LookupFailedException;
 
 import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.MediaPlayer;
+import uk.co.caprica.vlcj.player.embedded.DefaultFullScreenStrategy;
+import uk.co.caprica.vlcj.player.embedded.FullScreenStrategy;
 import uk.co.caprica.vlcj.runtime.windows.WindowsRuntimeUtil;
 
 public class SimpleStreamClient
 {
-	private static Lookup						nameLookup		= null;
-	private static Server						server			= null;
-	private static StreamMediaPlayer			remotePlayer	= null;
+	private static Lookup					nameLookup		= null;
+	private static Server					server			= null;
+	private static Session					session;
+	private static StreamMediaPlayer		remotePlayer	= null;
 
-	private static final String					protocol		= "http";
-	private static final int					port			= 5555;
-	private static final String					path			= "cougar2x20.mkv";
+	private static final String				protocol		= "http";
+	private static final int				port			= 8080;
+	private static String					streamPath;
 
-	private final JFrame						frame;
+	private JFrame							frame;
 
-	private final JPanel						contentPane;
-	private final JButton						btnPlay;
-	private final JButton						btnPause;
-	private final JButton						btnStop;
+	private JTabbedPane						tabbedPane;
 
-	private final EmbeddedMediaPlayerComponent	mediaPlayerComponent;
+	private JPanel							mediaTab;
+	private JButton							btnPlay;
+	private JButton							btnPause;
+	private JButton							btnStop;
+	private JToggleButton					btnToggleFullScreen;
+
+	private JPanel							fileTreeTab;
+	private JButton							btnPlayPath;
+	private JTextField						txtFldPath;
+	private JLabel							lblFileInfo;
+	private JTextField						txtFldElapsedTime;
+
+	private EmbeddedMediaPlayerComponent	mediaPlayerComponent;
 
 	public static void main(String[] args)
 	{
 		try
 		{
-			String vlcInstallDir = WindowsRuntimeUtil.getVlcInstallDir();
-			if (vlcInstallDir == null)
-				vlcInstallDir = "D:\\mhertram\\VLCPortable\\App\\vlc";
-			NativeLibrary.addSearchPath("libvlc", vlcInstallDir);
-			NativeLibrary.addSearchPath("libvlccore", vlcInstallDir);
+			initSimon();
 
-			nameLookup = Simon.createNameLookup(Server.IP, Server.REGISTRY_PORT);
-			server = (Server) nameLookup.lookup(Server.BIND_NAME);
-			nameLookup.addClosedListener(server, new ClosedListener()
-			{
-				public void closed()
-				{
-					System.out.println("Closed!");
-				}
-			});
-
-			ClientCallbackImpl callback = new ClientCallbackImpl(null);
-			// server.register("Max", "pw");
-			Session session = (Session) server.login("Max", "pw", callback);
-			remotePlayer = session.getRemoteMediaPlayer(protocol, port);
-			final String streamPath = remotePlayer.getMrlForClient();
-			// remotePlayer.clearList();
-			remotePlayer.play(path);
+			initVlc();
 
 			SwingUtilities.invokeLater(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					SimpleStreamClient client = new SimpleStreamClient();
-					client.start(streamPath);
+					new SimpleStreamClient();
 				}
 			});
 
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			exit();
 		}
 	}
 
+	private static void initVlc()
+	{
+		String vlcInstallDir = WindowsRuntimeUtil.getVlcInstallDir();
+		if (vlcInstallDir == null)
+			vlcInstallDir = "D:\\mhertram\\VLCPortable\\App\\vlc";
+		NativeLibrary.addSearchPath("libvlc", vlcInstallDir);
+		NativeLibrary.addSearchPath("libvlccore", vlcInstallDir);
+	}
+
+	private static void initSimon() throws UnknownHostException, LookupFailedException, EstablishConnectionFailed
+	{
+		nameLookup = Simon.createNameLookup(Server.IP, Server.REGISTRY_PORT);
+		server = (Server) nameLookup.lookup(Server.BIND_NAME);
+		nameLookup.addClosedListener(server, new ClosedListener()
+		{
+			public void closed()
+			{
+				System.out.println("Closed!");
+			}
+		});
+
+		DefaultClientCallback callback = new DefaultClientCallback(null);
+		// server.register("Max", "pw");
+		session = (Session) server.login("Max", "pw", callback);
+		remotePlayer = session.getRemoteMediaPlayer();
+		streamPath = remotePlayer.setAndGetStreamTarget(protocol, port, "h264", "a52", 1024, 192, false, false);
+	}
+
 	private SimpleStreamClient()
 	{
-		System.out.println("init");
+		try
+		{
+			System.out.println("init " + getClass().getSimpleName());
 
-		frame = new JFrame(this.getClass().getSimpleName());
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+			frame = createFrame();
+
+			mediaTab = createMediaPanel();
+			fileTreeTab = createFileTreePanel();
+			tabbedPane = createTabbedPane();
+			frame.setContentPane(tabbedPane);
+
+			frame.setVisible(true);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			if (mediaPlayerComponent != null)
+				mediaPlayerComponent.release();
+			exit();
+		}
+	}
+
+	private JFrame createFrame()
+	{
+		JFrame frame = new JFrame(this.getClass().getSimpleName());
 		frame.setLocation(100, 100);
 		frame.setSize(640, 480);
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -113,84 +171,174 @@ public class SimpleStreamClient
 			}
 		});
 
-		contentPane = new JPanel();
-		contentPane.setLayout(new BorderLayout());
-		contentPane.setBackground(Color.black);
-		frame.setContentPane(contentPane);
+		return frame;
+	}
+
+	private JTabbedPane createTabbedPane()
+	{
+		JTabbedPane pane = new JTabbedPane();
+		pane = new JTabbedPane();
+		pane.add(mediaTab, "Media");
+		pane.add(fileTreeTab, "FileTree");
+		return pane;
+	}
+
+	private JPanel createMediaPanel()
+	{
+		JPanel mediaPanel = new JPanel();
+		mediaPanel.setLayout(new BorderLayout());
+		mediaPanel.setBackground(Color.black);
 
 		// Create a media player instance (in this example an embedded media player)
 		mediaPlayerComponent = new EventHandlingEmbeddedMediaPlayerComponent();
-		contentPane.add(mediaPlayerComponent, BorderLayout.CENTER);
+		mediaPanel.add(mediaPlayerComponent, BorderLayout.CENTER);
 
 		JPanel btnPanel = new JPanel();
 		btnPanel.setMinimumSize(new Dimension(500, 100));
-		btnPlay = new JButton("Play");
-		btnPlay.addActionListener(new ActionListener()
+		btnPlay = new JButton(new AbstractAction("Play")
 		{
+			private static final long	serialVersionUID	= 1L;
+
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				try
+				System.out.println("[play]");
+				if (remotePlayer.play())
 				{
-					remotePlayer.play();
-					System.out.println(TimeValue.formatMillis(remotePlayer.getLength()));
 					if (!mediaPlayerComponent.getMediaPlayer().isPlayable())
 					{
 						mediaPlayerComponent.getMediaPlayer().playMedia(mediaPlayerComponent.getMediaPlayer().mrl());
 					}
 				}
-				catch (Exception e1)
-				{
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
 			}
 		});
 
-		btnPause = new JButton("Pause");
-		btnPause.addActionListener(new ActionListener()
+		btnPause = new JButton(new AbstractAction("Pause")
 		{
+			private static final long	serialVersionUID	= 1L;
+
 			public void actionPerformed(ActionEvent e)
 			{
-				try
-				{
-					remotePlayer.pause();
-				}
-				catch (Exception e1)
-				{
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				remotePlayer.pause();
 			}
 		});
-		btnStop = new JButton("Stop");
-		btnStop.addActionListener(new ActionListener()
+		btnStop = new JButton(new AbstractAction("Stopp")
 		{
+			private static final long	serialVersionUID	= 1L;
+
 			public void actionPerformed(ActionEvent e)
 			{
-				try
-				{
-					remotePlayer.stop();
-				}
-				catch (Exception e1)
-				{
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				remotePlayer.stop();
 			}
 		});
+		btnToggleFullScreen = new JToggleButton(new AbstractAction("FullScreen")
+		{
+			private static final long	serialVersionUID	= 1L;
+
+			public void actionPerformed(ActionEvent e)
+			{
+				mediaPlayerComponent.getMediaPlayer().toggleFullScreen();
+			}
+		});
+
 		btnPanel.add(btnPlay);
 		btnPanel.add(btnPause);
 		btnPanel.add(btnStop);
-		contentPane.add(btnPanel, BorderLayout.SOUTH);
+		btnPanel.add(btnToggleFullScreen);
+		mediaPanel.add(btnPanel, BorderLayout.SOUTH);
 
-		frame.setVisible(true);
+		return mediaPanel;
 	}
 
-	// --------------------------------------------------------------------------------
-	private void start(String mrl)
+	private JPanel createFileTreePanel()
 	{
-		System.out.println("Playing: " + mrl);
-		mediaPlayerComponent.getMediaPlayer().playMedia(mrl);
+		JPanel treePanel = new JPanel(new BorderLayout());
+		lblFileInfo = new JLabel("");
+		treePanel.add(lblFileInfo, BorderLayout.NORTH);
+
+		JTree fileTree = createTree();
+		treePanel.add(new JScrollPane(fileTree), BorderLayout.CENTER);
+
+		JPanel treeButtonPanel = new JPanel();
+		btnPlayPath = new JButton(new AbstractAction("Play Path")
+		{
+			private static final long	serialVersionUID	= 1L;
+
+			public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					mediaPlayerComponent.getMediaPlayer().playMedia(streamPath);
+					remotePlayer.play(getTxtFldPathText());
+					remotePlayer.setTime(getTxtFldElapsedTimeText());
+				}
+				catch (Exception e1)
+				{
+					e1.printStackTrace();
+				}
+			}
+		});
+		treeButtonPanel.add(btnPlayPath);
+
+		txtFldPath = new JTextField();
+		txtFldPath.setColumns(25);
+		treeButtonPanel.add(txtFldPath);
+
+		treeButtonPanel.add(new JLabel("start at"));
+
+		txtFldElapsedTime = new JTextField();
+		txtFldElapsedTime.setColumns(15);
+		treeButtonPanel.add(txtFldElapsedTime);
+		treeButtonPanel.add(new JLabel("ms"));
+
+		treePanel.add(treeButtonPanel, BorderLayout.SOUTH);
+
+		return treePanel;
+	}
+
+	private JTree createTree()
+	{
+		final FileInfoTree tree = new FileInfoTree(session);
+		tree.addTreeSelectionListener(new TreeSelectionListener()
+		{
+			@Override
+			public void valueChanged(TreeSelectionEvent evt)
+			{
+				FileInfo fi = tree.getSelectedFileInfo();
+				if (fi != null)
+				{
+					setTxtFldPathText(fi.getPath());
+					setLblFileInfo(fi.toString(true));
+					setTxtFldElapsedTimeText(fi.getElapsedTime());
+				}
+			}
+		});
+		return tree;
+	}
+
+	private void setTxtFldPathText(String text)
+	{
+		txtFldPath.setText(text);
+	}
+
+	private String getTxtFldPathText()
+	{
+		return txtFldPath.getText();
+	}
+
+	private void setTxtFldElapsedTimeText(long text)
+	{
+		txtFldElapsedTime.setText(text + "");
+	}
+
+	private long getTxtFldElapsedTimeText()
+	{
+		return Long.parseLong(txtFldElapsedTime.getText());
+	}
+
+	private void setLblFileInfo(String info)
+	{
+		lblFileInfo.setText(info);
 	}
 
 	// --------------------------------------------------------------------------------
@@ -219,6 +367,12 @@ public class SimpleStreamClient
 		{
 			System.out.println("videoOutput: " + newCount);
 			new GetVideoDimensionTask(mediaPlayer, canvas).execute();
+		}
+
+		@Override
+		protected FullScreenStrategy onGetFullScreenStrategy()
+		{
+			return new UnDecoratingFullScreenStrategy(frame);
 		}
 
 		@Override
@@ -308,6 +462,27 @@ public class SimpleStreamClient
 			{
 				e.printStackTrace();
 			}
+		}
+	}
+
+	private class UnDecoratingFullScreenStrategy extends DefaultFullScreenStrategy
+	{
+		public UnDecoratingFullScreenStrategy(JFrame frame)
+		{
+			super(frame);
+		}
+
+		@Override
+		protected void onBeforeEnterFullScreenMode()
+		{
+			// frame.setContentPane(mediaTab);
+		}
+
+		@Override
+		protected void onAfterExitFullScreenMode()
+		{
+			// tabbedPane = createTabbedPane();
+			// frame.setContentPane(tabbedPane);
 		}
 	}
 

@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.DatabaseManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.UserManager;
 
@@ -23,7 +22,7 @@ public class SimpleQuery
 			dbMan = DatabaseManager.getInstance();
 			System.out.println("Gotten instance in " + (System.currentTimeMillis() - start));
 
-			Connection con = dbMan.getConnection();
+			Connection con = dbMan.getClientConnection();
 			start = System.currentTimeMillis();
 			for(int i=0; i<100; i++)
 			{

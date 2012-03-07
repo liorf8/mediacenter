@@ -2,8 +2,6 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager;
 
 import java.sql.SQLException;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.IOUtil;
-
 public class SQLCreateClientUser
 {
 	public static void main(String[] args) throws Exception
@@ -13,28 +11,19 @@ public class SQLCreateClientUser
 
 	public static void createClientUser(boolean drop) throws Exception
 	{
-		DatabaseManager dbMan = null;
-		try
+		if (drop)
 		{
-			dbMan = DatabaseManager.getInstance();
-			if (drop)
+			try
 			{
-				try
-				{
-					dbMan.executeStatementAsDBA(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "DropClientUser.sql"), void.class);
-				}
-				catch (SQLException e)
-				{
-					System.out.println("Did not need to drop User CLIENT. Seems to have not existed: " +e);
-				}
+				DatabaseManager.executeStatementAsDBA(DatabaseManager.getSQL("DropClientUser.sql"), void.class);
 			}
-			dbMan.executeStatementAsDBA(IOUtil.resourceToString(DatabaseManager.SQL_STMTS_PATH + "CreateClientUser.sql"), void.class);
+			catch (SQLException e)
+			{
+				System.out.println("Did not need to drop User CLIENT. Seems to have not existed: " + e);
+			}
 		}
-		finally
-		{
-			if (dbMan != null)
-				dbMan.shutdown();
-		}
+		DatabaseManager.executeStatementAsDBA(DatabaseManager.getSQL("CreateClientUser.sql"), void.class);
+		
+		System.out.println("done");
 	}
-
 }

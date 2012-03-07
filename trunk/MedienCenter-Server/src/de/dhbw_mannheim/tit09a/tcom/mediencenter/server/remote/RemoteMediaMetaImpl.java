@@ -5,14 +5,13 @@ import java.awt.image.BufferedImage;
 import java.io.Serializable;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.RemoteMediaMeta;
 import de.root1.simon.SimonUnreferenced;
 import de.root1.simon.annotation.SimonRemote;
 
 import uk.co.caprica.vlcj.player.MediaMeta;
 
-@SimonRemote(value = { RemoteMediaMeta.class })
-public class RemoteMediaMetaImpl implements Serializable, RemoteMediaMeta, SimonUnreferenced
+@SimonRemote(value = { MediaMeta.class })
+public class RemoteMediaMetaImpl implements Serializable, MediaMeta, SimonUnreferenced
 {
 	static final long	serialVersionUID	= -1945641832827532027L;
 	private MediaMeta	mediaMeta;
@@ -40,7 +39,6 @@ public class RemoteMediaMetaImpl implements Serializable, RemoteMediaMeta, Simon
 	public void parse()
 	{
 		mediaMeta.parse();
-
 	}
 
 	@Override
