@@ -2,8 +2,11 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.ServerMain;
 import uk.co.caprica.vlcj.binding.internal.libvlc_media_t;
+import uk.co.caprica.vlcj.player.AudioTrackInfo;
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventListener;
+import uk.co.caprica.vlcj.player.TrackInfo;
+import uk.co.caprica.vlcj.player.VideoTrackInfo;
 
 public class StreamMediaPlayerEventListener implements MediaPlayerEventListener
 {
@@ -35,7 +38,31 @@ public class StreamMediaPlayerEventListener implements MediaPlayerEventListener
 	@Override
 	public void playing(MediaPlayer mediaPlayer)
 	{
-		// TODO Auto-generated method stub
+		System.out.println("playing() " + mediaPlayer);
+		for(TrackInfo ti : mediaPlayer.getTrackInfo())
+		{
+			System.out.println("TrackInfo:");
+			System.out.println(ti.codec());
+			System.out.println(ti.codecName());
+			System.out.println(ti.level());
+			System.out.println(ti.profile());
+			
+			if(ti instanceof VideoTrackInfo)
+			{
+				System.out.println("VideoTrackInfo:");
+				VideoTrackInfo vti = (VideoTrackInfo) ti;
+				System.out.println(vti.width() + "x" + vti.height());
+			}
+			else if(ti instanceof AudioTrackInfo)
+			{
+				System.out.println("AudioTrackInfo:");
+				AudioTrackInfo ati = (AudioTrackInfo) ti;
+				System.out.println(ati.channels());
+				System.out.println(ati.rate());
+			}
+
+		}
+
 
 	}
 

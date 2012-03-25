@@ -35,8 +35,8 @@ public class Server
 		}
 		// some mechanism to shutdown the server should be placed here
 		// this should include the following command:
-		registry.unbind("server");
-		registry.stop();
+		//registry.unbind("server");
+		//registry.stop();
 	}
 
 }

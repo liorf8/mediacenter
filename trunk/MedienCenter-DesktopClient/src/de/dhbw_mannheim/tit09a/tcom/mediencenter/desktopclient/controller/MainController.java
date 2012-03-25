@@ -1,147 +1,198 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller;
 
-import javax.swing.JOptionPane;
+import java.awt.EventQueue;
+import java.awt.Window;
+import java.lang.reflect.InvocationTargetException;
+
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateConnected;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateDisconnected;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateLoggedIn;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnection;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionImpl;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionState;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateListener;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
 
-public class MainController
+public class MainController implements SimonConnectionStateListener
 {
-    // --------------------------------------------------------------------------------
-    // -- Class Variable(s) -----------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    private static MainController instance;
-    public static enum  OS { WIN, NUX, NIX, MAC, OTHER };
-    
-    // --------------------------------------------------------------------------------
-    // -- Instance Variable(s) --------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    private boolean is64BitVM;
-    public OS operatingSystem;
+	// --------------------------------------------------------------------------------
+	// -- Static Variables ------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	private static volatile MainController	instance;
 
-    // --------------------------------------------------------------------------------
-    // -- Constructor(s) --------------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    private MainController()
-    {
-	try
+	// --------------------------------------------------------------------------------
+	// -- Static Methods --------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	public static MainController getInstance()
 	{
-	    checkStartConditions();
-	    applyLookNFeel();
-	    MainFrame.getInstance();
+		if (instance == null)
+		{
+			synchronized (MainController.class)
+			{
+				if (instance == null)
+				{
+					instance = new MainController();
+				}
+			}
+		}
+		return instance;
 	}
-	catch (Exception e)
-	{
-	    e.printStackTrace();
-	    System.exit(1);
-	}
-    }
 
-    // --------------------------------------------------------------------------------
-    // -- Public Method(s) ------------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    public static MainController getInstance()
-    {
-	if (instance == null)
-	{
-	    return instance = new MainController();
-	}
-	return instance;
-    }
+	// --------------------------------------------------------------------------------
+	// -- Instance Variables ----------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	public final Logger			logger	= LoggerFactory.getLogger(this.getClass());
 
-    // --------------------------------------------------------------------------------
-    public boolean is64BitVM()
-    {
-	return is64BitVM;
-    }
+	private MainFrame			mainFrame;
+	private SimonConnectionImpl	simonConnection;
+	private ClientCallback		callback;
 
-    // --------------------------------------------------------------------------------
-    public OS getOs()
-    {
-	return operatingSystem;
-    }
-    
-    // --------------------------------------------------------------------------------
-    // -- Private Method(s) -----------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    private void checkStartConditions()
-    {
-	//Operating System
-	operatingSystem = checkOs();
-	System.out.println("Betriebssystem: "+operatingSystem);
-	    
-	// Java VM
-	is64BitVM = check64BitVM();
-	if (is64BitVM)
+	// --------------------------------------------------------------------------------
+	// -- Constructors ----------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	public MainController()
 	{
-	    JOptionPane.showMessageDialog(null,
-		    "Bitte starten Sie dieses Programm mit einer 32-bit Java VM.",
-		    "Keine 64-bit Java VM unterstützt", JOptionPane.ERROR_MESSAGE);
-	    System.exit(1);
-	}
-	
-	// VLC
-	if(VLCController.getVLCInstallDir() == null)
-	{
-	    JOptionPane.showMessageDialog(null,
-		    "Bitte installieren Sie die 32-bit-Version von VLC.",
-		    "Keine VLC-Installation gefunden", JOptionPane.ERROR_MESSAGE);
-	    System.exit(1); 
-	}
-    }
+		try
+		{
+			callback = new DefaultClientCallback(mainFrame);
+			simonConnection = new SimonConnectionImpl();
+			simonConnection.addStateListener(this);
 
-    // --------------------------------------------------------------------------------
-    private boolean check64BitVM()
-    {
-	String vmName = System.getProperty("java.vm.name");
-	System.out.println("VM@" + vmName);
-	if (vmName.indexOf("64") > 0)
-	{
-	    return true;
+			setLookAndFeel();
+			buildMainFrame().setVisible(true);
+		}
+		catch (Throwable t)
+		{
+			System.err.println("Exception while initializing:");
+			t.printStackTrace();
+			System.exit(1);
+		}
 	}
-	return false;
-    }
-    
-    // --------------------------------------------------------------------------------
-    private OS checkOs()
-    {
-	String os = System.getProperty("os.name").toLowerCase();
-	if(os.indexOf("win") >= 0)
-	{
-	    return OS.WIN;
-	}
-	else if(os.indexOf("nix") >= 0)
-	{
-	    return OS.NIX;
-	}
-	else if(os.indexOf("nux") >= 0)
-	{
-	    return OS.NUX;
-	}
-	else if(os.indexOf("mac") >= 0)
-	{
-	    return OS.MAC;
-	}
-	else
-	{
-	    return OS.OTHER;
-	}
-    }
 
-    // --------------------------------------------------------------------------------
-    private static void applyLookNFeel()
-    {
-	try
+	// --------------------------------------------------------------------------------
+	// -- Public Methods --------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	public SimonConnection getSimonConnection()
 	{
-	    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-	    System.out.println(" + System Look'n'Feel applied!");
+		return simonConnection;
 	}
-	catch (Exception e)
+
+	// --------------------------------------------------------------------------------
+	public ClientCallback getClientCallback()
 	{
-	    System.err.println("Error while trying to apply system Look'n'Feel: " + e);
+		return callback;
 	}
-    }
-    // --------------------------------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    // --------------------------------------------------------------------------------
+
+	// --------------------------------------------------------------------------------
+	public void exit()
+	{
+		try
+		{
+			System.out.println("exit() @" + Thread.currentThread());
+			simonConnection.disconnect();
+			disposeWindow(mainFrame);
+			System.exit(0);
+		}
+		catch (Throwable t)
+		{
+			System.err.println("Exception while exiting:");
+			t.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	// -- Private Methods -------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	private void setLookAndFeel() throws InvocationTargetException, InterruptedException
+	{
+		EventQueue.invokeAndWait(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+					// "javax.swing.plaf.metal.MetalLookAndFeel")
+					// "com.sun.java.swing.plaf.motif.MotifLookAndFeel");
+					// UIManager.getCrossPlatformLookAndFeelClassName());
+					// UIManager.getSystemLookAndFeelClassName()
+				}
+				catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	// --------------------------------------------------------------------------------
+	private MainFrame buildMainFrame() throws InvocationTargetException, InterruptedException
+	{
+		EventQueue.invokeAndWait(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				mainFrame = new MainFrame();
+			}
+		});
+		return mainFrame;
+	}
+
+	// --------------------------------------------------------------------------------
+	private void disposeWindow(final Window window) throws InvocationTargetException, InterruptedException
+	{
+		EventQueue.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				if (window != null)
+					window.dispose();
+			}
+		});
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public void stateChanged(SimonConnectionState oldState, SimonConnectionState newState)
+	{
+		System.out.println("stateChanged(): " + oldState.getClass().getSimpleName() + " -> " + newState.getClass().getSimpleName() + " @"
+				+ Thread.currentThread());
+
+		if (newState instanceof SimonConnectionStateDisconnected)
+		{
+			mainFrame.setLoggedIn(false);
+		}
+		else if (newState instanceof SimonConnectionStateConnected)
+		{
+
+		}
+		else if (newState instanceof SimonConnectionStateLoggedIn)
+		{
+			mainFrame.setLoggedIn(true);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	// -- Main Method -----------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	public static void main(String[] args)
+	{
+		MainController.getInstance();
+	}
+
+	// --------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------
 }

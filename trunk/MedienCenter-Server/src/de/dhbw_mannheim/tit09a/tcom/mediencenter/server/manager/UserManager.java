@@ -334,6 +334,8 @@ public class UserManager extends Manager
 		{
 			// Input validation
 			CheckUtil.ensureValidString(login, UserManager.VALID_USERNAME);
+			if(pw.isEmpty())
+				throw new IllegalArgumentException("Empty password");
 
 			// Get the id for the login
 			long id;

@@ -6,6 +6,7 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.Authenticatio
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.KeyAlreadyExistsException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Alle Pfadangaben sind relative Pfadangaben ausgehend vom Root-Verzeichnis des jeweiligen Users. Um dieses anzugeben, einfach einen leeren String
@@ -16,6 +17,8 @@ import java.util.List;
  */
 public interface Session
 {
+	public boolean isValid();
+	
 	/**
 	 * @return Die ID des Users.
 	 */
@@ -184,10 +187,24 @@ public interface Session
 	public byte[] getFileBytes(String path) throws FileSystemException, ServerException;
 
 	/**
-	 * Gibt den der Session zugeordneten MediaPlayer zurück.
+	 * Gibt den der Session zugeordneten StreamPlayer zurück.
 	 * 
-	 * @return Die der Session zugeordnete Instanz des {@link StreamMediaPlayer}s.
+	 * @return Die der Session zugeordnete Instanz des StreamPlayers.
+	 * @throws NoSuchElementException
 	 * @throws ServerException
 	 */
-	public StreamMediaPlayer getRemoteMediaPlayer() throws ServerException;
+	public StreamPlayer getStreamPlayer() throws NoSuchElementException, ServerException;
+
+	/**
+	 * Gibt den der Session zugeordnete InfoPlayer zurück. Der InfoPlayer dient zum Abrufen von ID3-Tags und anderen Metainformationen wie Länge,
+	 * Audio/Video-Spuren, und Kodierung. Er ist eine eigene MediaPlayer-Instanz und unabhängig vom StreamPlayer, damit letzterer weiter wiedergeben
+	 * kann, während Infos gelesen werden.
+	 * 
+	 * @returnDie der Session zugeordnete Instanz des InfoPlayers.
+	 * @throws NoSuchElementException
+	 * @throws ServerException
+	 */
+	public InfoPlayer getInfoPlayer() throws NoSuchElementException, ServerException;
+
+	public void logout();
 }

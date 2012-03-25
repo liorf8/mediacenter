@@ -77,7 +77,7 @@ public abstract class FileInfo
 
 	public final String toString()
 	{
-		return toString(false);
+		return String.format("FileInfo[" + getPath() + "]");
 	}
 
 	/**
@@ -88,9 +88,16 @@ public abstract class FileInfo
 	public final String toString(boolean full)
 	{
 		if (!full)
-			return String.format("FileInfo[" + getPath() + "]");
+			return toString();
 		else
-			return String.format("FileInfo[pa=%s,ct=%s,dr=%s,fs=%d,lm=%d,md=%s,et=%d,it=%d]", getPath(), getContentType(), isDir(), getSize(),
-					getLastModified(), isModifiable(), getElapsedTime(), getInfoTime());
+			return String.format("FileInfo[path=%s,contentType=%s,dir=%s,size=%d,lastModified=%d,modifiable=%s,elapsedTime=%d,infoTime=%d]",
+					getPath(),
+					getContentType(),
+					isDir(),
+					getSize(),
+					getLastModified(),
+					isModifiable(),
+					getElapsedTime(),
+					getInfoTime());
 	}
 }

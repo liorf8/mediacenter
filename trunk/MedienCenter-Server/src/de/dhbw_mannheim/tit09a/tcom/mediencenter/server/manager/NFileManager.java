@@ -173,6 +173,14 @@ public class NFileManager extends Manager
 		Files.walkFileTree(dir, EnumSet.noneOf(FileVisitOption.class), 1, visitor);
 		return visitor.getFileInfos();
 	}
+	
+	// --------------------------------------------------------------------------------
+	public List<FileInfo> listAllFileInfos(SessionImpl session, Path dir) throws IOException
+	{
+		ListFileInfosVisitor visitor = this.new ListFileInfosVisitor(session);
+		Files.walkFileTree(dir, EnumSet.noneOf(FileVisitOption.class), Integer.MAX_VALUE, visitor);
+		return visitor.getFileInfos();
+	}
 
 	// --------------------------------------------------------------------------------
 	public void saveElapsedTime(String mrl, long time)
@@ -186,7 +194,7 @@ public class NFileManager extends Manager
 	{
 		Long time = elapsedTimeMap.get(mrl);
 		logger.trace("{}={}", mrl, time);
-		return time == null ? -1L : time;
+		return time != null ? time : -1L;
 	}
 
 	// --------------------------------------------------------------------------------

@@ -21,6 +21,11 @@ public class TimeValue
 		return formatMillis(totalMillis, omitZeroDaysAndHours, omitMillis);
 	}
 
+	public long extractPartial(TimeUnit unit)
+	{
+		return extractPartial(totalMillis, unit);
+	}
+
 	public static String formatMillis(long millis)
 	{
 		return formatMillis(millis, true, true);
@@ -31,8 +36,11 @@ public class TimeValue
 		String formattedString;
 
 		// e.g. 00:23:00,001 or 100:23:00,001
-		formattedString = String.format("%02d:%02d:%02d:%02d", extractPartial(millis, TimeUnit.DAYS), extractPartial(millis, TimeUnit.HOURS),
-				extractPartial(millis, TimeUnit.MINUTES), extractPartial(millis, TimeUnit.SECONDS));
+		formattedString = String.format("%02d:%02d:%02d:%02d",
+				extractPartial(millis, TimeUnit.DAYS),
+				extractPartial(millis, TimeUnit.HOURS),
+				extractPartial(millis, TimeUnit.MINUTES),
+				extractPartial(millis, TimeUnit.SECONDS));
 
 		if (omitZeroDaysAndHours)
 		{
