@@ -12,7 +12,7 @@ public class SQLSelectTable
 
 	public static void main(String[] args) throws Exception
 	{
-		selectUsers(Table.Media);
+		selectUsers(Table.Users);
 	}
 
 	public static void selectUsers(Table table) throws Exception

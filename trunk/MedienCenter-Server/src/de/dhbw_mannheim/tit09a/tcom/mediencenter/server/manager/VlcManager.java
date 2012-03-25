@@ -9,6 +9,7 @@ import uk.co.caprica.vlcj.binding.LibVlcFactory;
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.headless.HeadlessMediaPlayer;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 import uk.co.caprica.vlcj.runtime.windows.WindowsRuntimeUtil;
 import uk.co.caprica.vlcj.version.LibVlcVersion;
 
@@ -58,9 +59,9 @@ public class VlcManager extends Manager
 			vlcInstallDir = "D:\\mhertram\\VLCPortable\\App\\vlc";
 		logger.info("VLC install dir: {}", vlcInstallDir);
 
-		// Locate the dll's
-		NativeLibrary.addSearchPath("libvlc", vlcInstallDir);
-		NativeLibrary.addSearchPath("libvlccore", vlcInstallDir);
+		// Locate the dll's (libvlc.dll and libvlccore.dll on Windows)
+		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), vlcInstallDir);
+		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcCoreName(), vlcInstallDir);
 		logger.info("libvlc version: {}", LibVlcVersion.getVersion());
 
 		// Create a libvlc factory
@@ -73,13 +74,16 @@ public class VlcManager extends Manager
 	// --------------------------------------------------------------------------------
 	public HeadlessMediaPlayer buildHeadlessPlayer()
 	{
-		return mediaPlayerFactory.newHeadlessMediaPlayer();
+		HeadlessMediaPlayer newPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
+		logger.debug("Creating new player: {}" + newPlayer);
+		return newPlayer;
 	}
-
+	
 	// --------------------------------------------------------------------------------
-	public void releasePlayer(MediaPlayer player)
+	public static void releasePlayer(MediaPlayer player)
 	{
-		player.release();
+		if (player != null)
+			player.release();
 	}
 
 	// --------------------------------------------------------------------------------
@@ -100,7 +104,6 @@ public class VlcManager extends Manager
 		if (mediaPlayerFactory != null)
 			mediaPlayerFactory.release();
 	}
-	
 
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------

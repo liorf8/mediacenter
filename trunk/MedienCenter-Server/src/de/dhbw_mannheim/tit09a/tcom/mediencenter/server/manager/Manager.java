@@ -41,10 +41,12 @@ public abstract class Manager
 		// Initialize Logger
 		logger = LoggerFactory.getLogger(getClass());
 		java.util.logging.Logger juLogger = java.util.logging.Logger.getLogger(getClass().getName());
+		
 		if (MANAGERS_LOG_LVL == null)
 			juLogger.setLevel(logLvl);
 		else
 			juLogger.setLevel(MANAGERS_LOG_LVL);
+		
 		juLogger.addHandler(new FileHandler(getClass().getName() + ".log", false));
 		logger.debug("{} Logger started", this);
 	}
@@ -115,7 +117,7 @@ public abstract class Manager
 	 */
 	protected void onBeforeSuperInit() throws Exception
 	{
-
+		// overwrite if you need to
 	}
 
 	// --------------------------------------------------------------------------------

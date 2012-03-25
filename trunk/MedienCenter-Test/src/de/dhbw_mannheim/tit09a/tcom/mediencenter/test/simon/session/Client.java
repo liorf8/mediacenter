@@ -23,9 +23,10 @@ public class Client
 
 	// use the serverobject as it would exist on your local machine
 	System.out.println(Thread.currentThread() + ": Logging in ...");
-	Session mySession = server.login("Donald Duck", clientCallbackImpl);
+	Session mySession = server.login("Donald Duck2", clientCallbackImpl);
 	mySession.doSomething();
-	mySession = server.login("Donald Duck2", clientCallbackImpl);
+	
+	nameLookup.release(mySession);
 	// do some more stuff
 	// ...
 	while(true)

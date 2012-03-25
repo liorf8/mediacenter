@@ -5,6 +5,7 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerExcepti
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
@@ -63,16 +64,16 @@ public class ServerImpl implements Server
 		{
 			long id = -1L;
 			Connection con = DatabaseManager.getInstance().getClientConnection();
-			NFileManager fileMan = NFileManager.getInstance();
 			try
 			{
 				// Insert user if does not exist
 				id = UserManager.getInstance().insertUser(con, login, pw);
 
 				// Create User's Dirs
-				fileMan.createUserDirs(id);
+				NFileManager.getInstance().createUserDirs(id);
 
-				con.commit(); // IMPORTANT! Is not done inside insertUser()!
+				// IMPORTANT! Is not done inside insertUser() because if directory could not be created registration fails and a rollback is needed!
+				con.commit();
 				return id;
 			}
 			catch (Exception e)
@@ -187,12 +188,17 @@ public class ServerImpl implements Server
 	}
 
 	// --------------------------------------------------------------------------------
+	Iterator<SessionImpl> getSessions()
+	{
+		return userSessions.iterator();
+	}
+	
+	// --------------------------------------------------------------------------------
 	// TODO maybe never used in the end
-	@SuppressWarnings("unused")
-	private SessionImpl getSession(String sessionId)
+	SessionImpl getSession(String sessionId)
 	{
 		ServerMain.INVOKE_LOGGER.debug("ENTRY {}", sessionId);
-		synchronized (userSessions)
+		synchronized (userSessions) // sync because iterations are not synced in a Vector
 		{
 			ServerMain.INVOKE_LOGGER.debug("userSessions: {}", userSessions);
 			for (SessionImpl oneSession : userSessions)
@@ -208,7 +214,7 @@ public class ServerImpl implements Server
 		ServerMain.INVOKE_LOGGER.debug("EXIT null");
 		return null;
 	}
-	
+
 	// --------------------------------------------------------------------------------
 	// -- Private Methods -------------------------------------------------------------
 	// --------------------------------------------------------------------------------
@@ -216,7 +222,7 @@ public class ServerImpl implements Server
 	{
 		ServerMain.INVOKE_LOGGER.debug("ENTRY {}", id);
 		List<InetSocketAddress> addresses = null;
-		synchronized (userSessions)
+		synchronized (userSessions) // sync because iterations are not synced in a Vector
 		{
 			for (SessionImpl oneSession : userSessions)
 			{

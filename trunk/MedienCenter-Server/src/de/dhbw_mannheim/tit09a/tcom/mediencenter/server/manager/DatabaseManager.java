@@ -19,14 +19,17 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 public class DatabaseManager extends Manager
 {
 	// --------------------------------------------------------------------------------
-	// -- Static Variable(s) ----------------------------------------------------------
+	// -- Static Variables ------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	public static URI	SQL_PACKAGE;
 	static
 	{
 		try
 		{
-			SQL_PACKAGE = new URI("../sql/");
+			// TODO relative links do not work in jar files
+			// Does not work in jar: SQL_PACKAGE = new URI("../sql/");
+			SQL_PACKAGE = new URI("/de/dhbw_mannheim/tit09a/tcom/mediencenter/server/sql/");
+
 		}
 		catch (URISyntaxException e)
 		{
@@ -102,7 +105,12 @@ public class DatabaseManager extends Manager
 	// --------------------------------------------------------------------------------
 	public static String getSQL(String sqlFileName) throws IOException
 	{
-		return IOUtil.resourceToString(DatabaseManager.class, DatabaseManager.SQL_PACKAGE.resolve(sqlFileName));
+		String sql = IOUtil.resourceToString(DatabaseManager.class, DatabaseManager.SQL_PACKAGE.resolve(sqlFileName));
+		if (sql == null || sql.isEmpty())
+			ServerMain.SERVER_LOGGER.error("Reading sql String of file '{}' returned null or empty: '{}'",
+					DatabaseManager.SQL_PACKAGE.resolve(sqlFileName),
+					sql);
+		return sql;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -157,7 +165,7 @@ public class DatabaseManager extends Manager
 	{
 		// Fix for: Sadly the logger of HSQL sets global Formatter.
 		// So only warning and severe messages are displayed in a shortened format.
-		// And all loggers initialized before this command never log anything more.
+		// And all loggers initialized before this command never log anything anymore.
 		System.setProperty("hsqldb.reconfig_logging", "false");
 	}
 
@@ -189,12 +197,13 @@ public class DatabaseManager extends Manager
 	static <T> T executeStatementAsDBA(String sql, Class<T> returnType) throws SQLException
 	{
 		Connection con = null;
+		Statement stmt = null;
 		try
 		{
 			T returnObj = null;
 			con = getConnection(URL, DBA_USER, DBA_PW);
 			con.setAutoCommit(false);
-			Statement stmt = con.createStatement();
+			stmt = con.createStatement();
 			if (returnType.equals(Void.class) || returnType.equals(void.class))
 			{
 				stmt.execute(sql);
@@ -212,11 +221,10 @@ public class DatabaseManager extends Manager
 			}
 			else
 			{
-				throw new IllegalArgumentException("Operation for " + returnType + " not supported.");
+				throw new UnsupportedOperationException("Operation for " + returnType + " not supported.");
 			}
 			con.commit();
 			return returnObj;
-
 		}
 		catch (SQLException e)
 		{
@@ -226,6 +234,7 @@ public class DatabaseManager extends Manager
 		}
 		finally
 		{
+			close(stmt);
 			if (con != null)
 			{
 				con.close();

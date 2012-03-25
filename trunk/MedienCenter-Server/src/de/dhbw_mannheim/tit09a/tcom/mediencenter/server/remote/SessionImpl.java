@@ -17,7 +17,8 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager.Fil
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.ServerUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamMediaPlayer;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.InfoPlayer;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamPlayer;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.SimpleFileReceiver.ExistOption;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
@@ -49,7 +50,10 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	private final ClientCallback	callback;
 	private final String			sessionId;
 	private final ServerImpl		server;
-	private StreamMediaPlayerImpl	streamPlayer;
+	private StreamPlayerImpl		streamPlayer;
+	private InfoPlayerImpl			infoPlayer;
+
+	private volatile boolean		isValid	= true;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructor(s) --------------------------------------------------------------
@@ -74,19 +78,27 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		try
 		{
 			// important to let the server do this, because he gets closed
-			server.removeUserSession(this);
+			logout();
 		}
 		catch (Exception e)
 		{
-			ServerMain.INVOKE_LOGGER.error("Unreferencing of " + this + " failed", e);
+			ServerMain.INVOKE_LOGGER.warn("Unreferencing of " + this + " failed", e);
 		}
 	}
 
 	// Overriding Session
 	// --------------------------------------------------------------------------------
 	@Override
+	public boolean isValid()
+	{
+		return isValid;
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
 	public long getId()
 	{
+		checkValid();
 		return id;
 	}
 
@@ -94,6 +106,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public String getLogin()
 	{
+		checkValid();
 		return login;
 	}
 
@@ -101,12 +114,14 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public String getSessionId()
 	{
+		checkValid();
 		return sessionId;
 	}
 
 	// --------------------------------------------------------------------------------
 	ClientCallback getClientCallback()
 	{
+		checkValid();
 		return callback;
 	}
 
@@ -114,6 +129,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public void changeLogin(String newLogin, String pw) throws ServerException
 	{
+		checkValid();
 		try
 		{
 			UserManager.getInstance().changeLogin(DatabaseManager.getInstance().getClientConnection(), id, newLogin, pw);
@@ -133,6 +149,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public void changePw(String newPw, String currentPw) throws ServerException
 	{
+		checkValid();
 		try
 		{
 			UserManager.getInstance().changePw(DatabaseManager.getInstance().getClientConnection(), id, newPw, currentPw);
@@ -152,6 +169,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public int deleteFile(String Path, boolean deleteNotEmptyDir) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
 			Path fileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, Path, FileType.FILE_OR_DIR, true);
@@ -172,6 +190,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public String renameFile(String Path, String newName) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
 			// Check Arguments
@@ -193,6 +212,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public int moveFile(String srcPath, String targetDirPath, boolean replace) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
 			Path srcFileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, srcPath, FileType.FILE_OR_DIR, true);
@@ -214,6 +234,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public int copyFile(String srcPath, String targetDirPath, boolean replace) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
 			Path srcFileOrDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, srcPath, FileType.FILE_OR_DIR, true);
@@ -235,6 +256,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public String createDir(String parentDirPath, String dirName) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
 			Path parentDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, parentDirPath, FileType.DIR, false);
@@ -255,6 +277,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public List<FileInfo> listFileInfos(String dirPath) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
 			Path dir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, dirPath, FileType.DIR, false);
@@ -275,13 +298,13 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public int prepareRawChannel(String destDirPath, String filename, long fileSize) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
-			NFileManager fileMan = NFileManager.getInstance();
-			Path destDir = fileMan.toValidatedAbsoluteServerPath(this, destDirPath, FileType.DIR, false);
+			Path destDir = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, destDirPath, FileType.DIR, false);
 			Path destFile = destDir.resolve(filename);
 
-			return Simon.prepareRawChannel(fileMan.new FileReceiver(destFile, fileSize, ExistOption.AUTO_RENAME), this);
+			return Simon.prepareRawChannel(NFileManager.getInstance().new FileReceiver(destFile, fileSize, ExistOption.AUTO_RENAME), this);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
 		{
@@ -298,11 +321,11 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	@Override
 	public void downloadFile(String path) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
-			NFileManager fileMan = NFileManager.getInstance();
-			Path file = fileMan.toValidatedAbsoluteServerPath(this, path, FileType.FILE, false);
-			fileMan.sendFile(callback, file);
+			Path file = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, path, FileType.FILE, false);
+			NFileManager.getInstance().sendFile(callback, file);
 		}
 		catch (IllegalArgumentException | FileSystemException e)
 		{
@@ -314,11 +337,12 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 			throw ServerUtil.logUserThrowable(this.toString(), t);
 		}
 	}
-	
 
+	// --------------------------------------------------------------------------------
 	@Override
 	public byte[] getFileBytes(String path) throws FileSystemException, ServerException
 	{
+		checkValid();
 		try
 		{
 			Path file = NFileManager.getInstance().toValidatedAbsoluteServerPath(this, path, FileType.FILE, false);
@@ -335,18 +359,15 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		}
 	}
 
-
 	// --------------------------------------------------------------------------------
 	@Override
-	public synchronized StreamMediaPlayer getRemoteMediaPlayer() throws NoSuchElementException, ServerException
+	public synchronized StreamPlayer getStreamPlayer() throws NoSuchElementException, ServerException
 	{
+		checkValid();
 		try
 		{
 			if (streamPlayer == null)
-			{
-				streamPlayer = new StreamMediaPlayerImpl(this);
-				
-			}
+				streamPlayer = new StreamPlayerImpl(this);
 
 			return streamPlayer;
 		}
@@ -361,9 +382,39 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	}
 
 	// --------------------------------------------------------------------------------
+	@Override
+	public synchronized InfoPlayer getInfoPlayer() throws NoSuchElementException, ServerException
+	{
+		checkValid();
+		try
+		{
+			if (infoPlayer == null)
+				infoPlayer = new InfoPlayerImpl(this);
+
+			return infoPlayer;
+		}
+		catch (NoSuchElementException nse)
+		{
+			throw nse;
+		}
+		catch (Throwable t)
+		{
+			throw ServerUtil.logUserThrowable(this.toString(), t);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public synchronized void logout()
+	{
+		invalidate();
+	}
+
+	// --------------------------------------------------------------------------------
 	public String toString()
 	{
-		return String.format("SessionImpl[%d,%s,%s,%s]", id, login, sessionId, Simon.getRemoteInetSocketAddress(callback));
+		return String.format("SessionImpl[%d,%s,%s,%s,%s]", id, login, sessionId, Simon.getRemoteInetSocketAddress(callback), isValid ? "valid"
+				: "invalid");
 	}
 
 	// --------------------------------------------------------------------------------
@@ -388,6 +439,26 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		return hashCode;
 	}
 
+	// --------------------------------------------------------------------------------
+	synchronized void invalidate()
+	{
+		if(isValid)
+		{
+			isValid = false;
+			if (infoPlayer != null)
+				infoPlayer.invalidate();
+			if (streamPlayer != null)
+				streamPlayer.invalidate();
+			server.removeUserSession(this);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	private void checkValid() throws IllegalStateException
+	{
+		if (!isValid)
+			throw new IllegalStateException(this + " is not valid anymore.");
+	}
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------

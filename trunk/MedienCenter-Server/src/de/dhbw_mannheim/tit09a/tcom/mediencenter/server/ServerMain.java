@@ -3,7 +3,6 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -14,16 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.DatabaseManager;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.Manager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.RpcManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.UserManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.VlcManager;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote.ServerImpl;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.util.ServerUtil;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
-import de.root1.simon.Registry;
-import de.root1.simon.Simon;
-import de.root1.simon.SimonRegistryStatistics;
 
 public class ServerMain
 {
@@ -62,14 +57,27 @@ public class ServerMain
 	public static void main(String[] args) throws Exception
 	{
 		ServerMain.getInstance().start();
+
+		/*
+		 * Ausführen per cmd:
+		 * 
+		 * 1. cmd als Admin starten, damit ein Logfile angelegt werden kann. Diese werden im "C:\Windows\SysWOW64"-Verzeichnis angelegt. -> TODO (vll
+		 * in bat ausführen) 2. Wichtig: In einer 32bit VM ausführen, wenn VLC 32bit ist. Für 64bit genau dasselbe. 3. Etwa diesen Code abschicken:
+		 * C:\Windows\system32>"C:\Program Files (x86)\Java\jre7\bin\java.exe" -jar C:\Users\Max\Desktop\MedienCenter-Server.jar
+		 */
 	}
 
 	// --------------------------------------------------------------------------------
 	// -- Instance Variables ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private Thread		userInputListenerThread;
-	private Registry	registry;
-	private boolean		isRunning;
+	private Thread			userInputListenerThread;
+	private boolean			isRunning;
+
+	private RpcManager		rpcMan;
+	private DatabaseManager	dbMan;
+	private NFileManager	fileMan;
+	private UserManager		userMan;
+	private VlcManager		vlcMan;
 
 	// --------------------------------------------------------------------------------
 	public static synchronized ServerMain getInstance() throws Exception
@@ -95,7 +103,7 @@ public class ServerMain
 			// Make Server directory
 			NIOUtil.createDirs(SERVER_PATH);
 			SERVER_LOGGER.info("Server directory @ {}", SERVER_PATH);
-			
+
 			// Initialize the UserInputListener
 			userInputListenerThread = new Thread(new UserInputListenerTask(), UserInputListenerTask.class.getSimpleName());
 
@@ -110,40 +118,37 @@ public class ServerMain
 	}
 
 	// --------------------------------------------------------------------------------
-	public void start()
+	public synchronized void start()
 	{
 		try
 		{
 			if (!isRunning)
 			{
-				synchronized (this)
-				{
-					isRunning = true;
-					SERVER_LOGGER.info("Starting {} ...", CLASS_NAME);
-					long start = System.currentTimeMillis();
+				isRunning = true;
+				SERVER_LOGGER.info("Starting {} ...", CLASS_NAME);
+				long start = System.currentTimeMillis();
 
-					// Simon
-					Server server = new ServerImpl();
-					
-					registry = Simon.createRegistry(InetAddress.getByName(Server.IP), Server.REGISTRY_PORT);
-					SERVER_LOGGER.info("SIMON registry @ {}:{}", Server.IP, Server.REGISTRY_PORT);
-					
-					registry.bind(Server.BIND_NAME, server);
-					SERVER_LOGGER.info("Bound {} as '{}' to registry", server, Server.BIND_NAME);
-					
-					// Managers
-					SERVER_LOGGER.info("Starting Managers ...");
-					DatabaseManager.getInstance().start();
-					NFileManager.getInstance().start();
-					VlcManager.getInstance().start();
-					UserManager.getInstance().start();
+				// Managers
+				SERVER_LOGGER.info("Starting Managers ...");
+				fileMan = NFileManager.getInstance();
+				dbMan = DatabaseManager.getInstance();
+				vlcMan = VlcManager.getInstance();
+				userMan = UserManager.getInstance();
+				rpcMan = RpcManager.getInstance();
+				
+				// (for restart)
+				fileMan.start();
+				dbMan.start();
+				vlcMan.start();
+				userMan.start();
+				rpcMan.start();
 
-					// Finally start the UserInputListener
-					if (!userInputListenerThread.isAlive())
-						userInputListenerThread.start();
 
-					SERVER_LOGGER.info("Started {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
-				}
+				// Finally start the UserInputListener
+				if (!userInputListenerThread.isAlive())
+					userInputListenerThread.start();
+
+				SERVER_LOGGER.info("Started {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
 			}
 			else
 			{
@@ -161,35 +166,23 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	// TODO: If shutdown and player is initialized, null pointer exception because not directly given from remote instance.
 	// FIXME..
-	public void shutdown() throws Exception
+	public synchronized void shutdown() throws Exception
 	{
 		if (isRunning)
 		{
-			synchronized (this)
-			{
-				isRunning = false;
-				SERVER_LOGGER.info("Shutting down {} ...", CLASS_NAME);
-				long start = System.currentTimeMillis();
+			isRunning = false;
+			SERVER_LOGGER.info("Shutting down {} ...", CLASS_NAME);
+			long start = System.currentTimeMillis();
 
-				// Shut down the managers
-				SERVER_LOGGER.info("Shutting down Managers ...");
-				NFileManager.getInstance().shutdown();
-				UserManager.getInstance().shutdown();
-				VlcManager.getInstance().shutdown();
-				DatabaseManager.getInstance().shutdown();
+			// Shut down the managers (do not get instance because if an error occurred there it will occurr again on forced shutdown)
+			SERVER_LOGGER.info("Shutting down Managers ...");
+			Manager.shutdownManager(rpcMan);
+			Manager.shutdownManager(userMan);
+			Manager.shutdownManager(vlcMan);
+			Manager.shutdownManager(dbMan);
+			Manager.shutdownManager(fileMan);
 
-				// Shut down Simon Registry
-				SERVER_LOGGER.info("Shutting down SIMON");
-				SimonRegistryStatistics stats = registry.getStatistics();
-				SERVER_LOGGER.info(ServerUtil.remoteStatsToString(stats));
-				SERVER_LOGGER.info(ServerUtil.registryStatsToString(stats));
-				// some mechanism to shutdown the server should be placed here
-				// this should include the following command:
-				registry.unbind(ServerImpl.BIND_NAME);
-				registry.stop();
-
-				SERVER_LOGGER.info("Shut down {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
-			}
+			SERVER_LOGGER.info("Shut down {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
 		}
 		else
 		{
@@ -198,40 +191,35 @@ public class ServerMain
 	}
 
 	// --------------------------------------------------------------------------------
-	public void restart() throws Exception
+	public synchronized void restart() throws Exception
 	{
-		synchronized (this)
-		{
-			SERVER_LOGGER.info("Restarting {} ...", CLASS_NAME);
-			long start = System.currentTimeMillis();
+		SERVER_LOGGER.info("Restarting {} ...", CLASS_NAME);
+		long start = System.currentTimeMillis();
 
-			shutdown();
-			start();
+		shutdown();
+		start();
 
-			SERVER_LOGGER.info("Restarted {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
-		}
+		SERVER_LOGGER.info("Restarted {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
 	}
 
 	// --------------------------------------------------------------------------------
-	public void exit()
+	public synchronized void exit()
 	{
 		try
 		{
-			synchronized (this)
-			{
-				SERVER_LOGGER.info("Exiting programm ...");
-				long start = System.currentTimeMillis();
+			SERVER_LOGGER.info("Exiting programm ...");
+			long start = System.currentTimeMillis();
 
-				shutdown();
+			shutdown();
 
-				// Interrupt the UserinputListenerThread
-				// This was the last thread alive, so the SuperManager will exit
-				SERVER_LOGGER.info("Shutting down {} ...", UserInputListenerTask.class.getSimpleName());
-				if (userInputListenerThread != null)
-					userInputListenerThread.interrupt();
+			// Interrupt the UserinputListenerThread
+			// This was the last thread alive, so the SuperManager will exit
+			SERVER_LOGGER.info("Shutting down {} ...", UserInputListenerTask.class.getSimpleName());
+			if (userInputListenerThread != null)
+				userInputListenerThread.interrupt();
 
-				SERVER_LOGGER.info("Exited in {}ms. Auf Wiedersehen!", (System.currentTimeMillis() - start));
-			}
+			SERVER_LOGGER.info("Exited in {}ms. Auf Wiedersehen! (Programm exits as soon as all Threads are closed - be patient)",
+					(System.currentTimeMillis() - start));
 		}
 		catch (Throwable t)
 		{
@@ -246,7 +234,7 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	private void printHelp()
 	{
-		StringBuffer sb = new StringBuffer("Usage:\n");
+		StringBuilder sb = new StringBuilder("Usage:\n");
 		for (Command oneCommand : Command.values())
 		{
 			sb.append(String.format("%-8s", oneCommand));
@@ -264,13 +252,13 @@ public class ServerMain
 		@Override
 		public void run()
 		{
-			System.out.println(Thread.currentThread() +" started!");
+			System.out.println(Thread.currentThread() + " started!");
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			while (!Thread.interrupted())
 			{
 				try
 				{
-					System.out.println("Type in a command " + Arrays.toString(Command.values()) + ":");
+					System.out.println("\nType in a command " + Arrays.toString(Command.values()) + ":");
 					String input = br.readLine();
 
 					if (input.equals(Command.exit.toString()))
@@ -289,7 +277,16 @@ public class ServerMain
 					e.printStackTrace();
 				}
 			}
-			System.out.println(Thread.currentThread() +" interrupted!");
+			try
+			{
+				if (br != null)
+					br.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			System.out.println(Thread.currentThread() + " interrupted!");
 		}
 	}
 
