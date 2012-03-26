@@ -119,7 +119,7 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 	}
 
 	// --------------------------------------------------------------------------------
-	ClientCallback getClientCallback()
+	public ClientCallback getClientCallback()
 	{
 		checkValid();
 		return callback;

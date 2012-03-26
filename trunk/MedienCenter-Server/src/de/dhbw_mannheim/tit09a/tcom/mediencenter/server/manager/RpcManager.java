@@ -40,6 +40,7 @@ public class RpcManager extends Manager
 	// -- Instance Variables ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	private Registry	registry;
+	private ServerImpl	server;
 
 	protected RpcManager() throws Exception
 	{
@@ -49,7 +50,7 @@ public class RpcManager extends Manager
 	@Override
 	protected void onStart() throws Exception
 	{
-		Server server = new ServerImpl();
+		server = new ServerImpl();
 
 		registry = Simon.createRegistry(InetAddress.getByName(Server.IP), Server.REGISTRY_PORT);
 		logger.info("SIMON registry @ {}:{}", Server.IP, Server.REGISTRY_PORT);
@@ -69,5 +70,10 @@ public class RpcManager extends Manager
 
 		registry.unbind(ServerImpl.BIND_NAME);
 		registry.stop();
+	}
+
+	public ServerImpl getServer()
+	{
+		return server;
 	}
 }

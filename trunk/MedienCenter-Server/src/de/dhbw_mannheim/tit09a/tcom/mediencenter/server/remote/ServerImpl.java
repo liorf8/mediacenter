@@ -188,7 +188,7 @@ public class ServerImpl implements Server
 	}
 
 	// --------------------------------------------------------------------------------
-	Iterator<SessionImpl> getSessions()
+	public Iterator<SessionImpl> getSessions()
 	{
 		return userSessions.iterator();
 	}
