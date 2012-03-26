@@ -6,8 +6,17 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import javax.swing.JOptionPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +27,8 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.NFileManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.RpcManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.UserManager;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.manager.VlcManager;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.server.remote.SessionImpl;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.NamedThreadPoolFactory;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.NIOUtil;
 
 public class ServerMain
@@ -34,7 +45,7 @@ public class ServerMain
 	private static enum Command
 	{
 		start("starts the server"),
-		shutdown("shuts the server down"),
+		shutdown("shuts the server down after a delay"),
 		restart("restarts the server (shutdown + start)"),
 		exit("shuts the server down, if necessary, and exits this programm");
 
@@ -117,8 +128,7 @@ public class ServerMain
 		}
 	}
 
-	// --------------------------------------------------------------------------------
-	public synchronized void start()
+	private void start() throws Exception
 	{
 		try
 		{
@@ -135,14 +145,13 @@ public class ServerMain
 				vlcMan = VlcManager.getInstance();
 				userMan = UserManager.getInstance();
 				rpcMan = RpcManager.getInstance();
-				
+
 				// (for restart)
 				fileMan.start();
 				dbMan.start();
 				vlcMan.start();
 				userMan.start();
 				rpcMan.start();
-
 
 				// Finally start the UserInputListener
 				if (!userInputListenerThread.isAlive())
@@ -163,16 +172,26 @@ public class ServerMain
 		}
 	}
 
-	// --------------------------------------------------------------------------------
-	// TODO: If shutdown and player is initialized, null pointer exception because not directly given from remote instance.
-	// FIXME..
-	public synchronized void shutdown() throws Exception
+	private void shutdown(int secs) throws Exception
 	{
 		if (isRunning)
 		{
 			isRunning = false;
 			SERVER_LOGGER.info("Shutting down {} ...", CLASS_NAME);
 			long start = System.currentTimeMillis();
+
+			// notify users
+			Iterator<SessionImpl> iter = rpcMan.getServer().getSessions();
+			while (iter.hasNext())
+			{
+				iter.next().getClientCallback().message("Server is shutting down!", JOptionPane.WARNING_MESSAGE);
+			}
+
+			for (; secs >= 0; secs--)
+			{
+				System.out.println(secs);
+				Thread.sleep(1000);
+			}
 
 			// Shut down the managers (do not get instance because if an error occurred there it will occurr again on forced shutdown)
 			SERVER_LOGGER.info("Shutting down Managers ...");
@@ -196,7 +215,7 @@ public class ServerMain
 		SERVER_LOGGER.info("Restarting {} ...", CLASS_NAME);
 		long start = System.currentTimeMillis();
 
-		shutdown();
+		shutdown(0);
 		start();
 
 		SERVER_LOGGER.info("Restarted {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
@@ -210,7 +229,7 @@ public class ServerMain
 			SERVER_LOGGER.info("Exiting programm ...");
 			long start = System.currentTimeMillis();
 
-			shutdown();
+			shutdown(0);
 
 			// Interrupt the UserinputListenerThread
 			// This was the last thread alive, so the SuperManager will exit
@@ -237,7 +256,7 @@ public class ServerMain
 		StringBuilder sb = new StringBuilder("Usage:\n");
 		for (Command oneCommand : Command.values())
 		{
-			sb.append(String.format("%-8s", oneCommand));
+			sb.append(String.format("%-15s", oneCommand));
 			sb.append(" - ");
 			sb.append(oneCommand.getDescr());
 			sb.append("\n");
@@ -265,8 +284,24 @@ public class ServerMain
 						exit();
 					else if (input.equals(Command.restart.toString()))
 						restart();
-					else if (input.equals(Command.shutdown.toString()))
-						shutdown();
+					else if (input.startsWith(Command.shutdown.toString()))
+					{
+						try
+						{
+							String arg = input.substring(Command.shutdown.toString().length()).trim();
+							int secs;
+							if (!arg.isEmpty())
+								secs = Integer.valueOf(arg);
+							else
+								secs = 0;
+
+							shutdown(secs);
+						}
+						catch (NumberFormatException e)
+						{
+							System.out.println(e + ": delay seconds expected.");
+						}
+					}
 					else if (input.equals(Command.start.toString()))
 						start();
 					else
