@@ -39,6 +39,20 @@ public class DefaultClientCallback implements ClientCallback
 	}
 
 	@Override
+	public void notifyShutdown(final int delayInSeconds)
+	{
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				JOptionPane.showMessageDialog(parentComponent, "Server will shut down in " + delayInSeconds + " seconds.", "Message from Server",
+						JOptionPane.WARNING_MESSAGE);
+			}
+		});
+	}
+
+	@Override
 	public void message(final String text, final int messageType)
 	{
 		SwingUtilities.invokeLater(new Runnable()

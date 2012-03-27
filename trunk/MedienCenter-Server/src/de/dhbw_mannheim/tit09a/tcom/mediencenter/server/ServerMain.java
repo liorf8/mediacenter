@@ -7,13 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-
-import javax.swing.JOptionPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +42,9 @@ public class ServerMain
 	{
 		start("starts the server"),
 		shutdown("shuts the server down"),
-		restart("restarts the server (shutdown + start)"),
-		cancel("cancels a start or a shutdown"),
-		exit("shuts the server down, if necessary, and exits this programm");
+		restart("restarts the server (shutdown and start)"),
+		cancel("cancels the current Task (start or shutdown). Do only cancel while counting down."),
+		exit("Cancels the current Task, shuts the server down and exits this programm");
 
 		private final String	descr;
 
@@ -79,9 +79,8 @@ public class ServerMain
 	// -- Instance Variables ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	private Thread				userInputListenerThread;
-	private ExecutorService		startShutdownExecutor;
-	private Future<?>			startFuture;
-	private Future<?>			shutdownFuture;
+	private ExecutorService		commandExecutor;
+	private Future<?>			commandFuture;
 	private volatile boolean	isRunning;
 	private volatile boolean	shutdownAnyway;
 
@@ -108,13 +107,12 @@ public class ServerMain
 			NIOUtil.createDirs(SERVER_PATH);
 			SERVER_LOGGER.info("Server directory @ {}", SERVER_PATH);
 
+			// Same for the startShutdownExecutor
+			commandExecutor = Executors.newSingleThreadExecutor(new NamedThreadPoolFactory("CommandSingleThreadExecutor"));
+
 			// Initialize the UserInputListener
 			userInputListenerThread = new Thread(new UserInputListenerTask(), UserInputListenerTask.class.getSimpleName());
-			userInputListenerThread.setDaemon(true);
 			userInputListenerThread.start();
-
-			// Same for the startShutdownExecutor
-			startShutdownExecutor = Executors.newSingleThreadExecutor(new NamedThreadPoolFactory("StartShutdownSingleThreadExecutor"));
 
 			SERVER_LOGGER.info("{} initialized in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
 		}
@@ -127,6 +125,72 @@ public class ServerMain
 		}
 	}
 
+	private class UserInputListenerTask implements Runnable
+	{
+		@Override
+		public void run()
+		{
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			while (!Thread.interrupted())
+			{
+				try
+				{
+					System.out.println("\nType in a command " + Arrays.toString(Command.values()) + ":");
+					String inputLine = br.readLine();
+					if (Thread.interrupted())
+						break;
+					String[] input = inputLine.split("\\s");
+					String command = input[0];
+					int delayInSeconds = 0;
+					if (input.length > 1)
+					{
+						try
+						{
+							String arg1 = input[1];
+							if (!arg1.isEmpty())
+								delayInSeconds = Integer.valueOf(arg1);
+						}
+						catch (NumberFormatException e)
+						{
+							System.out.println(e + ". Delay in seconds expected.");
+						}
+					}
+
+					if (command.equals(Command.start.toString()))
+						start();
+					else if (command.equals(Command.shutdown.toString()))
+						shutdown(delayInSeconds);
+					else if (command.equals(Command.restart.toString()))
+						restart(delayInSeconds);
+					else if (command.equals(Command.cancel.toString()))
+						cancel();
+					else if (command.equals(Command.exit.toString()))
+						exit(delayInSeconds);
+					else
+						printHelp();
+
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			try
+			{
+				if (br != null)
+					br.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			finally
+			{
+				System.out.println(Thread.currentThread() + " interrupted!");
+			}
+		}
+	}
+
 	// --------------------------------------------------------------------------------
 	private void start()
 	{
@@ -134,7 +198,7 @@ public class ServerMain
 		{
 			if (!isRunning)
 			{
-				shutdownFuture = startShutdownExecutor.submit(new StartTask());
+				commandFuture = commandExecutor.submit(new StartTask());
 			}
 			else
 			{
@@ -142,7 +206,7 @@ public class ServerMain
 			}
 		}
 		else
-			System.out.println(CLASS_NAME + " is currently shutting down/starting. Enter 'cancel' to abort operation.");
+			System.out.println(CLASS_NAME + " is currently running a Task. Enter 'cancel' to abort operation.");
 	}
 
 	// --------------------------------------------------------------------------------
@@ -176,7 +240,6 @@ public class ServerMain
 
 				isRunning = true;
 				SERVER_LOGGER.info("Started {} in {}ms", CLASS_NAME, (System.currentTimeMillis() - start));
-
 			}
 			catch (InterruptedException ignore)
 			{
@@ -198,9 +261,9 @@ public class ServerMain
 		if (isRunning || shutdownAnyway)
 		{
 			if (isNoTaskRunning())
-				shutdownFuture = startShutdownExecutor.submit(new ShutdownTask(delayInSeconds));
+				commandFuture = commandExecutor.submit(new ShutdownTask(delayInSeconds));
 			else
-				System.out.println(CLASS_NAME + " is currently shutting down/starting. Enter 'cancel' to abort operation.");
+				System.out.println(CLASS_NAME + " is currently running a Task. Enter 'cancel' to abort operation.");
 		}
 		else
 		{
@@ -230,9 +293,7 @@ public class ServerMain
 					Iterator<SessionImpl> iter = rpcMan.getServer().getSessions();
 					while (iter.hasNext())
 					{
-						iter.next()
-								.getClientCallback()
-								.message("Server is shutting down in " + delayInSeconds + " seconds!", JOptionPane.WARNING_MESSAGE);
+						iter.next().getClientCallback().notifyShutdown(delayInSeconds);
 					}
 					// wait for delayInSeconds
 					for (; delayInSeconds > 0; delayInSeconds--)
@@ -273,30 +334,20 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	private void cancel()
 	{
-		SERVER_LOGGER.info("Cancelling running Tasks...");
-		if (shutdownFuture != null && !shutdownFuture.isCancelled() && !shutdownFuture.isDone())
+		SERVER_LOGGER.info("Cancelling running Task...");
+		if (commandFuture != null && !commandFuture.isDone())
 		{
-			shutdownFuture.cancel(true);
-			System.out.println("ShutdownTask cancelled!");
+			commandFuture.cancel(true);
+			System.out.println("CommandTask cancelled!");
 		}
 		else
 		{
-			System.out.println("Cancellation of ShutdownTask not necessary!");
-		}
-
-		if (startFuture != null && !startFuture.isCancelled() && !startFuture.isDone())
-		{
-			startFuture.cancel(true);
-			System.out.println("StartTask cancelled!");
-		}
-		else
-		{
-			System.out.println("Cancellation of StartTask not necessary!");
+			System.out.println("Cancellation of CommandTask not necessary because it is done already!");
 		}
 	}
 
 	// --------------------------------------------------------------------------------
-	public void restart(int delayInSeconds) throws Exception
+	public void restart(int delayInSeconds)
 	{
 		if (isNoTaskRunning())
 		{
@@ -315,8 +366,29 @@ public class ServerMain
 		cancel();
 		shutdown(delayInSeconds);
 
-		if (startShutdownExecutor != null)
-			startShutdownExecutor.shutdown();
+		// new thread so that user commands are possible while waiting
+		new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					commandFuture.get();
+					if (userInputListenerThread != null)
+						userInputListenerThread.interrupt();
+					if (commandExecutor != null)
+						commandExecutor.shutdown();
+					System.out.println("Exit almost complete! Press any key to exit UserInputListenerTask.");
+				}
+				catch (InterruptedException | ExecutionException | CancellationException e)
+				{
+					System.out.println("Shutdown aborted!");
+				}
+				
+			}
+		}).start();
+
 	}
 
 	// --------------------------------------------------------------------------------
@@ -324,7 +396,7 @@ public class ServerMain
 	// --------------------------------------------------------------------------------
 	private boolean isNoTaskRunning()
 	{
-		return (shutdownFuture == null || shutdownFuture.isDone()) && (startFuture == null || startFuture.isDone());
+		return (commandFuture == null || commandFuture.isDone());
 	}
 
 	// --------------------------------------------------------------------------------
@@ -343,66 +415,6 @@ public class ServerMain
 		sb.append("Specify a delay in seconds after a command to delay the shutdown/restart/exit. e.g. \"shutdown 30\")");
 		System.out.println(sb);
 		System.out.flush();
-	}
-
-	// --------------------------------------------------------------------------------
-	private class UserInputListenerTask implements Runnable
-	{
-		@Override
-		public void run()
-		{
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			while (!Thread.interrupted())
-			{
-				try
-				{
-					System.out.println("\nType in a command " + Arrays.toString(Command.values()) + ":");
-					String[] input = br.readLine().split("\\s");
-					String command = input[0];
-					int delayInSeconds = 0;
-					if (input.length > 1)
-					{
-						try
-						{
-							String arg1 = input[1];
-							if (!arg1.isEmpty())
-								delayInSeconds = Integer.valueOf(arg1);
-						}
-						catch (NumberFormatException e)
-						{
-							System.out.println(e + ". Delay in seconds expected.");
-						}
-					}
-
-					if (command.equals(Command.start.toString()))
-						start();
-					else if (command.equals(Command.shutdown.toString()))
-						shutdown(delayInSeconds);
-					else if (command.equals(Command.restart.toString()))
-						restart(delayInSeconds);
-					else if (command.equals(Command.cancel.toString()))
-						cancel();
-					else if (command.equals(Command.exit.toString()))
-						exit(delayInSeconds);
-					else
-						printHelp();
-				}
-				catch (Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-			try
-			{
-				if (br != null)
-					br.close();
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
-			System.out.println(this.getClass().getSimpleName() + " interrupted!");
-		}
 	}
 
 	// --------------------------------------------------------------------------------
