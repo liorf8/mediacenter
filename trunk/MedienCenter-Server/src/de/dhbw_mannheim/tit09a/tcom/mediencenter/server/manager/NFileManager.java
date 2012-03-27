@@ -79,7 +79,6 @@ public class NFileManager extends Manager
 				if (instance == null)
 				{
 					instance = new NFileManager();
-					instance.start();
 				}
 			}
 		}

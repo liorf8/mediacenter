@@ -89,7 +89,6 @@ public class UserManager extends Manager
 				if (instance == null)
 				{
 					instance = new UserManager();
-					instance.start();
 				}
 			}
 		}

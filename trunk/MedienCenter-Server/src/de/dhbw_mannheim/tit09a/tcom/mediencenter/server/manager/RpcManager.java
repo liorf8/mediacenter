@@ -29,7 +29,6 @@ public class RpcManager extends Manager
 				if (instance == null)
 				{
 					instance = new RpcManager();
-					instance.start();
 				}
 			}
 		}
