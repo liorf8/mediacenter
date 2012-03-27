@@ -74,7 +74,6 @@ public class DatabaseManager extends Manager
 				if (instance == null)
 				{
 					instance = new DatabaseManager();
-					instance.start();
 				}
 			}
 		}

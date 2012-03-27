@@ -32,7 +32,6 @@ public class VlcManager extends Manager
 				if (instance == null)
 				{
 					instance = new VlcManager();
-					instance.start();
 				}
 			}
 		}
