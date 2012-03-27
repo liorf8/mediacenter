@@ -12,6 +12,8 @@ import de.root1.simon.exceptions.SimonException;
  */
 public interface ClientCallback
 {
+	public void notifyShutdown(int delayInSeconds);
+
 	/**
 	 * Wird vom Server aufgerufen, wenn er eine Nachricht schickt. Zum Beispiel eine informative Nachricht, eine Warnung oder eine Fehlermeldung.
 	 * 
