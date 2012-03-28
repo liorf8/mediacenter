@@ -20,6 +20,7 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.NamedThreadPoolFactory;
 
 public class MainController implements SimonConnectionStateListener
 {
@@ -49,11 +50,12 @@ public class MainController implements SimonConnectionStateListener
 	// --------------------------------------------------------------------------------
 	// -- Instance Variables ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public final Logger			logger	= LoggerFactory.getLogger(this.getClass());
+	public final Logger					logger	= LoggerFactory.getLogger(this.getClass());
 
-	private MainFrame			mainFrame;
-	private SimonConnectionImpl	simonConnection;
-	private ClientCallback		callback;
+	private ScheduledEventDispatcher	scheduledEventDispatcher;
+	private MainFrame					mainFrame;
+	private SimonConnectionImpl			simonConnection;
+	private ClientCallback				callback;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
@@ -62,10 +64,12 @@ public class MainController implements SimonConnectionStateListener
 	{
 		try
 		{
-			callback = new DefaultClientCallback(mainFrame);
+			scheduledEventDispatcher = new ScheduledEventDispatcher(5, new NamedThreadPoolFactory("ScheduledEventDispatcher"));
+
 			simonConnection = new SimonConnectionImpl();
 			simonConnection.addStateListener(this);
 
+			callback = new DefaultClientCallback(mainFrame);
 			setLookAndFeel();
 			buildMainFrame().setVisible(true);
 		}
@@ -92,6 +96,12 @@ public class MainController implements SimonConnectionStateListener
 	}
 
 	// --------------------------------------------------------------------------------
+	public ScheduledEventDispatcher getScheduledEventDispatcher()
+	{
+		return scheduledEventDispatcher;
+	}
+
+	// --------------------------------------------------------------------------------
 	public void exit()
 	{
 		try
@@ -99,6 +109,7 @@ public class MainController implements SimonConnectionStateListener
 			System.out.println("exit() @" + Thread.currentThread());
 			simonConnection.disconnect();
 			disposeWindow(mainFrame);
+			scheduledEventDispatcher.shutdownNow();
 			System.exit(0);
 		}
 		catch (Throwable t)
