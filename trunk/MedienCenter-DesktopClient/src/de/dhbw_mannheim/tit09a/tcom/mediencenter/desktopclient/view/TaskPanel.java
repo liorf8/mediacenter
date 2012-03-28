@@ -1,5 +1,6 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view;
 
+import java.awt.Color;
 import java.awt.event.ActionListener;
 
 import javax.swing.GroupLayout;
@@ -29,9 +30,10 @@ public class TaskPanel extends JPanel
 
 		// Layout
 		groupLayout.setHorizontalGroup(groupLayout.createSequentialGroup().addComponent(progressBar).addComponent(btnCancel));
-		
-		groupLayout.setVerticalGroup(groupLayout.createSequentialGroup()
-				.addGroup(groupLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(progressBar).addComponent(btnCancel)));
+
+		groupLayout.setVerticalGroup(groupLayout.createSequentialGroup().addGroup(groupLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+				.addComponent(progressBar)
+				.addComponent(btnCancel)));
 	}
 
 	public void setProgress(int progress)
@@ -44,4 +46,16 @@ public class TaskPanel extends JPanel
 		progressBar.setString(status);
 	}
 
+	public void setCancelText(String text)
+	{
+		btnCancel.setText(text);
+	}
+
+	public void setTaskFailed(String cause)
+	{
+		btnCancel.setEnabled(false);
+		progressBar.setString(cause);
+		progressBar.setValue(progressBar.getMaximum());
+		progressBar.setForeground(Color.RED);
+	}
 }

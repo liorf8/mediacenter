@@ -14,28 +14,33 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainCo
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.TaskPanel;
 
-public class LoginAction extends AbstractSwingWorkerAction<Void, String>
+public abstract class AbstractSwingWorkerAction2 implements ActionListener
 {
-	private final MainFrame	mainFrame;
+	protected MainFrame						mainFrame;
+	protected AbstractSwingWorkerAction2	instance;
 
-	public LoginAction(MainFrame mainFrame)
+	public AbstractSwingWorkerAction2(MainFrame mainFrame)
 	{
 		this.mainFrame = mainFrame;
+		this.instance = this;
 	}
 
 	@Override
-	protected SwingWorker<Void, String> buildSwingWorker(ActionEvent e)
+	public void actionPerformed(ActionEvent e)
 	{
-		LoginTask task = new LoginTask();
-		return task;
+		new ActionTask(e).execute();
 	}
+	
+	protected abstract void doInBackground() throws Exception;
 
-	public class LoginTask extends SwingWorker<Void, String> implements ActionListener
+	public class ActionTask extends SwingWorker<Void, String> implements ActionListener
 	{
-		private TaskPanel	taskPanel;
+		private final ActionEvent	actionEvent;
+		private final TaskPanel		taskPanel;
 
-		public LoginTask()
+		public ActionTask(ActionEvent actionEvent)
 		{
+			this.actionEvent = actionEvent;
 			taskPanel = new TaskPanel(this);
 			this.addPropertyChangeListener(new PropertyChangeListener()
 			{
@@ -50,29 +55,17 @@ public class LoginAction extends AbstractSwingWorkerAction<Void, String>
 			});
 		}
 
-		@Override
-		protected Void doInBackground() throws Exception
-		{
-			mainFrame.addTaskPanel(taskPanel);
-			publish("Logging in...");
-			mainFrame.getLoginPanel().setActionEnabled(false);
-
-			String login = mainFrame.getLoginPanel().getLoginText();
-			String pw = String.valueOf(mainFrame.getLoginPanel().getPwChars());
-
-			if (login.isEmpty() || pw.isEmpty())
-				throw new IllegalArgumentException("Not all required fields are filled!");
-
-			MainController.getInstance().getSimonConnection().connect();
-			setProgress(50);
-			MainController.getInstance().getSimonConnection().login(login, pw, MainController.getInstance().getClientCallback());
-			return null;
-		}
-
 		protected void process(List<String> statuses)
 		{
 			// executed in AWTEventQueue
 			taskPanel.setStatus(statuses.get(statuses.size() - 1));
+		}
+
+		@Override
+		protected Void doInBackground() throws Exception
+		{
+			// TODO Auto-generated method stub
+			return null;
 		}
 
 		@Override
@@ -83,19 +76,20 @@ public class LoginAction extends AbstractSwingWorkerAction<Void, String>
 			{
 				get();
 				setProgress(100);
-				taskPanel.setStatus("Successfully logged in!");
+				taskPanel.setStatus(actionEvent.getActionCommand() + " successfull!");
 			}
 			catch (ExecutionException e)
 			{
-				taskPanel.setTaskFailed("Login failed: " + e.getCause().getClass().getSimpleName() + ": " + e.getCause().getMessage());
+				taskPanel.setTaskFailed(actionEvent.getActionCommand() + " failed: " + e.getCause().getClass().getSimpleName() + ": "
+						+ e.getCause().getMessage());
 			}
 			catch (CancellationException e)
 			{
-				taskPanel.setTaskFailed("Login cancelled!");
+				taskPanel.setTaskFailed(actionEvent.getActionCommand() + " cancelled!");
 			}
 			catch (InterruptedException e)
 			{
-				taskPanel.setTaskFailed("Login interrupted!");
+				taskPanel.setTaskFailed(actionEvent.getActionCommand() + " interrupted!");
 			}
 			finally
 			{
@@ -126,6 +120,6 @@ public class LoginAction extends AbstractSwingWorkerAction<Void, String>
 		{
 			this.cancel(true);
 		}
-	}
 
+	}
 }

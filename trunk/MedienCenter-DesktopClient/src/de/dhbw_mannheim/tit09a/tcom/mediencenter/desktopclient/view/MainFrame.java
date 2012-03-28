@@ -1,10 +1,11 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view;
 
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener.MainFrameWindowListener;
@@ -16,10 +17,11 @@ public class MainFrame extends JFrame
 {
 	private static final long	serialVersionUID	= -6050971688251747359L;
 
-	// Controller
-	private JTabbedPane	tabbedPane;
-	private LoginPanel loginPanel;
-
+	private JTabbedPane			tabbedPane;
+	private LoginPanel			loginPanel;
+	private JPanel				statusPanel;
+	private int statusPanelCounter = 0;
+	
 	public MainFrame()
 	{
 		super("MedienCenterApp");
@@ -29,48 +31,50 @@ public class MainFrame extends JFrame
 	private void initGUI()
 	{
 		setLocation(400, 400);
-		
+
 		setPreferredSize(new Dimension(640, 480));
 		setMinimumSize(new Dimension(360, 220));
 		setSize(getMinimumSize());
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new MainFrameWindowListener(this));
 		setLayout(new BorderLayout());
-		
-		setLoggedIn(false);
-	}
 
+		setLoggedIn(false);
+
+		getContentPane().add(getStatusPanel(), BorderLayout.SOUTH);
+	}
 
 	public void setLoggedIn(boolean loggedIn)
 	{
-		if(loggedIn)
+		// TODO not remove all, just the ones in the middle
+		if (loggedIn)
 		{
-			System.out.println("logged in setting tabbedpane");
-			getContentPane().removeAll();
+			if(loginPanel != null)
+				getContentPane().remove(loginPanel);
 			getContentPane().add(getTabbedPane(), BorderLayout.CENTER);
 			setSize(getPreferredSize());
 		}
 		else
 		{
-			getContentPane().removeAll();
+			if(tabbedPane != null)
+				getContentPane().remove(tabbedPane);
 			getContentPane().add(getLoginPanel(), BorderLayout.CENTER);
 			setSize(getMinimumSize());
 		}
 	}
-	
 
 	public LoginPanel getLoginPanel()
 	{
-		if(loginPanel == null)
+		if (loginPanel == null)
 		{
 			loginPanel = new LoginPanel(this);
 		}
 		return loginPanel;
 	}
-	
+
 	public JTabbedPane getTabbedPane()
 	{
-		if(tabbedPane == null)
+		if (tabbedPane == null)
 		{
 			tabbedPane = new JTabbedPane();
 			tabbedPane.addTab("Media", new MediaPanel(this));
@@ -79,16 +83,31 @@ public class MainFrame extends JFrame
 		}
 		return tabbedPane;
 	}
-	
+
+	public JPanel getStatusPanel()
+	{
+		if (statusPanel == null)
+		{
+			statusPanel = new JPanel();
+		}
+		return statusPanel;
+	}
+
 
 	public void addTaskPanel(TaskPanel tp)
 	{
-		getContentPane().add(tp, BorderLayout.SOUTH);
+		statusPanelCounter++;
+		statusPanel.setLayout(new GridLayout(statusPanelCounter,1));
+		getStatusPanel().add(tp);
+		getContentPane().validate();
 	}
-	
+
 	public void removeTaskPanel(TaskPanel tp)
 	{
-		getContentPane().remove(tp);
+		statusPanelCounter--;
+		statusPanel.setLayout(new GridLayout(statusPanelCounter,1));
+		getStatusPanel().remove(tp);
+		getContentPane().validate();
 	}
 
 }
