@@ -1,81 +1,53 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action;
 
 import java.awt.event.ActionEvent;
-import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-
-import javax.swing.SwingWorker;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.LoginPanel;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
 public class RegisterAction extends AbstractSwingWorkerAction<Void, String>
 {
-	private final LoginPanel	loginDialog;
-
-	public RegisterAction(LoginPanel loginDialog)
+	public RegisterAction(MainFrame mainFrame)
 	{
-		this.loginDialog = loginDialog;
+		super(mainFrame);
 	}
 
 	@Override
-	protected SwingWorker<Void, String> buildSwingWorker(ActionEvent e)
+	protected AbstractTaskPanelSwingWorker buildSwingWorker(MainController mainController, MainFrame mainFrame, ActionEvent e)
 	{
-		return new RegisterTask();
+		return new RegisterWorker(mainController, mainFrame, e);
 	}
 
-	public class RegisterTask extends SwingWorker<Void, String>
+	private class RegisterWorker extends AbstractTaskPanelSwingWorker
 	{
-		@Override
-		protected Void doInBackground() throws Exception
+		public RegisterWorker(MainController mainController, MainFrame mainFrame, ActionEvent actionEvent)
 		{
-			publish("Registering...");
-			loginDialog.setActionEnabled(false);
-			String login = loginDialog.getLoginText();
-			String pw = String.valueOf(loginDialog.getPwChars());
-			String pwRepeat = String.valueOf(loginDialog.getPwRepeatChars());
-			
-			if( login.isEmpty() || pw.isEmpty() || pwRepeat.isEmpty())
+			super(mainController, mainFrame, actionEvent);
+		}
+
+		@Override
+		protected void work() throws Exception
+		{
+			LoginPanel loginPanel = mainFrame.getLoginPanel();
+			String login = loginPanel.getLoginText();
+			String pw = String.valueOf(loginPanel.getPwChars());
+			String pwRepeat = String.valueOf(loginPanel.getPwRepeatChars());
+
+			if (login.isEmpty() || pw.isEmpty() || pwRepeat.isEmpty())
 				throw new IllegalArgumentException("Not all required fields are filled!");
-			if(!pw.equals(pwRepeat))
+			if (!pw.equals(pwRepeat))
 				throw new IllegalArgumentException("Password and repeated password are not equal!");
-			
+
+			publish("Connecting...");
 			MainController.getInstance().getSimonConnection().connect();
-			long id =  MainController.getInstance().getSimonConnection().getServer().register(login, pw);
+			setProgress(50);
 			
-			publish("Registered " +login+ " (ID: "+id+")");
-			return null;
-		}
+			publish("Registering...");
+			long id = MainController.getInstance().getSimonConnection().getServer().register(login, pw);
 
-		protected void process(List<String> statuses)
-		{
-			System.out.println(statuses.get(statuses.size() - 1));
-		}
-
-		@Override
-		protected void done()
-		{
-			try
-			{
-				get();
-			}
-			catch (InterruptedException e)
-			{
-				System.out.println("Registering interrupted!");
-			}
-			catch (ExecutionException e)
-			{
-				System.out.println("Registering failed: " + e.getCause().getClass().getSimpleName() + ": " +e.getCause().getMessage());
-			}
-			catch (CancellationException e)
-			{
-				System.out.println("Registering cancelled!");
-			}
-			finally
-			{
-				loginDialog.setActionEnabled(true);
-			}
+			System.out.println("Registered " + login + " (ID: " + id + ")");
 		}
 	}
+
 }

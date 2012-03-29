@@ -3,32 +3,28 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.actio
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.SwingWorker;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
 public abstract class AbstractSwingWorkerAction<T, V> implements ActionListener
 {
-	private SwingWorker<T, V>	task;
+	private MainFrame	mainFrame;
+	private AbstractTaskPanelSwingWorker worker;
+
+	public AbstractSwingWorkerAction(MainFrame mainFrame)
+	{
+		this.mainFrame = mainFrame;
+	}
 
 	@Override
-	public final void actionPerformed(ActionEvent e)
+	public synchronized void actionPerformed(ActionEvent e)
 	{
-		System.out.println("actionPerformed(): " +this.getClass().getSimpleName());
-		cancelAction();
-		synchronized (this)
-		{
-			task = buildSwingWorker(e);
-			task.execute();
-		}
+		if(worker != null)
+			worker.removeTaskPanel();
+		worker = buildSwingWorker(MainController.getInstance(), mainFrame, e);
+		worker.execute();
 	}
 
-	public final void cancelAction()
-	{
-		synchronized (this)
-		{
-			if (task != null)
-				task.cancel(true);
-		}
-	}
+	protected abstract AbstractTaskPanelSwingWorker buildSwingWorker(MainController mainController, MainFrame mainFrame, ActionEvent e);
 
-	protected abstract SwingWorker<T, V> buildSwingWorker(ActionEvent e);
 }

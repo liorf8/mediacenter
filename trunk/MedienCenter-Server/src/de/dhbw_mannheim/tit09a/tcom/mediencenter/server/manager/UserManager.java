@@ -214,7 +214,7 @@ public class UserManager extends Manager
 
 		// Input validation
 		if (!authenticate(con, id, currentPw))
-			throw new AuthenticationException(id + "", currentPw);
+			throw new AuthenticationException(id + "");
 
 		// Set the pw to the new one
 		setPw(con, id, newPw);
@@ -272,7 +272,7 @@ public class UserManager extends Manager
 			// Input validation
 			CheckUtil.ensureValidString(newLogin, VALID_USERNAME);
 			if (!authenticate(con, id, pw))
-				throw new AuthenticationException(id + "", pw);
+				throw new AuthenticationException(id + "");
 
 			// Get the id for 'newLogin'. If > 0L, the user already exists.
 			// But if the returned id equals this user's id, he can rename himself (f.i. mAx -> Max).
