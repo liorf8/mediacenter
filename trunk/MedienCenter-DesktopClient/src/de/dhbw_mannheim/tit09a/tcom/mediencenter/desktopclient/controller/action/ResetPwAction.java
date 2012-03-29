@@ -1,86 +1,56 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action;
 
 import java.awt.event.ActionEvent;
-import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-
 import javax.swing.JOptionPane;
-import javax.swing.SwingWorker;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.LoginPanel;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
 public class ResetPwAction extends AbstractSwingWorkerAction<Void, String>
 {
-	private final LoginPanel	loginPanel;
-
-	public ResetPwAction(LoginPanel loginDialog)
+	public ResetPwAction(MainFrame mainFrame)
 	{
-		this.loginPanel = loginDialog;
+		super(mainFrame);
 	}
 
 	@Override
-	protected SwingWorker<Void, String> buildSwingWorker(ActionEvent e)
+	protected AbstractTaskPanelSwingWorker buildSwingWorker(MainController mainController, MainFrame mainFrame, ActionEvent e)
 	{
-		return new ResetPwTask();
+		return new RegisterWorker(mainController, mainFrame, e);
 	}
 
-	public class ResetPwTask extends SwingWorker<Void, String>
+	private class RegisterWorker extends AbstractTaskPanelSwingWorker
 	{
-		@Override
-		protected Void doInBackground() throws Exception
+		public RegisterWorker(MainController mainController, MainFrame mainFrame, ActionEvent actionEvent)
 		{
-			publish("Resetting password...");
-			loginPanel.setActionEnabled(false);
+			super(mainController, mainFrame, actionEvent);
+		}
+
+		@Override
+		protected void work() throws Exception
+		{
+			LoginPanel loginPanel = mainFrame.getLoginPanel();
 			String login = loginPanel.getLoginText();
 			
 			if(login.isEmpty())
 				throw new IllegalArgumentException("Not all required fields are filled!");
 			
+			publish("Waiting for user input...");
 			int returnValue = JOptionPane.showConfirmDialog(loginPanel, "Do you really want to reset your password?", "Reset password?", JOptionPane.YES_NO_OPTION);
 			if(returnValue == JOptionPane.YES_OPTION)
 			{
+				publish("Connecting...");
 				MainController.getInstance().getSimonConnection().connect();
+				setProgress(50);
+				
+				publish("Resetting password...");
 				MainController.getInstance().getSimonConnection().getServer().resetPw(login);
-
-				publish("Reset password for " + login + ". Please ask the server admin for the new one.");
+				System.out.println("Reset password for " + login + ". Please ask the server admin for the new one.");
 			}
 			else
 			{
 				this.cancel(false);
-			}
-
-			return null;
-		}
-
-		protected void process(List<String> statuses)
-		{
-			System.out.println(statuses.get(statuses.size() - 1));
-		}
-
-		@Override
-		protected void done()
-		{
-			try
-			{
-				get();
-			}
-			catch (InterruptedException e)
-			{
-				System.out.println("Resetting password interrupted!");
-			}
-			catch (ExecutionException e)
-			{
-				System.out.println("Resetting password failed: " + e.getCause().getClass().getSimpleName() + ": " + e.getCause().getMessage());
-			}
-			catch (CancellationException e)
-			{
-				System.out.println("Resetting password cancelled!");
-			}
-			finally
-			{
-				loginPanel.setActionEnabled(true);
 			}
 		}
 	}

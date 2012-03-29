@@ -20,8 +20,8 @@ public class MainFrame extends JFrame
 	private JTabbedPane			tabbedPane;
 	private LoginPanel			loginPanel;
 	private JPanel				statusPanel;
-	private int statusPanelCounter = 0;
-	
+	private int					statusPanelCounter	= 0;
+
 	public MainFrame()
 	{
 		super("MedienCenterApp");
@@ -33,7 +33,7 @@ public class MainFrame extends JFrame
 		setLocation(400, 400);
 
 		setPreferredSize(new Dimension(640, 480));
-		setMinimumSize(new Dimension(360, 220));
+		setMinimumSize(new Dimension(360, 240));
 		setSize(getMinimumSize());
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new MainFrameWindowListener(this));
@@ -49,14 +49,14 @@ public class MainFrame extends JFrame
 		// TODO not remove all, just the ones in the middle
 		if (loggedIn)
 		{
-			if(loginPanel != null)
+			if (loginPanel != null)
 				getContentPane().remove(loginPanel);
 			getContentPane().add(getTabbedPane(), BorderLayout.CENTER);
 			setSize(getPreferredSize());
 		}
 		else
 		{
-			if(tabbedPane != null)
+			if (tabbedPane != null)
 				getContentPane().remove(tabbedPane);
 			getContentPane().add(getLoginPanel(), BorderLayout.CENTER);
 			setSize(getMinimumSize());
@@ -93,19 +93,18 @@ public class MainFrame extends JFrame
 		return statusPanel;
 	}
 
-
-	public void addTaskPanel(TaskPanel tp)
+	public synchronized void addTaskPanel(TaskPanel tp)
 	{
 		statusPanelCounter++;
-		statusPanel.setLayout(new GridLayout(statusPanelCounter,1));
+		statusPanel.setLayout(new GridLayout(statusPanelCounter, 1));
 		getStatusPanel().add(tp);
 		getContentPane().validate();
 	}
 
-	public void removeTaskPanel(TaskPanel tp)
+	public synchronized void removeTaskPanel(TaskPanel tp)
 	{
 		statusPanelCounter--;
-		statusPanel.setLayout(new GridLayout(statusPanelCounter,1));
+		statusPanel.setLayout(new GridLayout(statusPanelCounter, 1));
 		getStatusPanel().remove(tp);
 		getContentPane().validate();
 	}

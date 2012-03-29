@@ -110,7 +110,7 @@ public class ServerImpl implements Server
 			// Authenticate the user
 			if (!userMan.authenticate(con, id, pw))
 			{
-				throw new AuthenticationException(login, pw);
+				throw new AuthenticationException(login);
 			}
 
 			// Get the exact login (user can login with Max or max or MAX or ...)

@@ -26,9 +26,4 @@ public class AuthenticationException extends IllegalArgumentException
 		super(message, cause);
 		// TODO Auto-generated constructor stub
 	}
-
-	public AuthenticationException(String login, String pw)
-	{
-		super(login + ", " + pw);
-	}
 }

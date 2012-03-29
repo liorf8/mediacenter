@@ -14,7 +14,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.LoginAction;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.RegisterAction;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.ResetPwAction;
@@ -82,8 +81,8 @@ public class LoginPanel extends JPanel
 		add(createCenterPanel(), BorderLayout.CENTER);
 
 		loginAction = new LoginAction(mainFrame);
-		registerAction = new RegisterAction(this);
-		resetPwAction = new ResetPwAction(this);
+		registerAction = new RegisterAction(mainFrame);
+		resetPwAction = new ResetPwAction(mainFrame);
 		
 		mainFrame.getRootPane().setDefaultButton(btnAction);
 	}
