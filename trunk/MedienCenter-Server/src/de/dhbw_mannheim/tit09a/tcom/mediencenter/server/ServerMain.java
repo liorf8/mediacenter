@@ -100,10 +100,15 @@ public class ServerMain
 			SERVER_LOGGER.info("Initializing {} ...", CLASS_NAME);
 			long start = System.currentTimeMillis();
 
+			String vmName = System.getProperty("java.vm.name");
+			SERVER_LOGGER.info("Java VM: {}", vmName);
+			if (vmName.indexOf("64") > 0)
+				throw new Exception("The VLC library only works in 32bit. Please use a 32bit Java Virtual Machine.");
+
 			// Initialize Logging
 			initLogging(Level.ALL, Level.ALL);
 
-			// Make Server directory
+			// Create Server directory
 			NIOUtil.createDirs(SERVER_PATH);
 			SERVER_LOGGER.info("Server directory @ {}", SERVER_PATH);
 
@@ -385,7 +390,7 @@ public class ServerMain
 				{
 					System.out.println("Shutdown aborted!");
 				}
-				
+
 			}
 		}).start();
 

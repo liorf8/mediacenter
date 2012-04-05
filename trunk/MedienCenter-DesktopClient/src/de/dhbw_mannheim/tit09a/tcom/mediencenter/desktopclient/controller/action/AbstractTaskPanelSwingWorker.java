@@ -54,8 +54,10 @@ public abstract class AbstractTaskPanelSwingWorker extends SwingWorker<Void, Str
 		publish(actionEvent.getActionCommand() + "...");
 		mainFrame.getLoginPanel().setActionEnabled(false);
 		work();
+		
 		return null;
 	}
+	
 
 	protected final void process(List<String> statuses)
 	{
@@ -73,7 +75,7 @@ public abstract class AbstractTaskPanelSwingWorker extends SwingWorker<Void, Str
 			get();
 			setProgress(100);
 			taskPanel.setStatus(actionEvent.getActionCommand() + " successfull!");
-			secs = 2;
+			secs = 1;
 		}
 		catch (CancellationException e)
 		{
