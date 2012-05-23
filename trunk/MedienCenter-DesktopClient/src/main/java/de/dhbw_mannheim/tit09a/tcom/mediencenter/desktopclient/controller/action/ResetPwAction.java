@@ -5,7 +5,6 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.LoginTab;
 
@@ -45,11 +44,11 @@ public class ResetPwAction extends AbstractSwingWorkerAction<Void, String>
 			if(returnValue == JOptionPane.YES_OPTION)
 			{
 				publish("Connecting");
-				MainController.getInstance().getSimonConnection().connect();
+				mainController.getSimonConnection().connect();
 				setProgress(50);
 				
 				publish("Resetting password");
-				MainController.getInstance().getSimonConnection().getServer().resetPw(login);
+				mainController.getSimonConnection().getServer().resetPw(login);
 				System.out.println("Reset password for " + login + ". Please ask the server admin for the new one.");
 			}
 			else

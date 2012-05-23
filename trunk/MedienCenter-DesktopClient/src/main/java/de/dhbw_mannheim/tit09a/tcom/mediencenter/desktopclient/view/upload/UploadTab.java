@@ -17,9 +17,9 @@ public class UploadTab extends Tab
 
 	private JTree				filesTree;
 
-	public UploadTab(MainFrame parent)
+	public UploadTab(MainFrame mainFrame)
 	{
-		super("Upload");
+		super(mainFrame, "Upload");
 		setLayout(new BorderLayout());
 		filesTree = createTree();
 		this.add(new JScrollPane(filesTree), BorderLayout.CENTER);

@@ -2,23 +2,21 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.actio
 
 import java.awt.event.ActionEvent;
 
-import javax.swing.AbstractAction;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
-
-public class ExitAction extends AbstractAction
+public class ExitAction extends ParentAbstractAction
 {
 	private static final long	serialVersionUID	= 7496527303982095411L;
 
-	public ExitAction()
+	public ExitAction(MainFrame mainFrame)
 	{
-		super("Exit");
+		super(mainFrame, "Exit", null);
 	}
 	
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
-		MainController.getInstance().exit();
+		mainController.exit();
 	}
 
 }

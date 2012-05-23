@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnection;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
@@ -39,7 +38,7 @@ public class LoginAction extends AbstractSwingWorkerAction<Void, String>
 			if (login.isEmpty() || pw.isEmpty())
 				throw new IllegalArgumentException("Not all required fields are filled!");
 
-			SimonConnection simonConn = MainController.getInstance().getSimonConnection();
+			SimonConnection simonConn = mainController.getSimonConnection();
 
 			String address = simonConn.getServerHost() + ":" + simonConn.getServerRegistryPort() + "/" + simonConn.getServerBindname();
 			publish("Connecting to " + address);
@@ -47,7 +46,7 @@ public class LoginAction extends AbstractSwingWorkerAction<Void, String>
 			setProgress(50);
 
 			publish("Logging in as " + login);
-			simonConn.login(login, pw, MainController.getInstance().getClientCallback());
+			simonConn.login(login, pw, mainController.getClientCallback());
 		}
 	}
 }

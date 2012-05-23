@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.LoginTab;
 
@@ -44,11 +43,11 @@ public class RegisterAction extends AbstractSwingWorkerAction<Void, String>
 				throw new IllegalArgumentException("Password and repeated password are not equal!");
 
 			publish("Connecting");
-			MainController.getInstance().getSimonConnection().connect();
+			mainController.getSimonConnection().connect();
 			setProgress(50);
 			
 			publish("Registering " +login);
-			long id = MainController.getInstance().getSimonConnection().getServer().register(login, pw);
+			long id = mainController.getSimonConnection().getServer().register(login, pw);
 
 			System.out.println("Registered " + login + " (ID: " + id + ")");
 		}

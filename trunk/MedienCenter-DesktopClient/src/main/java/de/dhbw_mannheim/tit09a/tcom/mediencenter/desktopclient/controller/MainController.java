@@ -175,7 +175,7 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 			@Override
 			public void run()
 			{
-				mainFrame = new MainFrame(mainController);
+				mainFrame = new MainFrame();
 			}
 		});
 		return mainFrame;
