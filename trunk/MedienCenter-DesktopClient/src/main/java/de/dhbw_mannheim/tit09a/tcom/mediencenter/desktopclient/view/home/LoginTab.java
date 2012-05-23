@@ -46,7 +46,7 @@ public class LoginTab extends Tab
 
 	public LoginTab(MainFrame mainFrame)
 	{
-		super("Login");
+		super(mainFrame, "Login");
 		this.mainFrame = mainFrame;
 		initGUI();
 

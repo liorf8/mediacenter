@@ -1,32 +1,22 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.Icon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.LogoutAction;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
 
 public class HomeTab extends Tab
 {
 	private static final long	serialVersionUID	= 1L;
 
-	public HomeTab(JFrame frame)
+	public HomeTab(MainFrame mainFrame)
 	{
-		super("Home");
+		super(mainFrame, "Home");
 		
 		JButton logoutBtn = new JButton("Logout");
-		logoutBtn.addActionListener(new ActionListener(){
-
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				MainController.getInstance().getSimonConnection().disconnect();
-				
-			}});
+		logoutBtn.setAction(new LogoutAction(mainFrame));
 		add(logoutBtn);
 	}
 

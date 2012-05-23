@@ -25,7 +25,7 @@ public class MainFrameWindowListener implements WindowListener
 	@Override
 	public void windowClosing(WindowEvent e)
 	{
-		new ExitAction().actionPerformed(null);
+		new ExitAction(mainFrame).actionPerformed(null);
 	}
 
 	@Override

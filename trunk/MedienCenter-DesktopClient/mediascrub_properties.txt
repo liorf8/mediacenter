@@ -1,5 +1,5 @@
 #
-#Wed May 23 17:35:55 CEST 2012
+#Wed May 23 18:48:34 CEST 2012
 server.host=localhost
 settings.selectedCategory=Server
 player.toolbarLocation=South

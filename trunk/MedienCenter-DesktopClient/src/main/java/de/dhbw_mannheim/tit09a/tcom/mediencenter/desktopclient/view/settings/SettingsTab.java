@@ -21,6 +21,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.Settings;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
 
 public class SettingsTab extends Tab implements TreeSelectionListener
@@ -49,9 +50,9 @@ public class SettingsTab extends Tab implements TreeSelectionListener
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public SettingsTab(JFrame frame)
+	public SettingsTab(MainFrame mainFrame)
 	{
-		super("Settings");
+		super(mainFrame, "Settings");
 
 		settings = MainController.getInstance().getSettings();
 

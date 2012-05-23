@@ -1,8 +1,8 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.play;
 
 import javax.swing.Icon;
-import javax.swing.JFrame;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
 
 public class PlayTab extends Tab
@@ -11,9 +11,9 @@ public class PlayTab extends Tab
 
 	private MediaComponent		mediaComponent;
 
-	public PlayTab(JFrame frame)
+	public PlayTab(MainFrame mainFrame)
 	{
-		super("Play");
+		super(mainFrame, "Play");
 	}
 
 	public MediaComponent getMediaComponent()

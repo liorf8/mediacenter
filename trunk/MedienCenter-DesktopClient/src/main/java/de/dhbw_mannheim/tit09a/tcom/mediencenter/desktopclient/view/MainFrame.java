@@ -21,8 +21,6 @@ public class MainFrame extends JFrame
 {
 	private static final long	serialVersionUID	= -6050971688251747359L;
 
-	private MainController		mainController;
-
 	private JPanel				mainPanel;
 	private JTabbedPane			tabbedPane;
 	private LoginTab			loginTab;
@@ -36,11 +34,62 @@ public class MainFrame extends JFrame
 
 	private MediaToolBar		mediaToolBar;
 
-	public MainFrame(MainController mainController)
+	public MainFrame()
 	{
 		super("MediaScrub");
-		this.mainController = mainController;
 		initGUI();
+	}
+
+	public LoginTab getLoginTab()
+	{
+		return loginTab;
+	}
+	
+	public void setLoggedIn(boolean loggedIn)
+	{
+		if (loggedIn)
+		{
+			tabbedPane.removeAll();
+			addTab(createHomeTab());
+			addTab(createPlayTab());
+			addTab(createUploadTab());
+			addTab(createSettingsTab());
+
+			getContentPane().add(createMediaToolBar(), MainController.getInstance().getSettings().getProperty(Settings.KEY_PLAYER_TOOLBAR_LOCATION));
+
+			setSize(getPreferredSize());
+		}
+		else
+		{
+			tabbedPane.removeAll();
+			addTab(createLoginTab());
+			addTab(createSettingsTab());
+
+			getContentPane().remove(createMediaToolBar());
+
+			setSize(getMinimumSize());
+		}
+	}
+
+	public synchronized void addTaskPanel(TaskPanel tp)
+	{
+		statusPanelCounter++;
+		statusPanel.setLayout(new GridLayout(statusPanelCounter, 1));
+		statusPanel.add(tp);
+		getContentPane().validate(); // refresh the GUI
+	}
+
+	public synchronized void removeTaskPanel(TaskPanel tp)
+	{
+		statusPanelCounter--;
+		statusPanel.setLayout(new GridLayout(statusPanelCounter, 1));
+		statusPanel.remove(tp);
+		getContentPane().validate();
+	}
+
+	private void addTab(Tab tab)
+	{
+		tabbedPane.addTab(tab.getName(), tab.getIcon(), tab, tab.getTip());
 	}
 
 	private void initGUI()
@@ -59,33 +108,7 @@ public class MainFrame extends JFrame
 		setLoggedIn(false);
 	}
 
-	public void setLoggedIn(boolean loggedIn)
-	{
-		if (loggedIn)
-		{
-			tabbedPane.removeAll();
-			addTab(getHomeTab());
-			addTab(getPlayTab());
-			addTab(rebuildUploadTab());
-			addTab(getSettingsTab());
-
-			getContentPane().add(getMediaToolBar(), mainController.getSettings().getProperty(Settings.KEY_PLAYER_TOOLBAR_LOCATION));
-
-			setSize(getPreferredSize());
-		}
-		else
-		{
-			tabbedPane.removeAll();
-			addTab(getLoginTab());
-			addTab(getSettingsTab());
-
-			getContentPane().remove(getMediaToolBar());
-
-			setSize(getMinimumSize());
-		}
-	}
-
-	public JPanel createMainPanel()
+	private JPanel createMainPanel()
 	{
 		if (mainPanel == null)
 		{
@@ -95,94 +118,50 @@ public class MainFrame extends JFrame
 			tabbedPane = new JTabbedPane();
 			mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
-			mainPanel.add(getStatusPanel(), BorderLayout.SOUTH);
+			mainPanel.add(createStatusPanel(), BorderLayout.SOUTH);
 		}
 		return mainPanel;
 	}
 
-	public LoginTab getLoginTab()
+	private LoginTab createLoginTab()
 	{
-		if (loginTab == null)
-		{
-			loginTab = new LoginTab(this);
-		}
-		loginTab.repaint();
+		loginTab = new LoginTab(this);
 		return loginTab;
 	}
 
-	public HomeTab getHomeTab()
+	private HomeTab createHomeTab()
 	{
-		if (homeTab == null)
-		{
-			homeTab = new HomeTab(this);
-		}
-		homeTab.repaint();
+		homeTab = new HomeTab(this);
 		return homeTab;
 	}
 
-	public PlayTab getPlayTab()
+	private PlayTab createPlayTab()
 	{
-		if (playTab == null)
-		{
-			playTab = new PlayTab(this);
-		}
-		playTab.repaint();
+		playTab = new PlayTab(this);
 		return playTab;
 	}
 
-	public UploadTab rebuildUploadTab()
+	private UploadTab createUploadTab()
 	{
-		uploadTab = null;
 		uploadTab = new UploadTab(this);
 		return uploadTab;
 	}
 
-	public SettingsTab getSettingsTab()
+	private SettingsTab createSettingsTab()
 	{
-		if (settingsTab == null)
-		{
-			settingsTab = new SettingsTab(this);
-		}
+		settingsTab = new SettingsTab(this);
 		return settingsTab;
 	}
 
-	public JPanel getStatusPanel()
+	private JPanel createStatusPanel()
 	{
-		if (statusPanel == null)
-		{
-			statusPanel = new JPanel();
-		}
+		statusPanel = new JPanel();
 		return statusPanel;
 	}
 
-	public MediaToolBar getMediaToolBar()
+	private MediaToolBar createMediaToolBar()
 	{
-		if (mediaToolBar == null)
-		{
-			mediaToolBar = new MediaToolBar();
-		}
+		mediaToolBar = new MediaToolBar();
 		return mediaToolBar;
 	}
-
-	public synchronized void addTaskPanel(TaskPanel tp)
-	{
-		statusPanelCounter++;
-		statusPanel.setLayout(new GridLayout(statusPanelCounter, 1));
-		getStatusPanel().add(tp);
-		getContentPane().validate(); // refresh the GUI
-	}
-
-	public synchronized void removeTaskPanel(TaskPanel tp)
-	{
-		statusPanelCounter--;
-		statusPanel.setLayout(new GridLayout(statusPanelCounter, 1));
-		getStatusPanel().remove(tp);
-		getContentPane().validate();
-	}
-
-	private void addTab(Tab tab)
-	{
-		tabbedPane.addTab(tab.getName(), tab.getIcon(), tab, tab.getTip());
-	}
-
 }

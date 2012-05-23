@@ -7,9 +7,11 @@ public abstract class Tab extends JPanel
 {
 	private static final long	serialVersionUID	= 1L;
 
+	protected MainFrame mainFrame;
 	
-	public Tab(String tabName)
+	public Tab(MainFrame mainFrame, String tabName)
 	{
+		this.mainFrame = mainFrame;
 		setName(tabName);
 	}
 	

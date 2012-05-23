@@ -7,17 +7,15 @@ import javax.swing.Icon;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
-public abstract class AbstractSwingWorkerAction<T, V> extends AbstractAction
+public abstract class AbstractSwingWorkerAction<T, V> extends ParentAbstractAction
 {
 	private static final long	serialVersionUID	= 5640355678917572814L;
 	
-	private MainFrame	mainFrame;
 	private AbstractTaskPanelSwingWorker worker;
 
 	public AbstractSwingWorkerAction(MainFrame mainFrame, String actionName, Icon icon)
 	{
-		super(actionName, icon);
-		this.mainFrame = mainFrame;
+		super(mainFrame, actionName, icon);
 		putValue(ACTION_COMMAND_KEY, actionName);
 	}
 
