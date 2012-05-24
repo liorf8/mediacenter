@@ -16,6 +16,8 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.PathFileInfo;
 
+
+
 public class FileInfoTree_alt extends JTree implements TreeWillExpandListener
 {
 	private static final long	serialVersionUID	= -2444667977301185992L;
@@ -38,7 +40,7 @@ public class FileInfoTree_alt extends JTree implements TreeWillExpandListener
 		setCellRenderer(new FileInfoTreeRenderer(session.getLogin()));
 		// Wurzel aufklappen
 		expandPath(root);
-		// Listener hinzufügen
+		// Listener hinzufÃ¼gen
 		addTreeWillExpandListener(this);
 		// und so ...
 		getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);

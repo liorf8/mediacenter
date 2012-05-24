@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree;
 
 import java.nio.file.FileSystemException;
 import java.util.List;
@@ -8,7 +8,6 @@ import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.upload.FileInfoTree;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
 

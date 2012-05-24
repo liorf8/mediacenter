@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.upload;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree;
 
 import java.nio.file.FileSystemException;
 import java.util.List;
@@ -9,7 +9,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener.FileTreeWillExpandListener;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.FileInfoTreeRenderer;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
@@ -22,7 +21,7 @@ public class FileInfoTree extends JTree
 	public FileInfoTree()
 	{
 		// Home Verzeichnis feststellen
-		FileInfo userRoot = new PathFileInfo("root", null, true, 0L, 0L, false);
+		FileInfo userRoot = new PathFileInfo(MainController.getInstance().getSimonConnection().getSession().getLogin(), null, true, 0L, 0L, false);
 
 		// Wurzelelement erstellen
 		DefaultMutableTreeNode root = new DefaultMutableTreeNode(userRoot);
@@ -36,7 +35,7 @@ public class FileInfoTree extends JTree
 		// TreeCellRenderer setzen.
 		setCellRenderer(new FileInfoTreeRenderer());
 
-		// Listener hinzufügen
+		// Listener hinzufÃ¼gen
 		addTreeWillExpandListener(new FileTreeWillExpandListener());
 
 		// Wurzel aufklappen

@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;

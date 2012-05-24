@@ -45,6 +45,11 @@ public class MainFrame extends JFrame
 		return loginTab;
 	}
 	
+	public PlayTab getPlayTab()
+	{
+		return playTab;
+	}
+
 	public void setLoggedIn(boolean loggedIn)
 	{
 		if (loggedIn)
@@ -65,7 +70,8 @@ public class MainFrame extends JFrame
 			addTab(createLoginTab());
 			addTab(createSettingsTab());
 
-			getContentPane().remove(createMediaToolBar());
+			if (mediaToolBar != null)
+				getContentPane().remove(mediaToolBar);
 
 			setSize(getMinimumSize());
 		}
@@ -96,7 +102,7 @@ public class MainFrame extends JFrame
 	{
 		setLocation(400, 400);
 		setPreferredSize(new Dimension(760, 480));
-		setMinimumSize(new Dimension(500, 400));
+		setMinimumSize(new Dimension(520, 400));
 		setSize(getMinimumSize());
 
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);

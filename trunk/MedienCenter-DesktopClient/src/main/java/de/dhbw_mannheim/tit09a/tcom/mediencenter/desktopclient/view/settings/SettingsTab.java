@@ -8,7 +8,6 @@ import java.util.Enumeration;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;

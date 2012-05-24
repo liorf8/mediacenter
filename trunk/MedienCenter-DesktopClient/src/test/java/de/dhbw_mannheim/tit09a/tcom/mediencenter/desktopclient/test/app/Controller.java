@@ -75,7 +75,7 @@ public class Controller
 	{
 	    JOptionPane.showMessageDialog(null,
 		    "Bitte starten Sie dieses Programm mit einer 32-bit Java VM.",
-		    "Keine 64-bit Java VM unterstützt", JOptionPane.ERROR_MESSAGE);
+		    "Keine 64-bit Java VM unterstÃ¼tzt", JOptionPane.ERROR_MESSAGE);
 	    System.exit(1);
 	}
 	

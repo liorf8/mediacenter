@@ -28,7 +28,7 @@ public class TaskPanel extends JPanel
 		progressBar.setStringPainted(true);
 
 		// Cancel button
-		ImageIcon icon = MiscUtil.createImageIcon("/tango-icon-theme-0.8.90/16x16/actions/process-stop.png", "process-stop.png");
+		ImageIcon icon = MiscUtil.createImageIcon("/imgs/16x16/process-stop.png", "process-stop.png");
 		btnCancel = new JButton(icon);
 		btnCancel.addActionListener(cancelActionListener);
 

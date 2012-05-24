@@ -4,8 +4,10 @@ import java.net.UnknownHostException;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.InfoPlayer;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamPlayer;
 import de.root1.simon.exceptions.EstablishConnectionFailed;
 import de.root1.simon.exceptions.LookupFailedException;
 
@@ -73,6 +75,20 @@ public abstract class SimonConnectionState implements SimonConnection
 	// --------------------------------------------------------------------------------
 	@Override
 	public Session getSession()
+	{
+		throw new IllegalStateException(this.getClass().getSimpleName());
+	}
+	
+	// --------------------------------------------------------------------------------
+	@Override
+	public InfoPlayer getInfoPlayer()
+	{
+		throw new IllegalStateException(this.getClass().getSimpleName());
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public StreamPlayer getStreamPlayer()
 	{
 		throw new IllegalStateException(this.getClass().getSimpleName());
 	}
