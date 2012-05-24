@@ -2,15 +2,16 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces;
 
 import java.nio.file.FileSystemException;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.AuthenticationException;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.KeyAlreadyExistsException;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.AuthenticationException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.KeyAlreadyExistsException;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
+
 /**
  * Alle Pfadangaben sind relative Pfadangaben ausgehend vom Root-Verzeichnis des jeweiligen Users. Um dieses anzugeben, einfach einen leeren String
- * übergeben (<code>""</code>). Für den Standard-Ordner "Music" <code>"/Music"</code>.
+ * ï¿½bergeben (<code>""</code>). FÃ¼r den Standard-Ordner "Music" <code>"/Music"</code>.
  * 
  * @author mhertram
  * 
@@ -35,27 +36,27 @@ public interface Session
 	public String getSessionId();
 
 	/**
-	 * Zum Ändern des Login-Namens.
+	 * Zum ï¿½ndern des Login-Namens.
 	 * 
 	 * @param pw
 	 *            Das aktuelle Passwort des Users.
 	 * @param newLogin
-	 *            Der neue, gewünschte Login-Name des Users.
+	 *            Der neue, gewÃ¼nschte Login-Name des Users.
 	 * @throws AuthenticationException
 	 *             Falls das Passwort nicht stimmt.
 	 * @throws KeyAlreadyExistsException
-	 *             Falls der gewünschte Login-Name schon vergeben ist.
+	 *             Falls der gewÃ¼nschte Login-Name schon vergeben ist.
 	 * @throws ServerException
 	 */
 	public void changeLogin(String pw, String newLogin) throws AuthenticationException, KeyAlreadyExistsException, ServerException;
 
 	/**
-	 * Zum Ändern des Passwortes.
+	 * Zum ï¿½ndern des Passwortes.
 	 * 
 	 * @param currentPw
 	 *            Das aktuelle Passwort.
 	 * @param newPw
-	 *            Das neue, gewünschte Passwort.
+	 *            Das neue, gewÃ¼nschte Passwort.
 	 * @throws AuthenticationException
 	 *             Falls das aktuelle Passwort nicht stimmt.
 	 * @throws ServerException
@@ -78,7 +79,7 @@ public interface Session
 	 * @param parentDirPath
 	 *            Der Pfad zum Ordner, in dem der neue Ordner erstellt werden soll.
 	 * @param dirName
-	 *            Der Name für das neue Verzeichnis.
+	 *            Der Name fÃ¼r das neue Verzeichnis.
 	 * @return
 	 * @throws FileSystemException
 	 *             Bei IO-Fehlern.
@@ -87,12 +88,12 @@ public interface Session
 	public String createDir(String parentDirPath, String dirName) throws FileSystemException, ServerException;
 
 	/**
-	 * Zum Umbennenen einer Datei. Existiert schon eine Datei unter dem gewünschten Namen, wird die zu erstellende automatisch umbenannt.
+	 * Zum Umbennenen einer Datei. Existiert schon eine Datei unter dem gewÃ¼nschten Namen, wird die zu erstellende automatisch umbenannt.
 	 * 
 	 * @param path
 	 *            Der Pfad zur Datei.
 	 * @param newName
-	 *            Der gewünschte, neue Name.
+	 *            Der gewÃ¼nschte, neue Name.
 	 * @return Den Pfad zur Datei unter dem neuen Namen.
 	 * @throws FileSystemException
 	 *             Bei IO-Fehlern.
@@ -109,7 +110,7 @@ public interface Session
 	 *            Der Pfad zum Ordner, in den kopiert werden soll.
 	 * @param replace
 	 *            Ob existierende Dateien ersetzt werden sollen.
-	 * @return Wie viele Dateien tatsächlich kopiert wurden.
+	 * @return Wie viele Dateien tatsï¿½chlich kopiert wurden.
 	 * @throws FileSystemException
 	 *             Bei IO-Fehlern.
 	 * @throws ServerException
@@ -125,7 +126,7 @@ public interface Session
 	 *            Der Pfad zum Zielordner.
 	 * @param replace
 	 *            Ob existierende Dateien ersetzt werden sollen.
-	 * @return Wie viele Dateien tatsächlich verschoben wurden.
+	 * @return Wie viele Dateien tatsï¿½chlich verschoben wurden.
 	 * @throws FileSystemException
 	 *             Bei IO-Fehlern.
 	 * @throws ServerException
@@ -133,13 +134,13 @@ public interface Session
 	public int moveFile(String srcPath, String targetDirPath, boolean replace) throws FileSystemException, ServerException;
 
 	/**
-	 * Löscht eine Datei oder einen Dateibaum.
+	 * LÃ¶scht eine Datei oder einen Dateibaum.
 	 * 
 	 * @param path
-	 *            Der Pfad der zu löschenden Datei bzw des Ordners.
+	 *            Der Pfad der zu lÃ¶schenden Datei bzw des Ordners.
 	 * @param deleteNotEmptyDir
-	 *            Ob nicht-leere Ordner gelöscht werden sollen.
-	 * @return Die Anzahl der tatsächlich gelöschten Dateien.
+	 *            Ob nicht-leere Ordner gelÃ¶scht werden sollen.
+	 * @return Die Anzahl der tatsï¿½chlich gelÃ¶schten Dateien.
 	 * @throws FileSystemException
 	 *             Bei IO-Fehlern.
 	 * @throws ServerException
@@ -148,15 +149,15 @@ public interface Session
 
 	/**
 	 * Wird vom Client aufgerufen, wenn er eine Datei hochladen will. Hiermit wird ein RawChannel beim SIMON-Dispatcher des Servers registriert. Die
-	 * Rückgabe ist der Token, der diesen Channel identifiziert.
+	 * RÃ¼ckgabe ist der Token, der diesen Channel identifiziert.
 	 * 
 	 * @param targetDirPath
 	 *            Der Ordner, in dem die hochgeladene Datei erstellt werden soll.
 	 * @param filename
 	 *            Der Name der hochzuladenden Datei.
 	 * @param fileSize
-	 *            Die Größe der hochzuladenden Datei.
-	 * @return Der Token, der den Channel identifiziert, über den der tatsächliche Upload-Vorgang stattfindet.
+	 *            Die GrÃ¶ÃŸe der hochzuladenden Datei.
+	 * @return Der Token, der den Channel identifiziert, ï¿½ber den der tatsï¿½chliche Upload-Vorgang stattfindet.
 	 * @throws FileSystemException
 	 *             Bei IO-Fehlern.
 	 * @throws ServerException
@@ -164,7 +165,7 @@ public interface Session
 	public int prepareRawChannel(String targetDirPath, String filename, long fileSize) throws FileSystemException, ServerException;
 
 	/**
-	 * Lädt eine Datei herunter unter Verwendung von {@link ClientCallback#prepareRawChannel(String, long)}.
+	 * LÃ¤dt eine Datei herunter unter Verwendung von {@link ClientCallback#prepareRawChannel(String, long)}.
 	 * 
 	 * @param path
 	 *            Der Pfad zur herunterzuladenden Datei.
@@ -175,7 +176,7 @@ public interface Session
 	public void downloadFile(String path) throws FileSystemException, ServerException;
 
 	/**
-	 * Gibt die Bytes einer Datei zurück. Limit sind 32MB.
+	 * Gibt die Bytes einer Datei zurÃ¼ck. Limit sind 32MB.
 	 * 
 	 * @param path
 	 *            Der Pfad zu der Datei.
@@ -187,7 +188,7 @@ public interface Session
 	public byte[] getFileBytes(String path) throws FileSystemException, ServerException;
 
 	/**
-	 * Gibt den der Session zugeordneten StreamPlayer zurück.
+	 * Gibt den der Session zugeordneten StreamPlayer zurï¿½ck.
 	 * 
 	 * @return Die der Session zugeordnete Instanz des StreamPlayers.
 	 * @throws NoSuchElementException
@@ -196,9 +197,9 @@ public interface Session
 	public StreamPlayer getStreamPlayer() throws NoSuchElementException, ServerException;
 
 	/**
-	 * Gibt den der Session zugeordnete InfoPlayer zurück. Der InfoPlayer dient zum Abrufen von ID3-Tags und anderen Metainformationen wie Länge,
-	 * Audio/Video-Spuren, und Kodierung. Er ist eine eigene MediaPlayer-Instanz und unabhängig vom StreamPlayer, damit letzterer weiter wiedergeben
-	 * kann, während Infos gelesen werden.
+	 * Gibt den der Session zugeordnete InfoPlayer zurï¿½ck. Der InfoPlayer dient zum Abrufen von ID3-Tags und anderen Metainformationen wie Lï¿½nge,
+	 * Audio/Video-Spuren, und Kodierung. Er ist eine eigene MediaPlayer-Instanz und unabhï¿½ngig vom StreamPlayer, damit letzterer weiter wiedergeben
+	 * kann, wÃ¤hrend Infos gelesen werden.
 	 * 
 	 * @returnDie der Session zugeordnete Instanz des InfoPlayers.
 	 * @throws NoSuchElementException

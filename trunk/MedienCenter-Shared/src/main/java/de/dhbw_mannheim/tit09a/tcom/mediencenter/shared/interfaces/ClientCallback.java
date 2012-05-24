@@ -30,12 +30,12 @@ public interface ClientCallback
 	 * @param filename
 	 *            Der Dateiname der anzulegenden Datei.
 	 * @param fileSize
-	 *            Die Größe in Bytes.
+	 *            Die GrÃ¶ÃŸe in Bytes.
 	 * @return Einen Token, mit dem die Channel-Verbindung identifiziert wird.
 	 * @throws SimonException
 	 *             Siehe {@link de.root1.simon.Simon#prepareRawChannel}.
 	 * @throws FileAlreadyExistsException
-	 *             Falls die Datei schon existiert und nicht überschrieben werden soll.
+	 *             Falls die Datei schon existiert und nicht Ã¼berschrieben werden soll.
 	 */
 	public int prepareRawChannel(String filename, long fileSize) throws SimonException, FileAlreadyExistsException;
 }
