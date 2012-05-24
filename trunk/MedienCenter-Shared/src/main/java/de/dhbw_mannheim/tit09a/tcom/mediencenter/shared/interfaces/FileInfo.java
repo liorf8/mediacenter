@@ -29,7 +29,7 @@ public abstract class FileInfo
 	public abstract String getContentType();
 
 	/**
-	 * @return Die Dateigröße in Bytes.
+	 * @return Die DateigrÃ¶ÃŸe in Bytes.
 	 */
 	public abstract long getSize();
 
@@ -44,15 +44,15 @@ public abstract class FileInfo
 	public abstract long getInfoTime();
 
 	/**
-	 * Der Boolean-Wert gibt an, ob die Datei vom Anwender modifiziert werden kann. Beispielsweise können die Standard-Ordner (Music, Pictures,
-	 * Videos) nicht verändert werden.
+	 * Der Boolean-Wert gibt an, ob die Datei vom Anwender modifiziert werden kann. Beispielsweise kï¿½nnen die Standard-Ordner (Music, Pictures,
+	 * Videos) nicht verÃ¤ndert werden.
 	 * 
-	 * @return Ob die Datei verändert werden kann.
+	 * @return Ob die Datei verÃ¤ndert werden kann.
 	 */
 	public abstract boolean isModifiable();
 
 	/**
-	 * Wichtig fürs Streamen.
+	 * Wichtig fï¿½rs Streamen.
 	 * 
 	 * @return Aktuelle Position in der Mediadatei in Millisekunden.
 	 */
@@ -83,7 +83,7 @@ public abstract class FileInfo
 	/**
 	 * @param full
 	 *            Ist dieser Wert auf "wahr" gesetzt, werden alle Werte ausgegeben. Ansonsten nur der Pfad.
-	 * @return Eine toString-Repräsentation der FileInfo.
+	 * @return Eine toString-ReprÃ¤sentation der FileInfo.
 	 */
 	public final String toString(boolean full)
 	{

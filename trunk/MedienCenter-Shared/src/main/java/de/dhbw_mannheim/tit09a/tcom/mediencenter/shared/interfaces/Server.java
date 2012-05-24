@@ -12,7 +12,7 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerExcepti
  * System.out.println(&quot;Current server time: &quot; + server.serverTime());
  * </pre>
  * 
- * Geht bei der Ausführung einer Methode auf Serverseite etwas unerwartet schief, wird immer eine {@link ServerException} geworfen. Dies ist eine
+ * Geht bei der AusfÃ¼hrung einer Methode auf Serverseite etwas unerwartet schief, wird immer eine {@link ServerException} geworfen. Dies ist eine
  * {@link RuntimeException}, sie muss also nicht abgefangen werden.
  * 
  * @author mhertram
@@ -21,7 +21,7 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerExcepti
 public interface Server
 {
 	/**
-	 * Der Name, unter dem der Server über die SIMON-Registry erreichbar ist.
+	 * Der Name, unter dem der Server Ã¼ber die SIMON-Registry erreichbar ist.
 	 */
 	public static final String	BIND_NAME		= "server";
 
@@ -42,7 +42,7 @@ public interface Server
 	public long serverTime() throws ServerException;
 
 	/**
-	 * Um einen User beim Server zu registrieren. Ist der gewünschte Login-Name bereits vergeben, wird eine KeyAlreadyExistsException geworfen.
+	 * Um einen User beim Server zu registrieren. Ist der gewï¿½nschte Login-Name bereits vergeben, wird eine KeyAlreadyExistsException geworfen.
 	 * 
 	 * @param login
 	 *            Der Login-Name.
@@ -50,7 +50,7 @@ public interface Server
 	 *            Das Passwort.
 	 * @return Die ID des registrierten Users.
 	 * @throws KeyAlreadyExistsException
-	 *             Falls der gewünschte Login-Name schon vorhanden ist.
+	 *             Falls der gewÃ¼nschte Login-Name schon vorhanden ist.
 	 * @throws ServerException
 	 */
 	public long register(String login, String pw) throws KeyAlreadyExistsException, ServerException;
@@ -61,19 +61,19 @@ public interface Server
 	 * @param login
 	 *            Der bei der Registrierung ({@link Server#register(String, String)}) angegebene Login-Name.
 	 * @param pw
-	 *            Das dazugehörige Passwort.
+	 *            Das dazugehÃ¶rige Passwort.
 	 * @param callback
 	 *            Ein {@link ClientCallback}, dessen Methoden vom Server aufgerufen werden.
-	 * @return Eine {@link Session} für den User.
+	 * @return Eine {@link Session} fï¿½r den User.
 	 * @throws ServerException
 	 */
 	public Session login(String login, String pw, ClientCallback callback) throws ServerException;
 
 	/**
-	 * Um das Passwort des Users zurückzusetzen. Das neu generierte Passwort muss im Moment dann im Server-Log nachgelesen werden.
+	 * Um das Passwort des Users zurÃ¼ckzusetzen. Das neu generierte Passwort muss im Moment dann im Server-Log nachgelesen werden.
 	 * 
 	 * @param login
-	 *            Der Login-Name für den das Passwort zurückgesetzt werden soll.
+	 *            Der Login-Name fï¿½r den das Passwort zurï¿½ckgesetzt werden soll.
 	 * @throws ServerException
 	 */
 	public void resetPw(String login) throws ServerException;
