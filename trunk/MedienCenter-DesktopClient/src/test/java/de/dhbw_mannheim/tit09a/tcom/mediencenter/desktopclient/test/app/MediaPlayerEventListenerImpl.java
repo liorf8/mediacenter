@@ -15,12 +15,6 @@ public class MediaPlayerEventListenerImpl implements MediaPlayerEventListener
 
 	}
 
-	@Override
-	public void mediaChanged(MediaPlayer mediaPlayer)
-	{
-		// TODO Auto-generated method stub
-
-	}
 
 	@Override
 	public void opening(MediaPlayer mediaPlayer)
@@ -29,12 +23,6 @@ public class MediaPlayerEventListenerImpl implements MediaPlayerEventListener
 
 	}
 
-	@Override
-	public void buffering(MediaPlayer mediaPlayer)
-	{
-		// TODO Auto-generated method stub
-
-	}
 
 	@Override
 	public void playing(MediaPlayer mediaPlayer)
@@ -226,6 +214,22 @@ public class MediaPlayerEventListenerImpl implements MediaPlayerEventListener
 
 		Frame.getInstance().pack();
 
+	}
+
+
+	@Override
+	public void buffering(MediaPlayer arg0, float arg1)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void mediaChanged(MediaPlayer arg0, libvlc_media_t arg1, String arg2)
+	{
+		// TODO Auto-generated method stub
+		
 	}
 
 }

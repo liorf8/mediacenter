@@ -9,8 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.exceptions.ServerException;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.InfoPlayer;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamPlayer;
 import de.root1.simon.ClosedListener;
 import de.root1.simon.Lookup;
 import de.root1.simon.Simon;
@@ -28,6 +30,8 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 	Lookup										lookup;
 	Server										server;
 	Session										session;
+	InfoPlayer									infoPlayer;
+	StreamPlayer								streamPlayer;
 	String										serverHost;
 	int											serverRegistryPort;
 	String										serverBindname;
@@ -123,6 +127,20 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 
 	// --------------------------------------------------------------------------------
 	@Override
+	public InfoPlayer getInfoPlayer()
+	{
+		return state.getInfoPlayer();
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public StreamPlayer getStreamPlayer()
+	{
+		return state.getStreamPlayer();
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
 	public Server getServer()
 	{
 		return state.getServer();
@@ -192,6 +210,12 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 	{
 		lookup.removeClosedListener(server, this);
 		lookup.release(server);
+
+		lookup = null;
+		server = null;
+		session = null;
+		infoPlayer = null;
+		streamPlayer = null;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -206,6 +230,8 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 	void doLogin(String login, String pw, ClientCallback callback)
 	{
 		session = server.login(login, pw, callback);
+		infoPlayer = session.getInfoPlayer();
+		streamPlayer = session.getStreamPlayer();
 	}
 
 	// --------------------------------------------------------------------------------

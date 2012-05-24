@@ -6,10 +6,10 @@ import javax.swing.Icon;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener.FileTreeSelectionListener;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree.FileInfoTree;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree.FileTreeSelectionListener;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.upload.FileInfoTree;
 
 public class UploadTab extends Tab
 {

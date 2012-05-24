@@ -10,7 +10,7 @@ public class OpenFileAction extends AbstractMediaCenterAction
 
     public OpenFileAction()
     {
-	super("Datei öffnen...");
+	super("Datei Ã¶ffnen...");
     }
 
     @Override
@@ -25,7 +25,7 @@ public class OpenFileAction extends AbstractMediaCenterAction
 	    path = fileChooser.getSelectedFile().getAbsolutePath();
 	    System.out.println("Path:" + path);
 	    
-	    // TODO:  äöüß and other non ANSI chars must be escaped like a.mkv results in this:
+	    // TODO:  Ã¼ and other non ANSI chars must be escaped like a.mkv results in this:
 	   // path = "http://localhost:8080/web/upload/%C3%A4.mkv";
 
 	    VLCController.getInstance(true).playMedia(path);
