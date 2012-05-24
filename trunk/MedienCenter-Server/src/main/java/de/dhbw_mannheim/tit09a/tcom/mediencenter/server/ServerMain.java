@@ -67,10 +67,10 @@ public class ServerMain
 		new ServerMain().start();
 
 		/*
-		 * Ausführen per cmd:
+		 * AusfÃ¼hren per cmd:
 		 * 
 		 * 1. cmd als Admin starten, damit ein Logfile angelegt werden kann. Diese werden im "C:\Windows\SysWOW64"-Verzeichnis angelegt. -> TODO (vll
-		 * in bat ausführen) 2. Wichtig: In einer 32bit VM ausführen, wenn VLC 32bit ist. Für 64bit genau dasselbe. 3. Etwa diesen Code abschicken:
+		 * in bat ausfÃ¼hren) 2. Wichtig: In einer 32bit VM ausfÃ¼hren, wenn VLC 32bit ist. FÃ¼r 64bit genau dasselbe. 3. Etwa diesen Code abschicken:
 		 * C:\Windows\system32>"C:\Program Files (x86)\Java\jre7\bin\java.exe" -jar C:\Users\Max\Desktop\MedienCenter-Server.jar
 		 */
 	}

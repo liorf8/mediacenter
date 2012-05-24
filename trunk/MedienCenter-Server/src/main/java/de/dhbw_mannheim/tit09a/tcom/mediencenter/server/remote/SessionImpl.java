@@ -368,7 +368,9 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		{
 			if (streamPlayer == null)
 				streamPlayer = new StreamPlayerImpl(this);
-
+			else
+				throw new NoSuchElementException("RemoteObjects can only be passed one time to the client (see http://dev.root1.de/issues/102). StreamPlayer was passed before.");
+			
 			return streamPlayer;
 		}
 		catch (NoSuchElementException nse)
@@ -390,6 +392,8 @@ public class SessionImpl implements Session, SimonUnreferenced, Serializable
 		{
 			if (infoPlayer == null)
 				infoPlayer = new InfoPlayerImpl(this);
+			else
+				throw new NoSuchElementException("RemoteObjects can only be passed one time to the client (see http://dev.root1.de/issues/102). InfoPlayer was passed before.");
 
 			return infoPlayer;
 		}

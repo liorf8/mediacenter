@@ -14,13 +14,7 @@ public class StreamMediaPlayerEventListener implements MediaPlayerEventListener
 	{
 		ServerMain.INVOKE_LOGGER.info("{} started!", this.getClass().getSimpleName());
 	}
-
-	@Override
-	public void mediaChanged(MediaPlayer mediaPlayer)
-	{
-		System.out.println("mediaChanged: " + mediaPlayer);
-	}
-
+	
 	@Override
 	public void opening(MediaPlayer mediaPlayer)
 	{
@@ -28,12 +22,6 @@ public class StreamMediaPlayerEventListener implements MediaPlayerEventListener
 
 	}
 
-	@Override
-	public void buffering(MediaPlayer mediaPlayer)
-	{
-		// TODO Auto-generated method stub
-
-	}
 
 	@Override
 	public void playing(MediaPlayer mediaPlayer)
@@ -229,6 +217,20 @@ public class StreamMediaPlayerEventListener implements MediaPlayerEventListener
 	{
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void buffering(MediaPlayer arg0, float arg1)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mediaChanged(MediaPlayer arg0, libvlc_media_t arg1, String arg2)
+	{
+		// TODO Auto-generated method stub
+		
 	}
 
 }
