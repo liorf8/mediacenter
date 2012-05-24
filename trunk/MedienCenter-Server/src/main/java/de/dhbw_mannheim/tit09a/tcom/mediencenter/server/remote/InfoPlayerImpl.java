@@ -61,8 +61,10 @@ public class InfoPlayerImpl implements InfoPlayer, Serializable
 		{
 			Path absolutePath = NFileManager.getInstance().toValidatedAbsoluteServerPath(session, path, FileType.FILE, false);
 			String mrl = NIOUtil.pathToUri(absolutePath);
-			headlessPlayer.prepareMedia(mrl);
-			return headlessPlayer.getLength();
+			headlessPlayer.startMedia(mrl);
+			long length = headlessPlayer.getLength();
+			headlessPlayer.stop();
+			return length;
 		}
 		catch (FileSystemException e)
 		{
@@ -87,7 +89,6 @@ public class InfoPlayerImpl implements InfoPlayer, Serializable
 			headlessPlayer.prepareMedia(mrl);
 			headlessPlayer.parseMedia();
 			return headlessPlayer.getTrackInfo();
-			// FIXME TrackInfo is not Serializable
 		}
 		catch (FileSystemException e)
 		{
