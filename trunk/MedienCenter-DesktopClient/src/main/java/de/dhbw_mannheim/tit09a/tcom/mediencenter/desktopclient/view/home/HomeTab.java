@@ -4,6 +4,7 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.LogoutAction;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
 
@@ -31,7 +32,6 @@ public class HomeTab extends Tab
 	@Override
 	public Icon getIcon()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Home Tab.png");
 	}
 }

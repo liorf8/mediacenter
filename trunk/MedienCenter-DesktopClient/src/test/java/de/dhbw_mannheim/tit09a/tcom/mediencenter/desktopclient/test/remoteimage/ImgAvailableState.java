@@ -3,7 +3,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.test.remoteimage
 import java.awt.Graphics;
 import java.awt.Image;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.GraphicsUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 
 public class ImgAvailableState extends RICState
 {
@@ -35,9 +35,9 @@ public class ImgAvailableState extends RICState
 		System.out.println(getClass().getSimpleName() + ": paintComponent() @" + Thread.currentThread());
 
 		if (doScale)
-			GraphicsUtil.drawScaledAndCenteredImg(g, ric, img, GraphicsUtil.calculateScale(ric, img));
+			MediaUtil.drawScaledAndCenteredImg(g, ric, img, MediaUtil.calculateScale(ric, img, false));
 		else
-			GraphicsUtil.drawCenteredImg(g, ric, img);
+			MediaUtil.drawCenteredImg(g, ric, img);
 	}
 	
 	// --------------------------------------------------------------------------------

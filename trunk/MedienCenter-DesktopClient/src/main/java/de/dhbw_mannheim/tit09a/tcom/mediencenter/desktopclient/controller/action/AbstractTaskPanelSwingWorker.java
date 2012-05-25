@@ -74,7 +74,7 @@ public abstract class AbstractTaskPanelSwingWorker extends SwingWorker<Void, Str
 		{
 			get();
 			taskPanel.setTaskFinished(true, actionEvent.getActionCommand() + " successfull!");
-			secs = 2;
+			secs = 0;
 		}
 		catch (CancellationException e)
 		{

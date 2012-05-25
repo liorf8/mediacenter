@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.InputStream;
 
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -14,10 +13,11 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JToolBar;
 import javax.swing.LayoutStyle;
+import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MiscUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 
 public class MediaToolBar extends JToolBar implements ActionListener, ChangeListener
 {
@@ -29,30 +29,68 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 
 	private JPanel				buttonsPanel;
 	private JLabel				lblNowPlaying;
-	private JButton				btnShuffle;
+	private JButton				btnRandom;
 	private JButton				btnRepeat;
 	private JButton				btnStop;
 	private JButton				btnPrevious;
 	private JButton				btnRewind;
-	private JButton				btnPlay;
+	private JButton				btnPlayPause;
 	private JButton				btnFastForward;
 	private JButton				btnNext;
+
 	private JButton				btnMute;
 	private JSlider				sldrVolume;
 	private JLabel				lblVolume;
 
-	private ImageIcon			imgVolumeLow;
-	private ImageIcon			imgVolumeMedium;
-	private ImageIcon			imgVolumeHigh;
+	private ImageIcon			imgRandom;
+	private ImageIcon			imgRepeat;
+	private ImageIcon			imgStop;
+	private ImageIcon			imgPrevious;
+	private ImageIcon			imgRewind;
+	private ImageIcon			imgPlay;
+	private ImageIcon			imgPause;
+	private ImageIcon			imgFastForward;
+	private ImageIcon			imgNext;
+
+	private ImageIcon			imgMute;
+	private ImageIcon			imgVolume0;
+	private ImageIcon			imgVolume1;
+	private ImageIcon			imgVolume2;
+	private ImageIcon			imgVolume3;
+	private ImageIcon			imgVolume4;
+	private ImageIcon			imgVolume5;
 
 	public MediaToolBar()
 	{
 		setName("MediaScrub - ToolBar");
-		setLayout(new GridLayout(2, 1));
 
 		loadImages();
+
+		setLayout(new GridLayout(2, 1));
 		this.add(createProgressPanel());
 		this.add(createButtonsPanel());
+	}
+
+	private void loadImages()
+	{
+		imgRandom = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Random.png");
+		imgRepeat = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Repeat.png");
+
+		imgStop = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Stop.png");
+		imgPrevious = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Previous.png");
+		imgRewind = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Backward.png");
+		imgPlay = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Play.png");
+		imgPause = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Pause.png");
+		imgFastForward = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Forward.png");
+		imgNext = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Next.png");
+
+		imgMute = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Mute.png");
+		imgVolume0 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 0.png");
+		imgVolume1 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 1.png");
+		imgVolume2 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 2.png");
+		imgVolume3 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 3.png");
+		imgVolume4 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 4.png");
+		imgVolume5 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 5.png");
 	}
 
 	private JPanel createProgressPanel()
@@ -60,12 +98,6 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 		if (progressPanel == null)
 		{
 			progressPanel = new JPanel();
-			GroupLayout groupLayout = new GroupLayout(progressPanel);
-			progressPanel.setLayout(groupLayout);
-
-			groupLayout.setHonorsVisibility(false);
-			groupLayout.setAutoCreateGaps(true);
-			groupLayout.setAutoCreateContainerGaps(false);
 
 			lblNowPlaying = new JLabel("Now Playing");
 
@@ -80,97 +112,103 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 			timeLabel = new TimeLabel();
 
 			// Layout
+			GroupLayout groupLayout = new GroupLayout(progressPanel);
+			groupLayout.setHonorsVisibility(false);
+			groupLayout.setAutoCreateGaps(true);
+			groupLayout.setAutoCreateContainerGaps(false);
+			progressPanel.setLayout(groupLayout);
+
 			groupLayout.setHorizontalGroup(groupLayout.createSequentialGroup()
 					.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 5, 5)
-					.addComponent(lblNowPlaying, 100, GroupLayout.PREFERRED_SIZE, 150)
+					.addComponent(lblNowPlaying, 100, GroupLayout.PREFERRED_SIZE, 200)
 					.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 5, 5)
 					.addComponent(sldrProgress)
 					.addComponent(timeLabel)
 					.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 5, 5));
 
-			groupLayout.setVerticalGroup(groupLayout.createSequentialGroup().addGroup(groupLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-					.addComponent(lblNowPlaying, GroupLayout.Alignment.CENTER)
+			groupLayout.setVerticalGroup(groupLayout.createSequentialGroup().addGroup(groupLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+					.addComponent(lblNowPlaying)
 					.addComponent(sldrProgress)
-					.addComponent(timeLabel, GroupLayout.Alignment.CENTER)));
+					.addComponent(timeLabel)));
 		}
 		return progressPanel;
-	}
-
-	private void loadImages()
-	{
-		String imgPath16x16 = "/imgs/16x16/";
-		InputStream is = getClass().getResourceAsStream( imgPath16x16 + "audio-volume-low.png" );
-		System.out.println(is);
-		imgVolumeLow = MiscUtil.createImageIcon(imgPath16x16 + "audio-volume-low.png", "audio-volume-low.png");
-		imgVolumeMedium = MiscUtil.createImageIcon(imgPath16x16 + "audio-volume-medium.png", "audio-volume-medium.png");
-		imgVolumeHigh = MiscUtil.createImageIcon(imgPath16x16 + "audio-volume-high.png", "audio-volume-high.png");
 	}
 
 	private JPanel createButtonsPanel()
 	{
 		if (buttonsPanel == null)
 		{
-			ImageIcon icon;
 			buttonsPanel = new JPanel();
 
-			btnShuffle = new JButton();
-			btnShuffle.setText("shuffle");
+			btnRandom = new JButton();
+			btnRandom.setIcon(imgRandom);
 
 			btnRepeat = new JButton();
-			btnRepeat.setText("repeat");
+			btnRepeat.setIcon(imgRepeat);
 
 			btnStop = new JButton();
-			icon = MiscUtil.createImageIcon("/imgs/22x22/media-playback-stop.png", "media-playback-stop.png");
-			btnStop.setIcon(icon);
+			btnStop.setIcon(imgStop);
 
 			btnPrevious = new JButton();
-			icon = MiscUtil.createImageIcon("/imgs/22x22/media-skip-backward.png", "media-skip-backward.png");
-			btnPrevious.setIcon(icon);
+			btnPrevious.setIcon(imgPrevious);
 
 			btnRewind = new JButton();
-			icon = MiscUtil.createImageIcon("/imgs/22x22/media-seek-backward.png", "media-seek-backward.png");
-			btnRewind.setIcon(icon);
+			btnRewind.setIcon(imgRewind);
 
-			btnPlay = new JButton();
-			icon = MiscUtil.createImageIcon("/imgs/22x22/media-playback-start.png", "media-playback-start.png");
-			btnPlay.setIcon(icon);
+			btnPlayPause = new JButton();
+			btnPlayPause.setIcon(imgPlay);
 
 			btnFastForward = new JButton();
-			icon = MiscUtil.createImageIcon("/imgs/22x22/media-seek-forward.png", "media-seek-forward.png");
-			btnFastForward.setIcon(icon);
+			btnFastForward.setIcon(imgFastForward);
 
 			btnNext = new JButton();
-			icon = MiscUtil.createImageIcon("/imgs/22x22/media-skip-forward.png", "media-skip-forward.png");
-			btnNext.setIcon(icon);
+			btnNext.setIcon(imgNext);
 
 			btnMute = new JButton();
-			icon = MiscUtil.createImageIcon("/imgs/16x16/audio-volume-muted.png", "audio-volume-muted.png");
-			btnMute.setIcon(icon);
+			btnMute.setIcon(imgMute);
 			btnMute.setActionCommand("mute");
 			btnMute.addActionListener(this);
 
 			sldrVolume = new JSlider(0, 100);
-			Dimension sldrVolumeDim = new Dimension(100, sldrVolume.getPreferredSize().height);
-			sldrVolume.setPreferredSize(sldrVolumeDim);
-			sldrVolume.setMinimumSize(sldrVolumeDim);
-			sldrVolume.setMaximumSize(sldrVolumeDim);
 			sldrVolume.addChangeListener(this);
 
 			lblVolume = new JLabel();
 			displayVolume(50);
 
-			buttonsPanel.add(lblNowPlaying);
-			buttonsPanel.add(btnShuffle);
-			buttonsPanel.add(btnRepeat);
-			buttonsPanel.add(btnStop);
-			buttonsPanel.add(btnPrevious);
-			buttonsPanel.add(btnRewind);
-			buttonsPanel.add(btnPlay);
-			buttonsPanel.add(btnFastForward);
-			buttonsPanel.add(btnNext);
-			buttonsPanel.add(btnMute);
-			buttonsPanel.add(sldrVolume);
-			buttonsPanel.add(lblVolume);
+			// Layout
+			GroupLayout grpLayout = new GroupLayout(buttonsPanel);
+			grpLayout.setHonorsVisibility(false);
+			grpLayout.setAutoCreateGaps(true);
+			grpLayout.setAutoCreateContainerGaps(false);
+			buttonsPanel.setLayout(grpLayout);
+
+			grpLayout.setHorizontalGroup(grpLayout.createSequentialGroup()
+					.addComponent(btnRandom)
+					.addComponent(btnRepeat)
+					.addPreferredGap(ComponentPlacement.UNRELATED, 30, 30)
+					.addComponent(btnStop)
+					.addComponent(btnPrevious)
+					.addComponent(btnRewind)
+					.addComponent(btnPlayPause)
+					.addComponent(btnFastForward)
+					.addComponent(btnNext)
+					.addPreferredGap(ComponentPlacement.UNRELATED, 50, Short.MAX_VALUE)
+					.addComponent(btnMute)
+					.addComponent(sldrVolume, 100, 100, 100)
+					.addComponent(lblVolume, 40, 40, 40));
+
+			grpLayout.setVerticalGroup(grpLayout.createSequentialGroup().addGroup(grpLayout.createParallelGroup(GroupLayout.Alignment.CENTER)
+					.addComponent(btnRandom)
+					.addComponent(btnRepeat)
+					.addComponent(btnStop)
+					.addComponent(btnPrevious)
+					.addComponent(btnRewind)
+					.addComponent(btnPlayPause)
+					.addComponent(btnFastForward)
+					.addComponent(btnNext)
+					.addComponent(btnMute)
+					.addComponent(sldrVolume)
+					.addComponent(lblVolume)));
 		}
 		return buttonsPanel;
 	}
@@ -191,17 +229,29 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 	private void displayVolume(int value)
 	{
 		lblVolume.setText(value + "");
-		if (value < 34)
+		if (value < 17)
 		{
-			lblVolume.setIcon(imgVolumeLow);
+			lblVolume.setIcon(imgVolume0);
 		}
-		else if (value >= 67)
+		else if (value < 34)
 		{
-			lblVolume.setIcon(imgVolumeHigh);
+			lblVolume.setIcon(imgVolume1);
+		}
+		else if (value < 50)
+		{
+			lblVolume.setIcon(imgVolume2);
+		}
+		else if (value < 67)
+		{
+			lblVolume.setIcon(imgVolume3);
+		}
+		else if (value < 84)
+		{
+			lblVolume.setIcon(imgVolume4);
 		}
 		else
 		{
-			lblVolume.setIcon(imgVolumeMedium);
+			lblVolume.setIcon(imgVolume5);
 		}
 	}
 
@@ -212,6 +262,7 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 		if (src.equals(sldrVolume))
 		{
 			displayVolume(((JSlider) src).getValue());
+			// TODO: adapt volume on modell
 		}
 	}
 

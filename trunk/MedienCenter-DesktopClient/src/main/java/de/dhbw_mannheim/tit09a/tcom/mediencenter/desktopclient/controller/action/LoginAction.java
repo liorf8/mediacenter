@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnection;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
 public class LoginAction extends AbstractSwingWorkerAction<Void, String>
@@ -13,7 +14,7 @@ public class LoginAction extends AbstractSwingWorkerAction<Void, String>
 
 	public LoginAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Login", null);
+		super(mainFrame, "Login", MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Login.png"));
 	}
 
 	@Override

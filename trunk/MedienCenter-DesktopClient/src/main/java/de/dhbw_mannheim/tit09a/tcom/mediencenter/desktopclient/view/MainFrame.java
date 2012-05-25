@@ -101,7 +101,7 @@ public class MainFrame extends JFrame
 	private void initGUI()
 	{
 		setLocation(400, 400);
-		setPreferredSize(new Dimension(760, 480));
+		setPreferredSize(new Dimension(800, 600));
 		setMinimumSize(new Dimension(520, 400));
 		setSize(getMinimumSize());
 

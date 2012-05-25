@@ -2,7 +2,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.test.remoteimage
 
 import java.awt.Graphics;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.GraphicsUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 
 public class NoImgState extends RICState
 {
@@ -26,7 +26,7 @@ public class NoImgState extends RICState
 	public void paintComponent(Graphics g)
 	{
 		System.out.println(getClass().getSimpleName() + ": paintComponent() @" + Thread.currentThread());
-		GraphicsUtil.drawCenteredString(g, ric, "No image specified!");
+		MediaUtil.drawCenteredString(g, ric, "No image specified!");
 	}
 
 	// --------------------------------------------------------------------------------

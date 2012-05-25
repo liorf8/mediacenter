@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.LoginTab;
 
@@ -14,7 +15,7 @@ public class ResetPwAction extends AbstractSwingWorkerAction<Void, String>
 
 	public ResetPwAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Reset Password", null);
+		super(mainFrame, "Reset Password", MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Reset Password.png"));
 	}
 
 	@Override

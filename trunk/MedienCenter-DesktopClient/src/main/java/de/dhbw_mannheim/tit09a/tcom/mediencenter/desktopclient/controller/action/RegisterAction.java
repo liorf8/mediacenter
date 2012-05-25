@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.LoginTab;
 
@@ -13,7 +14,7 @@ public class RegisterAction extends AbstractSwingWorkerAction<Void, String>
 
 	public RegisterAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Register", null);
+		super(mainFrame, "Register", MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Register.png"));
 	}
 
 	@Override
