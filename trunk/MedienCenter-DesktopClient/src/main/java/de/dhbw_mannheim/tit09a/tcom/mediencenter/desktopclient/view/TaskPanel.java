@@ -1,6 +1,7 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view;
 
 import java.awt.Color;
+import java.awt.ComponentOrientation;
 import java.awt.event.ActionListener;
 
 import javax.swing.GroupLayout;
@@ -9,7 +10,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MiscUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 
 public class TaskPanel extends JPanel
 {
@@ -28,7 +29,7 @@ public class TaskPanel extends JPanel
 		progressBar.setStringPainted(true);
 
 		// Cancel button
-		ImageIcon icon = MiscUtil.createImageIcon("/imgs/16x16/process-stop.png", "process-stop.png");
+		ImageIcon icon = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Delete.png");
 		btnCancel = new JButton(icon);
 		btnCancel.addActionListener(cancelActionListener);
 
@@ -62,7 +63,7 @@ public class TaskPanel extends JPanel
 		progressBar.setString(message);
 		progressBar.setValue(progressBar.getMaximum());
 		if (successfull)
-			progressBar.setForeground(MiscUtil.DARK_GREEN);
+			progressBar.setForeground(MediaUtil.COLOR_DARK_GREEN);
 		else
 			progressBar.setForeground(Color.RED);
 	}

@@ -13,9 +13,9 @@ import javax.swing.SwingWorker;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnection;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionImpl;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Session;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.GraphicsUtil;
 
 public class ImgControllerImpl implements ImgController
 {
@@ -144,7 +144,7 @@ public class ImgControllerImpl implements ImgController
 			simCon.login("max", "pw", new DefaultClientCallback(ric));
 			Session session = simCon.getSession();
 			byte[] data = session.getFileBytes(path);
-			BufferedImage bi = GraphicsUtil.read(data);
+			BufferedImage bi = MediaUtil.readImage(data);
 
 			// if could not be read -> change state
 			if (bi == null)

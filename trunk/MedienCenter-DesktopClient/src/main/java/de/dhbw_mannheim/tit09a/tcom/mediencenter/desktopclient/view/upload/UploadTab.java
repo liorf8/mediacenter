@@ -8,6 +8,7 @@ import javax.swing.JTree;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree.FileInfoTree;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree.FileTreeSelectionListener;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
 
@@ -41,7 +42,6 @@ public class UploadTab extends Tab
 	@Override
 	public Icon getIcon()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Upload Tab.png");
 	}
 }

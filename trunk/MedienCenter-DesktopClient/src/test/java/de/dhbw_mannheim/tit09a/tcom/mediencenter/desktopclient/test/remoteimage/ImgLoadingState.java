@@ -1,7 +1,8 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.test.remoteimage;
 
 import java.awt.Graphics;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.GraphicsUtil;
+
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 
 public class ImgLoadingState extends RICState
 {
@@ -30,8 +31,8 @@ public class ImgLoadingState extends RICState
 	public void paintComponent(Graphics g)
 	{
 		System.out.println(getClass().getSimpleName() + ": paintComponent() @" + Thread.currentThread());
-		GraphicsUtil.drawCenteredString(g, ric, "Loading '" + path + "' ...", 0, -15);
-		GraphicsUtil.drawCenteredString(g, ric, "Double-click to cancel.", 0, 15);
+		MediaUtil.drawCenteredString(g, ric, "Loading '" + path + "' ...", 0, -15);
+		MediaUtil.drawCenteredString(g, ric, "Double-click to cancel.", 0, 15);
 	}
 	
 	// --------------------------------------------------------------------------------

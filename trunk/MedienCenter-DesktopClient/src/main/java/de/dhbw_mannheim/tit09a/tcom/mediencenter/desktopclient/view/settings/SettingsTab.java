@@ -20,6 +20,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.Settings;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
 
@@ -36,7 +37,6 @@ public class SettingsTab extends Tab implements TreeSelectionListener
 	private Settings					settings;
 
 	private JSplitPane					splitPane;
-	private JScrollPane					categoryTreePane;
 
 	// List just to iterate to search by name
 	private List<CategoryPanel>			categoryPanels				= new ArrayList<>();
@@ -78,8 +78,7 @@ public class SettingsTab extends Tab implements TreeSelectionListener
 	@Override
 	public Icon getIcon()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Settings Tab.png");
 	}
 
 	// --------------------------------------------------------------------------------
@@ -88,7 +87,7 @@ public class SettingsTab extends Tab implements TreeSelectionListener
 	{
 		// Returns the last path element of the selection.
 		// This method is useful only when the selection model allows a single selection.
-		DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getNewLeadSelectionPath().getLastPathComponent();
+		DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
 		if (node == null)
 			return; // Nothing is selected.
 
@@ -110,7 +109,7 @@ public class SettingsTab extends Tab implements TreeSelectionListener
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		splitPane.setDividerLocation(settings.getPropertyAsInt(Settings.KEY_SETTINGS_DIVIDER_LOCATION));
 		splitPane.setOneTouchExpandable(false);
-		splitPane.setLeftComponent(createCategoryTreePane());
+		splitPane.setLeftComponent(createCategoryTree());
 		splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener()
 		{
 			@Override
@@ -123,16 +122,9 @@ public class SettingsTab extends Tab implements TreeSelectionListener
 	}
 
 	// --------------------------------------------------------------------------------
-	private JScrollPane createCategoryTreePane()
+	private JScrollPane createCategoryTree()
 	{
-		categoryTreePane = new JScrollPane(createCategoryTree());
-
-		return categoryTreePane;
-	}
-
-	// --------------------------------------------------------------------------------
-	private JTree createCategoryTree()
-	{
+		JScrollPane categoryTreeScrollPane = new JScrollPane();
 		DefaultMutableTreeNode root = new DefaultMutableTreeNode("Settings");
 		createNodes(root);
 		JTree categoryTree = new JTree(root);
@@ -152,7 +144,9 @@ public class SettingsTab extends Tab implements TreeSelectionListener
 			categoryTree.setSelectionPath(path);
 
 		}
-		return categoryTree;
+		
+		categoryTreeScrollPane.setViewportView(categoryTree);
+		return categoryTreeScrollPane;
 	}
 
 	// --------------------------------------------------------------------------------
