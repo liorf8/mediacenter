@@ -40,6 +40,7 @@ public class InfoPlayerImpl implements InfoPlayer, Serializable
 	public InfoPlayerImpl(SessionImpl session) throws Exception
 	{
 		this.headlessPlayer = VlcManager.getInstance().buildHeadlessPlayer();
+		headlessPlayer.setVolume(0); // the InfoPlayer does no need to make voice
 		this.session = session;
 	}
 
