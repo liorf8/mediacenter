@@ -15,8 +15,8 @@ public class TimeLabel extends JLabel
 	// --------------------------------------------------------------------------------
 	// -- Instance Variable(s) --------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	private String				currentTime			= "--:--";
-	private String				fullTime			= "--:--";
+	private long				currentTime;
+	private long				fullTime;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructor(s) --------------------------------------------------------------
@@ -35,29 +35,32 @@ public class TimeLabel extends JLabel
 	// --------------------------------------------------------------------------------
 	// -- Instance Method(s) ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public void setCurrentTime(String currentTime)
-	{
-		this.currentTime = currentTime;
-		this.setText(this.currentTime + "/" + this.fullTime);
-	}
-
-	// --------------------------------------------------------------------------------
 	public void setCurrentTime(long millis)
 	{
-		this.setCurrentTime(TimeValue.formatMillis(millis, true, true));
+		this.currentTime = millis;
+		updateText();
 	}
 
-	// --------------------------------------------------------------------------------
-	public void setFullTime(String fullTime)
+	public long getCurrentTime()
 	{
-		this.fullTime = fullTime;
-		this.setText(this.currentTime + "/" + this.fullTime);
+		return currentTime;
 	}
 
 	// --------------------------------------------------------------------------------
 	public void setFullTime(long millis)
 	{
-		this.setFullTime(TimeValue.formatMillis(millis, true, true));
+		this.fullTime = millis;
+		updateText();
+	}
+
+	public long getFullTime()
+	{
+		return fullTime;
+	}
+
+	private void updateText()
+	{
+		this.setText(TimeValue.formatMillis(currentTime, true, true) + "/" + TimeValue.formatMillis(fullTime, true, true));
 	}
 
 	// --------------------------------------------------------------------------------

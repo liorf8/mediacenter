@@ -5,9 +5,9 @@ import java.net.UnknownHostException;
 import de.root1.simon.exceptions.EstablishConnectionFailed;
 import de.root1.simon.exceptions.LookupFailedException;
 
-public class SimonConnectionStateDisconnected extends SimonConnectionState
+public class ServerConnectionStateDisconnected extends ServerConnectionState
 {
-	public SimonConnectionStateDisconnected(SimonConnectionImpl connectionImpl)
+	public ServerConnectionStateDisconnected(ServerConnectionImpl connectionImpl)
 	{
 		super(connectionImpl);
 	}
@@ -17,7 +17,7 @@ public class SimonConnectionStateDisconnected extends SimonConnectionState
 	public void connect() throws UnknownHostException, LookupFailedException, EstablishConnectionFailed
 	{
 		connection.doConnect();
-		connection.setState(connection.getState(SimonConnectionStateConnected.class));
+		connection.setState(connection.getState(ServerConnectionStateConnected.class));
 	}
 	
 	// --------------------------------------------------------------------------------

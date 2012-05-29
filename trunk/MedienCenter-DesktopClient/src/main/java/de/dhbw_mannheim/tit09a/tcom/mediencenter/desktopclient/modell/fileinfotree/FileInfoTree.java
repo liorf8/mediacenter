@@ -19,9 +19,8 @@ public class FileInfoTree extends JTree
 
 	public FileInfoTree()
 	{
-		String rootFolderName = MainController.getInstance().getSimonConnection().getSession().getLogin();
 		// Home Verzeichnis feststellen
-		FileInfo userRoot = new PathFileInfo(rootFolderName, null, true, 0L, 0L, false);
+		FileInfo userRoot = new PathFileInfo("", null, true, 0L, 0L, false);
 
 		// Wurzelelement erstellen
 		DefaultMutableTreeNode root = new DefaultMutableTreeNode(userRoot);
@@ -31,8 +30,9 @@ public class FileInfoTree extends JTree
 		setModel(model);
 		// setShowsRootHandles(false);
 		// setRootVisible(false);
-
+		
 		// TreeCellRenderer setzen.
+		String rootFolderName = MainController.getInstance().getServerConnection().getSession().getLogin();
 		setCellRenderer(new FileInfoTreeRenderer(rootFolderName));
 
 		// Listener hinzufügen
@@ -41,7 +41,7 @@ public class FileInfoTree extends JTree
 		// Wurzel aufklappen
 		try
 		{
-			expandPath(root, MainController.getInstance().getSimonConnection().getSession().listFileInfos(""));
+			expandPath(root, MainController.getInstance().getServerConnection().getSession().listFileInfos(""));
 		}
 		catch (FileSystemException | ServerException e)
 		{

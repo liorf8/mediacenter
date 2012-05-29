@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell;
 
 import java.awt.EventQueue;
 import java.util.Collection;

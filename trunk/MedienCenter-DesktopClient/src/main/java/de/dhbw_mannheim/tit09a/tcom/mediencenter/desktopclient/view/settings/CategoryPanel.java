@@ -62,8 +62,6 @@ public abstract class CategoryPanel extends JPanel
 
 		// insert the current settings
 		settings.resetValuesAccordingToSettings(getValueComponents(), false);
-
-		// someValueChanged();
 	}
 
 	// --------------------------------------------------------------------------------
@@ -88,30 +86,36 @@ public abstract class CategoryPanel extends JPanel
 	{
 		for (Object comp : getValueComponents().values())
 		{
-			if (comp instanceof JTextField)
-			{
-				addValueChangeListener((JTextField) comp);
-			}
-			else if (comp instanceof JSpinner)
-			{
-				addValueChangeListener((JSpinner) comp);
-			}
-			else if (comp instanceof AbstractButton)
-			{
-				addValueChangeListener((AbstractButton) comp);
-			}
-			else if (comp instanceof ButtonGroup)
-			{
-				addValueChangeListener((ButtonGroup) comp);
-			}
-			else if (comp instanceof JComboBox<?>)
-			{
-				addValueChangeListener((JComboBox<?>) comp);
-			}
-			else
-			{
-				System.err.println("WARNING: Component " + comp + " is not supported for adding ValueChangeListener. Changes will never have effect!");
-			}
+			addValueChangeListener(comp);
+		}
+	}
+
+	// --------------------------------------------------------------------------------
+	private void addValueChangeListener(Object comp)
+	{
+		if (comp instanceof JTextField)
+		{
+			addValueChangeListener((JTextField) comp);
+		}
+		else if (comp instanceof JSpinner)
+		{
+			addValueChangeListener((JSpinner) comp);
+		}
+		else if (comp instanceof AbstractButton)
+		{
+			addValueChangeListener((AbstractButton) comp);
+		}
+		else if (comp instanceof ButtonGroup)
+		{
+			addValueChangeListener((ButtonGroup) comp);
+		}
+		else if (comp instanceof JComboBox<?>)
+		{
+			addValueChangeListener((JComboBox<?>) comp);
+		}
+		else
+		{
+			System.err.println("WARNING: Component " + comp + " is not supported for adding ValueChangeListener. Changes will never have effect!");
 		}
 	}
 
@@ -180,7 +184,12 @@ public abstract class CategoryPanel extends JPanel
 				@Override
 				public void itemStateChanged(ItemEvent e)
 				{
-					someValueChanged();
+					// TODO: check if this if-clause is right
+					// do not react if sth gets deselected
+					if (e.getStateChange() == ItemEvent.SELECTED)
+					{
+						someValueChanged();
+					}
 				}
 			});
 		}
@@ -282,7 +291,6 @@ public abstract class CategoryPanel extends JPanel
 		{
 			if (e.getSource().equals(btnSave))
 			{
-				
 				setBtnResetEnabled(false);
 				setBtnSaveEnabled(false);
 				settings.saveValuesToSettings(getValueComponents());
@@ -293,8 +301,11 @@ public abstract class CategoryPanel extends JPanel
 			}
 			else if (e.getSource().equals(btnDefaults))
 			{
-				int returnValue = JOptionPane.showConfirmDialog(settingsPanel, "Do you really want to insert the default settings?\n(No saving)", "Insert Defaults?", JOptionPane.YES_NO_OPTION);
-				if(returnValue == JOptionPane.OK_OPTION)
+				int returnValue = JOptionPane.showConfirmDialog(settingsPanel,
+						"Do you really want to insert the default settings?\n(No saving)",
+						"Insert Defaults?",
+						JOptionPane.YES_NO_OPTION);
+				if (returnValue == JOptionPane.OK_OPTION)
 				{
 					settings.resetValuesAccordingToSettings(getValueComponents(), true);
 				}

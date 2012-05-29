@@ -5,17 +5,21 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.LoginTab;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
-public class ResetPwAction extends AbstractSwingWorkerAction<Void, String>
+public class ResetPwAction extends AbstractSwingWorkerAction
 {
 	private static final long	serialVersionUID	= -6498708485503830785L;
 
 	public ResetPwAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Reset Password", MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Reset Password.png"));
+		super(mainFrame);
+		setName("Reset Password");
+
+		setSmallIcon(MediaUtil.PATH_IMGS_16x16 + "Reset Password.png");
+		setLargeIcon(MediaUtil.PATH_IMGS_22x22 + "Reset Password.png");
 	}
 
 	@Override
@@ -45,11 +49,11 @@ public class ResetPwAction extends AbstractSwingWorkerAction<Void, String>
 			if(returnValue == JOptionPane.YES_OPTION)
 			{
 				publish("Connecting");
-				mainController.getSimonConnection().connect();
+				mainController.getServerConnection().connect();
 				setProgress(50);
 				
 				publish("Resetting password");
-				mainController.getSimonConnection().getServer().resetPw(login);
+				mainController.getServerConnection().getServer().resetPw(login);
 				System.out.println("Reset password for " + login + ". Please ask the server admin for the new one.");
 			}
 			else

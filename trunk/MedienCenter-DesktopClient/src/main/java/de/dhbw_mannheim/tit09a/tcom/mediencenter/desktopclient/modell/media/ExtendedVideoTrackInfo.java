@@ -8,7 +8,12 @@ public class ExtendedVideoTrackInfo extends VideoTrackInfo
 
 	private final String		description;
 
-	protected ExtendedVideoTrackInfo(String description, int codec, int id, int profile, int level, int width, int height)
+	public ExtendedVideoTrackInfo(VideoTrackInfo vti, String description)
+	{
+		this(vti.codec(), vti.id(), vti.profile(), vti.level(), vti.width(), vti.height(), description);
+	}
+	
+	public ExtendedVideoTrackInfo(int codec, int id, int profile, int level, int width, int height, String description)
 	{
 		super(codec, id, profile, level, width, height);
 		this.description = description;

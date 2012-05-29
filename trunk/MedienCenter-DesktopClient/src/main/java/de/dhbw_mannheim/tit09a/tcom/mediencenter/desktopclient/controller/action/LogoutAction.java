@@ -3,6 +3,7 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.actio
 import java.awt.event.ActionEvent;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
 public class LogoutAction extends ParentAbstractAction
 {
@@ -10,14 +11,16 @@ public class LogoutAction extends ParentAbstractAction
 
 	public LogoutAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Logout", null);
-		this.mainFrame = mainFrame;
+		super(mainFrame);
+		setName("Logout");
+		setSmallIcon(MediaUtil.PATH_IMGS_16x16 + "Logout.png");
+		setLargeIcon(MediaUtil.PATH_IMGS_22x22 + "Logout.png");
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
-		mainController.getSimonConnection().disconnect();
+		mainController.getServerConnection().disconnect();
 	}
 
 }

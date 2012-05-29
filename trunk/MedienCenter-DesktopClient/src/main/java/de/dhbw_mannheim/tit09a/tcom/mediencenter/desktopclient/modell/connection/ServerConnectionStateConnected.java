@@ -8,9 +8,9 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.Server;
 import de.root1.simon.exceptions.EstablishConnectionFailed;
 import de.root1.simon.exceptions.LookupFailedException;
 
-public class SimonConnectionStateConnected extends SimonConnectionState
+public class ServerConnectionStateConnected extends ServerConnectionState
 {
-	public SimonConnectionStateConnected(SimonConnectionImpl ctrl)
+	public ServerConnectionStateConnected(ServerConnectionImpl ctrl)
 	{
 		super(ctrl);
 	}
@@ -34,7 +34,7 @@ public class SimonConnectionStateConnected extends SimonConnectionState
 	public void login(String login, String pw, ClientCallback callback) throws ServerException
 	{
 		connection.doLogin(login, pw, callback);
-		connection.setState(connection.getState(SimonConnectionStateLoggedIn.class));
+		connection.setState(connection.getState(ServerConnectionStateLoggedIn.class));
 	}
 
 	// --------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ public class SimonConnectionStateConnected extends SimonConnectionState
 	public void disconnect()
 	{
 		connection.doDisconnect();
-		connection.setState(connection.getState(SimonConnectionStateDisconnected.class));
+		connection.setState(connection.getState(ServerConnectionStateDisconnected.class));
 	}
 
 	// --------------------------------------------------------------------------------

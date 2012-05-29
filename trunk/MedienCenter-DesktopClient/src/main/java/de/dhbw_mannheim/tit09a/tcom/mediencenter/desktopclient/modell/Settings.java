@@ -23,6 +23,8 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
+import uk.co.caprica.vlcj.runtime.windows.WindowsRuntimeUtil;
+
 public class Settings
 {
 	public final String						PROPS_FILE									= "mediascrub_properties.txt";
@@ -36,6 +38,7 @@ public class Settings
 	public static final String				KEY_SERVER_BINDNAME							= "server.bindname";
 	public static final String				KEY_PLAYER_VOLUME							= "player.volume";
 	public static final String				KEY_PLAYER_TOOLBAR_LOCATION					= "player.toolbarLocation";
+	public static final String				KEY_STREAMING_VLC_INSTALL_DIR				= "streaming.vlcInstallDir";
 	public static final String				KEY_STREAMING_PROTOCOL						= "streaming.protocol";
 	public static final String				KEY_STREAMING_DESTINATION_PORT				= "streaming.destinationPort";
 	public static final String				KEY_STREAMING_TRANSCODING_ACTIVE			= "streaming.transcoding.active";
@@ -46,7 +49,7 @@ public class Settings
 	public static final String				KEY_STREAMING_TRANSCODING_AUDIO_SYNC		= "streaming.transcoding.audioSync";
 	public static final String				KEY_STREAMING_TRANSCODING_DEINTERLACE		= "streaming.transcoding.deinterlace";
 
-	private Map<String, String>				defaultProps								= new HashMap<>(15);
+	private Map<String, String>				defaultProps								= new HashMap<>(19);
 	private Properties						runtimeProps								= new Properties();
 	private List<Parameter<?>>				parameters									= new ArrayList<>(15);
 
@@ -80,9 +83,7 @@ public class Settings
 		parameters.add(new Parameter<Integer>(KEY_SETTINGS_DIVIDER_LOCATION, KEY_SETTINGS_DIVIDER_LOCATION, "INTERNAL"));
 		defaultProps.put(KEY_SETTINGS_DIVIDER_LOCATION, "150");
 
-		parameters.add(new Parameter<String>(KEY_SERVER_HOST,
-
-		"Server host", "The host where the server is located. E.g. 127.0.0.1 or localhost"));
+		parameters.add(new Parameter<String>(KEY_SERVER_HOST, "Server host", "The host where the server is located. E.g. 127.0.0.1 or localhost"));
 		defaultProps.put(KEY_SERVER_HOST, "localhost");
 		parameters.add(new Parameter<Integer>(KEY_SERVER_REGISTRY_PORT,
 
@@ -100,8 +101,13 @@ public class Settings
 		parameters.add(new Parameter<Integer>(KEY_PLAYER_VOLUME, KEY_PLAYER_VOLUME, "INTERNAL"));
 		defaultProps.put(KEY_PLAYER_VOLUME, "50");
 
+		parameters.add(new Parameter<String>(KEY_STREAMING_VLC_INSTALL_DIR,
+				"VLC installation directory",
+				"Where VLC is installed on your Computer. E.g. C:\\Program Files (x86)\\VideoLAN\\VLC"));
+		defaultProps.put(KEY_STREAMING_VLC_INSTALL_DIR, WindowsRuntimeUtil.getVlcInstallDir());
+
 		parameters.add(new Parameter<String>(KEY_STREAMING_PROTOCOL, "Streaming protocol", "http, rtp or rtsp"));
-		defaultProps.put(KEY_STREAMING_PROTOCOL, "http");
+		defaultProps.put(KEY_STREAMING_PROTOCOL, "rtp");
 
 		parameters.add(new Parameter<Integer>(KEY_STREAMING_DESTINATION_PORT,
 				"Streaming destination port",
@@ -112,13 +118,13 @@ public class Settings
 		defaultProps.put(KEY_STREAMING_TRANSCODING_ACTIVE, "false");
 
 		parameters.add(new Parameter<String>(KEY_STREAMING_TRANSCODING_VIDEO_CODEC, "Video codec", "bla"));
-		defaultProps.put(KEY_STREAMING_TRANSCODING_VIDEO_CODEC, "h264");
+		defaultProps.put(KEY_STREAMING_TRANSCODING_VIDEO_CODEC, "mp2v");
 
 		parameters.add(new Parameter<String>(KEY_STREAMING_TRANSCODING_AUDIO_CODEC, "Audio codec", "bla"));
-		defaultProps.put(KEY_STREAMING_TRANSCODING_AUDIO_CODEC, "mp3");
+		defaultProps.put(KEY_STREAMING_TRANSCODING_AUDIO_CODEC, "");
 
 		parameters.add(new Parameter<Integer>(KEY_STREAMING_TRANSCODING_VIDEO_KBIT_RATE, "Video kBit rate", "bla"));
-		defaultProps.put(KEY_STREAMING_TRANSCODING_VIDEO_KBIT_RATE, "1024");
+		defaultProps.put(KEY_STREAMING_TRANSCODING_VIDEO_KBIT_RATE, "4096");
 
 		parameters.add(new Parameter<Integer>(KEY_STREAMING_TRANSCODING_AUDIO_KBIT_RATE, "Audio kBit rate", "bla"));
 		defaultProps.put(KEY_STREAMING_TRANSCODING_AUDIO_KBIT_RATE, "192");

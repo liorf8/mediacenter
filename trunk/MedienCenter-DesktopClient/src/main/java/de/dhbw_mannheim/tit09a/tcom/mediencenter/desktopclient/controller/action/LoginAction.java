@@ -4,17 +4,20 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnection;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnection;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
-public class LoginAction extends AbstractSwingWorkerAction<Void, String>
+public class LoginAction extends AbstractSwingWorkerAction
 {
 	private static final long	serialVersionUID	= 3764670800584379655L;
 
 	public LoginAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Login", MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Login.png"));
+		super(mainFrame);
+		setName("Login");
+		setSmallIcon(MediaUtil.PATH_IMGS_16x16 + "Login.png");
+		setLargeIcon(MediaUtil.PATH_IMGS_22x22 + "Login.png");
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public class LoginAction extends AbstractSwingWorkerAction<Void, String>
 			if (login.isEmpty() || pw.isEmpty())
 				throw new IllegalArgumentException("Not all required fields are filled!");
 
-			SimonConnection simonConn = mainController.getSimonConnection();
+			ServerConnection simonConn = mainController.getServerConnection();
 
 			String address = simonConn.getServerHost() + ":" + simonConn.getServerRegistryPort() + "/" + simonConn.getServerBindname();
 			publish("Connecting to " + address);

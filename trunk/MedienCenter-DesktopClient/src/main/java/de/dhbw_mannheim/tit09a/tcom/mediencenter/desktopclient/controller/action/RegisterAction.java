@@ -4,17 +4,21 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.LoginTab;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
-public class RegisterAction extends AbstractSwingWorkerAction<Void, String>
+public class RegisterAction extends AbstractSwingWorkerAction
 {
 	private static final long	serialVersionUID	= -8477787763880936893L;
 
 	public RegisterAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Register", MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Register.png"));
+		super(mainFrame);
+		setName("Register");
+
+		setSmallIcon(MediaUtil.PATH_IMGS_16x16 + "Register.png");
+		setLargeIcon(MediaUtil.PATH_IMGS_22x22 + "Register.png");
 	}
 
 	@Override
@@ -44,11 +48,11 @@ public class RegisterAction extends AbstractSwingWorkerAction<Void, String>
 				throw new IllegalArgumentException("Password and repeated password are not equal!");
 
 			publish("Connecting");
-			mainController.getSimonConnection().connect();
+			mainController.getServerConnection().connect();
 			setProgress(50);
-			
-			publish("Registering " +login);
-			long id = mainController.getSimonConnection().getServer().register(login, pw);
+
+			publish("Registering " + login);
+			long id = mainController.getServerConnection().getServer().register(login, pw);
 
 			System.out.println("Registered " + login + " (ID: " + id + ")");
 		}

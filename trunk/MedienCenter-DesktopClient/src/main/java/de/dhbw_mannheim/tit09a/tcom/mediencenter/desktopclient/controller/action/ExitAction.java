@@ -10,7 +10,8 @@ public class ExitAction extends ParentAbstractAction
 
 	public ExitAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "Exit", null);
+		super(mainFrame);
+		setName("Exit");
 	}
 	
 	@Override

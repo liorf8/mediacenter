@@ -11,9 +11,9 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamPlayer;
 import de.root1.simon.exceptions.EstablishConnectionFailed;
 import de.root1.simon.exceptions.LookupFailedException;
 
-public class SimonConnectionStateLoggedIn extends SimonConnectionState
+public class ServerConnectionStateLoggedIn extends ServerConnectionState
 {
-	public SimonConnectionStateLoggedIn(SimonConnectionImpl ctrl)
+	public ServerConnectionStateLoggedIn(ServerConnectionImpl ctrl)
 	{
 		super(ctrl);
 	}
@@ -64,7 +64,7 @@ public class SimonConnectionStateLoggedIn extends SimonConnectionState
 	public void disconnect()
 	{
 		connection.doDisconnect();
-		connection.setState(connection.getState(SimonConnectionStateDisconnected.class));
+		connection.setState(connection.getState(ServerConnectionStateDisconnected.class));
 	}
 
 	// --------------------------------------------------------------------------------

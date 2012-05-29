@@ -11,9 +11,9 @@ import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.StreamPlayer;
 import de.root1.simon.exceptions.EstablishConnectionFailed;
 import de.root1.simon.exceptions.LookupFailedException;
 
-public interface SimonConnection
+public interface ServerConnection
 {
-	public SimonConnectionState getState();
+	public ServerConnectionState getState();
 	
 	public void setServerHost(String serverHost);
 

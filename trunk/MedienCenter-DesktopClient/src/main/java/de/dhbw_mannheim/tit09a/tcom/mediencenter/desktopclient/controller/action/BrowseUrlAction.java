@@ -5,22 +5,17 @@ import java.awt.event.ActionEvent;
 import java.net.URI;
 
 import javax.swing.AbstractAction;
-import javax.swing.Icon;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
-public class BrowseUrlAction extends AbstractSwingWorkerAction<Void, String>
+public class BrowseUrlAction extends AbstractSwingWorkerAction
 {
 	private static final long	serialVersionUID	= -4338302650114771616L;
 
 	public BrowseUrlAction(MainFrame mainFrame)
 	{
-		super(mainFrame, "BrowseUrlAction", null);
-	}
-
-	public BrowseUrlAction(MainFrame mainFrame, String actionName, Icon icon)
-	{
-		super(mainFrame, actionName, icon);
+		super(mainFrame);
+		setName("Browse URL");
 	}
 
 	@Override
@@ -39,7 +34,6 @@ public class BrowseUrlAction extends AbstractSwingWorkerAction<Void, String>
 		@Override
 		protected void work() throws Exception
 		{
-			publish("Launching browser");
 			Desktop desktop = Desktop.getDesktop();
 			setProgress(20);
 

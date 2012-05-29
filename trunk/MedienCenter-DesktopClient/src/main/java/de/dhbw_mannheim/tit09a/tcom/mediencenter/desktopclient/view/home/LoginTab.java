@@ -3,7 +3,6 @@ package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home;
 import javax.swing.AbstractButton;
 import javax.swing.GroupLayout;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -16,12 +15,13 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.LoginAction;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.RegisterAction;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.ResetPwAction;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
 public class LoginTab extends Tab
 {
@@ -64,7 +64,7 @@ public class LoginTab extends Tab
 	@Override
 	public Icon getIcon()
 	{
-		return MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Home Tab.png");
+		return MainController.getInstance().getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Home Tab.png");
 	}
 
 	public void requestFocusForLogin()
@@ -105,7 +105,7 @@ public class LoginTab extends Tab
 		JPanel northPanel = new JPanel();
 
 		btnLogin = new JButton("Login...");
-		btnLogin.setIcon(MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Login.png"));
+		btnLogin.setIcon(MainController.getInstance().getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Login.png"));
 		btnLogin.addActionListener(new ActionListener()
 		{
 			@Override
@@ -117,7 +117,7 @@ public class LoginTab extends Tab
 		northPanel.add(btnLogin);
 
 		btnRegister = new JButton("Register...");
-		btnRegister.setIcon(MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Register.png"));
+		btnRegister.setIcon(MainController.getInstance().getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Register.png"));
 		btnRegister.addActionListener(new ActionListener()
 		{
 			@Override
@@ -129,7 +129,7 @@ public class LoginTab extends Tab
 		northPanel.add(btnRegister);
 
 		btnResetPw = new JButton("Reset Password...");
-		btnResetPw.setIcon(MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Reset Password.png"));
+		btnResetPw.setIcon(MainController.getInstance().getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Reset Password.png"));
 		btnResetPw.addActionListener(new ActionListener()
 		{
 			@Override

@@ -1,6 +1,7 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 
@@ -9,11 +10,11 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener.MainFrameWindowListener;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.Settings;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.HomeTab;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.home.LoginTab;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.play.PlayTab;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.medialibrary.MediaLibraryTab;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.screen.ScreenTab;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.settings.SettingsTab;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.upload.UploadTab;
 
@@ -25,7 +26,8 @@ public class MainFrame extends JFrame
 	private JTabbedPane			tabbedPane;
 	private LoginTab			loginTab;
 	private HomeTab				homeTab;
-	private PlayTab				playTab;
+	private MediaLibraryTab		mediaLibraryTab;
+	private ScreenTab			screenTab;
 	private UploadTab			uploadTab;
 	private SettingsTab			settingsTab;
 
@@ -37,36 +39,59 @@ public class MainFrame extends JFrame
 	public MainFrame()
 	{
 		super("MediaScrub");
+
 		initGUI();
+	}
+
+	public void enterFullScreen(Container fullScreenContainer)
+	{
+		getContentPane().removeAll();
+		getContentPane().add(fullScreenContainer);
+	}
+
+	public void exitFullScreen()
+	{
+		getContentPane().removeAll();
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
+		addMediaToolBar();
+	}
+
+	public MediaToolBar getMediaToolBar()
+	{
+		return mediaToolBar;
 	}
 
 	public LoginTab getLoginTab()
 	{
 		return loginTab;
 	}
-	
-	public PlayTab getPlayTab()
+
+	public MediaLibraryTab getMediaLibraryTab()
 	{
-		return playTab;
+		return mediaLibraryTab;
+	}
+
+	public ScreenTab getScreenTab()
+	{
+		return screenTab;
 	}
 
 	public void setLoggedIn(boolean loggedIn)
 	{
+		tabbedPane.removeAll();
 		if (loggedIn)
 		{
-			tabbedPane.removeAll();
 			addTab(createHomeTab());
-			addTab(createPlayTab());
+			addTab(createMediaLibraryTab());
+			addTab(createScreenTab());
 			addTab(createUploadTab());
 			addTab(createSettingsTab());
-
-			getContentPane().add(createMediaToolBar(), MainController.getInstance().getSettings().getProperty(Settings.KEY_PLAYER_TOOLBAR_LOCATION));
+			addMediaToolBar();
 
 			setSize(getPreferredSize());
 		}
 		else
 		{
-			tabbedPane.removeAll();
 			addTab(createLoginTab());
 			addTab(createSettingsTab());
 
@@ -100,13 +125,12 @@ public class MainFrame extends JFrame
 
 	private void initGUI()
 	{
-		setLocation(400, 400);
+		setLocation(200, 200);
 		setPreferredSize(new Dimension(800, 600));
 		setMinimumSize(new Dimension(520, 400));
 		setSize(getMinimumSize());
 
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		addWindowListener(new MainFrameWindowListener(this));
 
 		setLayout(new BorderLayout());
 		getContentPane().add(createMainPanel(), BorderLayout.CENTER);
@@ -141,12 +165,18 @@ public class MainFrame extends JFrame
 		return homeTab;
 	}
 
-	private PlayTab createPlayTab()
+	private MediaLibraryTab createMediaLibraryTab()
 	{
-		playTab = new PlayTab(this);
-		return playTab;
+		mediaLibraryTab = new MediaLibraryTab(this);
+		return mediaLibraryTab;
 	}
 
+	private ScreenTab createScreenTab()
+	{
+		screenTab = new ScreenTab(this);
+		return screenTab;
+	}
+	
 	private UploadTab createUploadTab()
 	{
 		uploadTab = new UploadTab(this);
@@ -165,9 +195,14 @@ public class MainFrame extends JFrame
 		return statusPanel;
 	}
 
+	private void addMediaToolBar()
+	{
+		getContentPane().add(createMediaToolBar(), MainController.getInstance().getSettings().getProperty(Settings.KEY_PLAYER_TOOLBAR_LOCATION));
+	}
+
 	private MediaToolBar createMediaToolBar()
 	{
-		mediaToolBar = new MediaToolBar();
+		mediaToolBar = new MediaToolBar(this);
 		return mediaToolBar;
 	}
 }

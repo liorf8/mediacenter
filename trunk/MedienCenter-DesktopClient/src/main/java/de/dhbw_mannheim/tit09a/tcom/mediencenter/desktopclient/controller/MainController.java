@@ -5,27 +5,41 @@ import java.awt.Window;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.co.caprica.vlcj.binding.LibVlcFactory;
+import uk.co.caprica.vlcj.discovery.NativeDiscovery;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
+import uk.co.caprica.vlcj.version.LibVlcVersion;
+
+import com.sun.jna.NativeLibrary;
+
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener.MainFrameWindowListener;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.ScheduledEventDispatcher;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.Settings;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateConnected;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateDisconnected;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateLoggedIn;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnection;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionImpl;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionState;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.SimonConnectionStateListener;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnectionStateConnected;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnectionStateDisconnected;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnectionStateLoggedIn;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnection;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnectionImpl;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnectionState;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.connection.ServerConnectionStateListener;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.screen.ScreenTab;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.ClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.DefaultClientCallback;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.misc.NamedThreadPoolFactory;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
-public class MainController implements SimonConnectionStateListener, PropertyChangeListener
+public class MainController implements ServerConnectionStateListener, PropertyChangeListener
 {
 	// --------------------------------------------------------------------------------
 	// -- Static Variables ------------------------------------------------------------
@@ -53,14 +67,16 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 	// --------------------------------------------------------------------------------
 	// -- Instance Variables ----------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public final Logger					logger	= LoggerFactory.getLogger(this.getClass());
-
+	public static Logger				LOGGER					= LoggerFactory.getLogger(MainController.class);
 	private ScheduledEventDispatcher	scheduledEventDispatcher;
+	private Map<String, ImageIcon>		iconPool;
+
 	private Settings					settings;
-	private SimonConnectionImpl			simonConnection;
+	private ServerConnectionImpl		serverConnection;
 	private ClientCallback				callback;
 
 	private MainFrame					mainFrame;
+	private MainController				thisControllerInstance	= this;
 
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
@@ -70,14 +86,16 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 		try
 		{
 			scheduledEventDispatcher = new ScheduledEventDispatcher(5, new NamedThreadPoolFactory("ScheduledEventDispatcher"));
+			iconPool = new HashMap<>();
 
-			simonConnection = new SimonConnectionImpl();
-			simonConnection.addStateListener(this);
-			
+			serverConnection = new ServerConnectionImpl();
+			serverConnection.addStateListener(this);
+
 			settings = new Settings(this);
+			// VLCj needs to be initialized
+			initVlc();
 
 			callback = new DefaultClientCallback(mainFrame);
-
 			setLookAndFeel();
 		}
 		catch (Throwable t)
@@ -91,15 +109,39 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 	// --------------------------------------------------------------------------------
 	// -- Public Methods --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
+	public ScheduledEventDispatcher getScheduledEventDispatcher()
+	{
+		return scheduledEventDispatcher;
+	}
+
+	// --------------------------------------------------------------------------------
+	public ImageIcon getImageIcon(String uri)
+	{
+		return getImageIcon(uri, null);
+	}
+
+	// --------------------------------------------------------------------------------
+	public ImageIcon getImageIcon(String uri, String description)
+	{
+		ImageIcon ico = iconPool.get(uri);
+		if (ico == null)
+		{
+			ico = MediaUtil.getIconFromResource(uri, description);
+			iconPool.put(uri, ico);
+		}
+		return ico;
+	}
+
+	// --------------------------------------------------------------------------------
 	public Settings getSettings()
 	{
 		return settings;
 	}
 
 	// --------------------------------------------------------------------------------
-	public SimonConnection getSimonConnection()
+	public ServerConnection getServerConnection()
 	{
-		return simonConnection;
+		return serverConnection;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -109,28 +151,32 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 	}
 
 	// --------------------------------------------------------------------------------
-	public ScheduledEventDispatcher getScheduledEventDispatcher()
-	{
-		return scheduledEventDispatcher;
-	}
-
-	// --------------------------------------------------------------------------------
 	public void exit()
 	{
 		try
 		{
-			System.out.println("exit() @" + Thread.currentThread());
+			LOGGER.info("Exiting application");
 
-			// save settings
-			settings.storeProperties();
+			LOGGER.info("Releasing VLCj components");
+			ScreenTab screenTab = mainFrame.getScreenTab();
+			if (screenTab != null)
+			{
+				screenTab.releaseMediaPlayerComponent();
+			}
 
-			// release connection
-			simonConnection.disconnect();
+			LOGGER.info("Saving settings");
+			getSettings().storeProperties();
 
-			// close gui
+			LOGGER.info("Disconnecting from server");
+			serverConnection.disconnect();
+
+			LOGGER.info("Disposing window");
 			disposeWindow(mainFrame);
 
+			LOGGER.info("Shut down MainController's ScheduledEventDispatcher");
 			scheduledEventDispatcher.shutdownNow();
+
+			LOGGER.info("System.exit(0)");
 			System.exit(0);
 		}
 		catch (Throwable t)
@@ -140,7 +186,7 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 			System.exit(1);
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------------
 	// -- Private Methods -------------------------------------------------------------
 	// --------------------------------------------------------------------------------
@@ -176,6 +222,7 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 			public void run()
 			{
 				mainFrame = new MainFrame();
+				mainFrame.addWindowListener(new MainFrameWindowListener(thisControllerInstance, mainFrame));
 			}
 		});
 		return mainFrame;
@@ -196,13 +243,28 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 	}
 
 	// --------------------------------------------------------------------------------
-	@Override
-	public synchronized void stateChanged(SimonConnectionState oldState, SimonConnectionState newState)
+	private void initVlc() throws Exception
 	{
-		System.out.println("stateChanged(): " + oldState.getClass().getSimpleName() + " -> " + newState.getClass().getSimpleName() + " @"
+		String vlcInstallDir = getSettings().getProperty(Settings.KEY_STREAMING_VLC_INSTALL_DIR);
+		LOGGER.info("VLC installation directory: {}", vlcInstallDir);
+
+		// Locate the dll's (libvlc.dll and libvlccore.dll on Windows)
+		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), vlcInstallDir);
+		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcCoreName(), vlcInstallDir);
+		LOGGER.info("libvlc version: {}", LibVlcVersion.getVersion());
+
+		// Create a libvlc factory
+		LibVlcFactory.factory().atLeast("2.0.0").log().synchronise().discovery(new NativeDiscovery()).create();
+	}
+
+	// --------------------------------------------------------------------------------
+	@Override
+	public synchronized void stateChanged(ServerConnectionState oldState, ServerConnectionState newState)
+	{
+		System.out.println("CONNECTION: stateChanged(): " + oldState.getClass().getSimpleName() + " -> " + newState.getClass().getSimpleName() + " @"
 				+ Thread.currentThread());
 
-		if (newState instanceof SimonConnectionStateDisconnected)
+		if (newState instanceof ServerConnectionStateDisconnected)
 		{
 			EventQueue.invokeLater(new Runnable()
 			{
@@ -213,13 +275,20 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 				}
 			});
 		}
-		else if (newState instanceof SimonConnectionStateConnected)
+		else if (newState instanceof ServerConnectionStateConnected)
 		{
 
 		}
-		else if (newState instanceof SimonConnectionStateLoggedIn)
+		else if (newState instanceof ServerConnectionStateLoggedIn)
 		{
-			mainFrame.setLoggedIn(true);
+			EventQueue.invokeLater(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					mainFrame.setLoggedIn(true);
+				}
+			});
 		}
 	}
 
@@ -227,19 +296,19 @@ public class MainController implements SimonConnectionStateListener, PropertyCha
 	@Override
 	public synchronized void propertyChange(PropertyChangeEvent evt)
 	{
-		System.out.println("propertyChange: " +evt);
+		System.out.println("SETTINGS:propertyChange(): " + evt);
 		String propName = evt.getPropertyName();
 		if (propName.equals(Settings.KEY_SERVER_HOST))
 		{
-			simonConnection.setServerHost((String) evt.getNewValue());
+			serverConnection.setServerHost((String) evt.getNewValue());
 		}
 		else if (propName.equals(Settings.KEY_SERVER_REGISTRY_PORT))
 		{
-			simonConnection.setServerRegistryPort(Integer.parseInt((String)evt.getNewValue()));
+			serverConnection.setServerRegistryPort(Integer.parseInt((String) evt.getNewValue()));
 		}
 		else if (propName.equals(Settings.KEY_SERVER_BINDNAME))
 		{
-			simonConnection.setServerBindname((String) evt.getNewValue());
+			serverConnection.setServerBindname((String) evt.getNewValue());
 		}
 
 	}

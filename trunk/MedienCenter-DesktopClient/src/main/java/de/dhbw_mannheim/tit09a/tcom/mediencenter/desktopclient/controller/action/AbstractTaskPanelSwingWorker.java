@@ -34,11 +34,7 @@ public abstract class AbstractTaskPanelSwingWorker extends SwingWorker<Void, Str
 		{
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				// executed in AWTEventQueue
-				if ("progress".equals(evt.getPropertyName()))
-				{
-					taskPanel.setProgress((Integer) evt.getNewValue());
-				}
+				procressPropertyChange(evt);
 			}
 		});
 	}
@@ -50,6 +46,15 @@ public abstract class AbstractTaskPanelSwingWorker extends SwingWorker<Void, Str
 
 	protected abstract void work() throws Exception;
 
+	protected void procressPropertyChange(PropertyChangeEvent evt)
+	{
+		// executed in AWTEventQueue
+		if ("progress".equals(evt.getPropertyName()))
+		{
+			taskPanel.setProgress((Integer) evt.getNewValue());
+		}
+	}
+	
 	@Override
 	protected final Void doInBackground() throws Exception
 	{

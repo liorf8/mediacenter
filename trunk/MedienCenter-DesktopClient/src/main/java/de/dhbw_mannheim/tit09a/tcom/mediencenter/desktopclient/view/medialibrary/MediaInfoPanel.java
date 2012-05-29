@@ -1,13 +1,14 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.play;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.medialibrary;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 
 import javax.swing.JPanel;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
 public abstract class MediaInfoPanel extends JPanel
 {
@@ -42,6 +43,6 @@ public abstract class MediaInfoPanel extends JPanel
 
 	protected void loadImgs()
 	{
-		imgLastFm = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "lastfm.png", "www.last.fm");
+		imgLastFm = MainController.getInstance().getImageIcon(MediaUtil.PATH_IMGS_16x16 + "lastfm.png", "www.last.fm");
 	}
 }

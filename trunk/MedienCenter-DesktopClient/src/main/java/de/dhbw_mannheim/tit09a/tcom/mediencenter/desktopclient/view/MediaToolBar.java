@@ -5,7 +5,9 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Action;
 import javax.swing.GroupLayout;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -17,11 +19,17 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.ContinuePlayAction;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.PauseAction;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.PlayFileAction;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
 public class MediaToolBar extends JToolBar implements ActionListener, ChangeListener
 {
 	private static final long	serialVersionUID	= 7584348932344982696L;
+
+	private MainFrame			mainFrame;
 
 	private JPanel				progressPanel;
 	private TimeLabel			timeLabel;
@@ -35,6 +43,8 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 	private JButton				btnPrevious;
 	private JButton				btnRewind;
 	private JButton				btnPlayPause;
+	private Action				playAction;
+	private Action				pauseAction;
 	private JButton				btnFastForward;
 	private JButton				btnNext;
 
@@ -47,8 +57,6 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 	private ImageIcon			imgStop;
 	private ImageIcon			imgPrevious;
 	private ImageIcon			imgRewind;
-	private ImageIcon			imgPlay;
-	private ImageIcon			imgPause;
 	private ImageIcon			imgFastForward;
 	private ImageIcon			imgNext;
 
@@ -60,9 +68,10 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 	private ImageIcon			imgVolume4;
 	private ImageIcon			imgVolume5;
 
-	public MediaToolBar()
+	public MediaToolBar(MainFrame mainFrame)
 	{
 		setName("MediaScrub - ToolBar");
+		this.mainFrame = mainFrame;
 
 		loadImages();
 
@@ -71,26 +80,61 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 		this.add(createButtonsPanel());
 	}
 
+	public void setDuration(long duration)
+	{
+		timeLabel.setFullTime(duration);
+	}
+
+	public void setCurrentTime(long currentTime)
+	{
+		timeLabel.setCurrentTime(currentTime);
+		int progress = (int) (timeLabel.getCurrentTime() * 100 / timeLabel.getFullTime());
+		sldrProgress.setValue(progress);
+	}
+
+	public void setNowPlaying(Icon icon)
+	{
+		lblNowPlaying.setIcon(icon);
+	}
+
+	public void setNowPlaying(Icon icon, String text)
+	{
+		lblNowPlaying.setIcon(icon);
+		lblNowPlaying.setText(text);
+		lblNowPlaying.setToolTipText(text);
+	}
+
+	public void setPlayAction(boolean play)
+	{
+		if (play)
+		{
+			btnPlayPause.setAction(playAction);
+		}
+		else
+		{
+			btnPlayPause.setAction(pauseAction);
+		}
+	}
+
 	private void loadImages()
 	{
-		imgRandom = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Random.png");
-		imgRepeat = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Repeat.png");
+		MainController mainController = MainController.getInstance();
+		imgRandom = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Random.png");
+		imgRepeat = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Repeat.png");
 
-		imgStop = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Stop.png");
-		imgPrevious = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Previous.png");
-		imgRewind = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Backward.png");
-		imgPlay = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Play.png");
-		imgPause = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Pause.png");
-		imgFastForward = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Forward.png");
-		imgNext = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_22x22 + "Next.png");
+		imgStop = mainController.getImageIcon(MediaUtil.PATH_IMGS_22x22 + "Stop.png");
+		imgPrevious = mainController.getImageIcon(MediaUtil.PATH_IMGS_22x22 + "Previous.png");
+		imgRewind = mainController.getImageIcon(MediaUtil.PATH_IMGS_22x22 + "Backward.png");
+		imgFastForward = mainController.getImageIcon(MediaUtil.PATH_IMGS_22x22 + "Forward.png");
+		imgNext = mainController.getImageIcon(MediaUtil.PATH_IMGS_22x22 + "Next.png");
 
-		imgMute = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Mute.png");
-		imgVolume0 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 0.png");
-		imgVolume1 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 1.png");
-		imgVolume2 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 2.png");
-		imgVolume3 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 3.png");
-		imgVolume4 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 4.png");
-		imgVolume5 = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 5.png");
+		imgMute = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Mute.png");
+		imgVolume0 = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 0.png");
+		imgVolume1 = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 1.png");
+		imgVolume2 = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 2.png");
+		imgVolume3 = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 3.png");
+		imgVolume4 = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 4.png");
+		imgVolume5 = mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Volume 5.png");
 	}
 
 	private JPanel createProgressPanel()
@@ -156,7 +200,9 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 			btnRewind.setIcon(imgRewind);
 
 			btnPlayPause = new JButton();
-			btnPlayPause.setIcon(imgPlay);
+			playAction = new ContinuePlayAction(mainFrame);
+			pauseAction = new PauseAction(mainFrame);
+			setPlayAction(true);
 
 			btnFastForward = new JButton();
 			btnFastForward.setIcon(imgFastForward);
@@ -216,11 +262,7 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
-		if ("maxVolume".equals(e.getActionCommand()))
-		{
-			sldrVolume.setValue(100);
-		}
-		else if ("mute".equals(e.getActionCommand()))
+		if ("mute".equals(e.getActionCommand()))
 		{
 			sldrVolume.setValue(0);
 		}
@@ -261,8 +303,9 @@ public class MediaToolBar extends JToolBar implements ActionListener, ChangeList
 		Object src = e.getSource();
 		if (src.equals(sldrVolume))
 		{
-			displayVolume(((JSlider) src).getValue());
-			// TODO: adapt volume on modell
+			int volume = ((JSlider) src).getValue();
+			displayVolume(volume);
+			mainFrame.getScreenTab().getMediaPlayerComponent().getMediaPlayer().setVolume(volume);
 		}
 	}
 
