@@ -92,17 +92,18 @@ public class TranscodingCategoryPanel extends CategoryPanel
 		// video codec
 		p = settings.getParameter(Settings.KEY_STREAMING_TRANSCODING_VIDEO_CODEC);
 		cmbBxVideoCodec = new JComboBox<String>();
+		cmbBxVideoCodec.addItem("");
 		cmbBxVideoCodec.addItem("mp1v");
 		cmbBxVideoCodec.addItem("mp2v");
-		cmbBxVideoCodec.addItem("mp4v");
-		cmbBxVideoCodec.addItem("h264");
+		cmbBxVideoCodec.addItem("QPEG");
+		// dont ever use h264, it will crash the server
 		lblVideoCodec = new JLabel(p.getLabel());
 		lblVideoCodec.setToolTipText(p.getDescription());
 		lblVideoCodec.setLabelFor(cmbBxVideoCodec);
 
 		// video kbit rate
 		p = settings.getParameter(Settings.KEY_STREAMING_TRANSCODING_VIDEO_KBIT_RATE);
-		SpinnerModel spnrMdl = new SpinnerNumberModel(0, 0, 65535, 1);
+		SpinnerModel spnrMdl = new SpinnerNumberModel(1024, 1024, 64*1024, 1); // 3072
 		spnrVideoKBitRate = new JSpinner(spnrMdl);
 		lblVideoKBitRate = new JLabel(p.getLabel());
 		lblVideoKBitRate.setToolTipText(p.getDescription());
@@ -111,6 +112,7 @@ public class TranscodingCategoryPanel extends CategoryPanel
 		// audio codec
 		p = settings.getParameter(Settings.KEY_STREAMING_TRANSCODING_AUDIO_CODEC);
 		cmbBxAudioCodec = new JComboBox<String>();
+		cmbBxAudioCodec.addItem("");
 		cmbBxAudioCodec.addItem("mpga");
 		cmbBxAudioCodec.addItem("mp3");
 		cmbBxAudioCodec.addItem("mp4a");
@@ -121,7 +123,7 @@ public class TranscodingCategoryPanel extends CategoryPanel
 
 		// audio kbit rate
 		p = settings.getParameter(Settings.KEY_STREAMING_TRANSCODING_AUDIO_KBIT_RATE);
-		spnrMdl = new SpinnerNumberModel(0, 0, 65535, 1);
+		spnrMdl = new SpinnerNumberModel(64, 64, 1024, 1);
 		spnrAudioKBitRate = new JSpinner(spnrMdl);
 		lblAudioKBitRate = new JLabel(p.getLabel());
 		lblAudioKBitRate.setToolTipText(p.getDescription());

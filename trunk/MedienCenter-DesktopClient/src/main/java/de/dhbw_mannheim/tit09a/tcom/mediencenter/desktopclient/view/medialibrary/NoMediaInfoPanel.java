@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.play;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.medialibrary;
 
 import javax.swing.JLabel;
 

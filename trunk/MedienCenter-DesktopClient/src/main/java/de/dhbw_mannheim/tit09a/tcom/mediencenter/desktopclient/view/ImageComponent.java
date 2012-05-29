@@ -5,7 +5,7 @@ import java.awt.Image;
 
 import javax.swing.JComponent;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
 public class ImageComponent extends JComponent
 {

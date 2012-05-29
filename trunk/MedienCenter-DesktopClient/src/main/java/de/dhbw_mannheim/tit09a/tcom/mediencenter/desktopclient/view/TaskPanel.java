@@ -1,16 +1,15 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view;
 
 import java.awt.Color;
-import java.awt.ComponentOrientation;
 import java.awt.event.ActionListener;
 
 import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
 public class TaskPanel extends JPanel
 {
@@ -29,8 +28,7 @@ public class TaskPanel extends JPanel
 		progressBar.setStringPainted(true);
 
 		// Cancel button
-		ImageIcon icon = MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Delete.png");
-		btnCancel = new JButton(icon);
+		btnCancel = new JButton(MainController.getInstance().getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Delete.png"));
 		btnCancel.addActionListener(cancelActionListener);
 
 		// Layout
@@ -54,6 +52,11 @@ public class TaskPanel extends JPanel
 	public void setCancelText(String text)
 	{
 		btnCancel.setText(text);
+	}
+	
+	public void setCancelEnabled(boolean enabled)
+	{
+		btnCancel.setEnabled(enabled);
 	}
 
 	public void setTaskFinished(boolean successfull, String message)

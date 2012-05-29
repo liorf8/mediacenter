@@ -8,7 +8,12 @@ public class ExtendedAudioTrackInfo extends AudioTrackInfo
 
 	private final String		description;
 
-	public ExtendedAudioTrackInfo(String description, int codec, int id, int profile, int level, int channels, int rate)
+	public ExtendedAudioTrackInfo(AudioTrackInfo ati, String description)
+	{
+		this(ati.codec(), ati.id(), ati.profile(), ati.level(), ati.channels(), ati.rate(), description);
+	}
+
+	public ExtendedAudioTrackInfo(int codec, int id, int profile, int level, int channels, int rate, String description)
 	{
 		super(codec, id, profile, level, channels, rate);
 		this.description = description;

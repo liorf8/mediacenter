@@ -17,7 +17,7 @@ public class FileTreeWillExpandListener implements TreeWillExpandListener
 	@Override
 	public void treeWillCollapse(TreeExpansionEvent e)
 	{
-		System.out.println("treeWillCollapse(): source=" + e.getSource());
+		System.out.println("FILETREE: treeWillCollapse(): source=" + e.getSource());
 		((DefaultMutableTreeNode) (e.getPath().getLastPathComponent())).removeAllChildren();
 		((DefaultMutableTreeNode) (e.getPath().getLastPathComponent())).add(new DefaultMutableTreeNode(null));
 	}
@@ -25,7 +25,7 @@ public class FileTreeWillExpandListener implements TreeWillExpandListener
 	@Override
 	public void treeWillExpand(TreeExpansionEvent e)
 	{
-		System.out.println("treeWillExpand(): source=" + e.getSource());
+		System.out.println("FILETREE: treeWillExpand(): source=" + e.getSource());
 		expandNode((FileInfoTree) e.getSource(), (DefaultMutableTreeNode) (e.getPath().getLastPathComponent()));
 	}
 	
@@ -36,7 +36,7 @@ public class FileTreeWillExpandListener implements TreeWillExpandListener
 		String dirPath = ((FileInfo) d.getUserObject()).getPath();
 		try
 		{
-			List<FileInfo> infos = MainController.getInstance().getSimonConnection().getSession().listFileInfos(dirPath);
+			List<FileInfo> infos = MainController.getInstance().getServerConnection().getSession().listFileInfos(dirPath);
 			tree.expandPath(d, infos);
 		}
 		catch (FileSystemException | ServerException e)

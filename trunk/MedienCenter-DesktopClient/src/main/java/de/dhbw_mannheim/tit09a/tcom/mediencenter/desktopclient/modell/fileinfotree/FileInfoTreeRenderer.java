@@ -10,24 +10,23 @@ import javax.swing.filechooser.FileSystemView;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
 public class FileInfoTreeRenderer extends DefaultTreeCellRenderer
 {
 	private static final long		serialVersionUID	= 1L;
 	private static FileSystemView	fsv					= FileSystemView.getFileSystemView();
 	private static final Icon		ICO_FOLDER			= fsv.getSystemIcon(new File(System.getProperty("java.home")));
-	private static final Icon		ICO_ROOT			= MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "TreeView.png");
-	private static final Icon		ICO_FOLDER_MUSIC	= MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Folder Music.png");
-	private static final Icon		ICO_FOLDER_PICTURES	= MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Folder Pictures.png");
-	private static final Icon		ICO_FOLDER_VIDEOS	= MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Folder Videos.png");
 
 	private String					rootFolderName;
+	private MainController			mainController;
 
 	public FileInfoTreeRenderer(String rootFolderName)
 	{
 		this.rootFolderName = rootFolderName;
+		this.mainController = MainController.getInstance();
 	}
 
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus)
@@ -39,6 +38,7 @@ public class FileInfoTreeRenderer extends DefaultTreeCellRenderer
 			FileInfo fi = (FileInfo) userObj;
 			try
 			{
+				setText(fi.getName());
 				if (!fi.isDir())
 				{
 					File tempFile = File.createTempFile("tmp", fi.getName());
@@ -47,28 +47,28 @@ public class FileInfoTreeRenderer extends DefaultTreeCellRenderer
 				}
 				else
 				{
-					if (fi.getPath().equals(rootFolderName))
+					if (fi.getPath().equals(""))
 					{
-						setIcon(ICO_ROOT);
+						setText(rootFolderName);
+						setIcon(mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "TreeView.png"));
 					}
 					else if (fi.getPath().equals("Music"))
 					{
-						setIcon(ICO_FOLDER_MUSIC);
+						setIcon(mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Folder Music.png"));
 					}
 					else if (fi.getPath().equals("Pictures"))
 					{
-						setIcon(ICO_FOLDER_PICTURES);
+						setIcon(mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Folder Pictures.png"));
 					}
 					else if (fi.getPath().equals("Videos"))
 					{
-						setIcon(ICO_FOLDER_VIDEOS);
+						setIcon(mainController.getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Folder Videos.png"));
 					}
 					else
 					{
 						setIcon(ICO_FOLDER);
 					}
 				}
-				setText(fi.getName());
 			}
 			catch (IOException e)
 			{

@@ -1,4 +1,4 @@
-package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.play;
+package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.medialibrary;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -12,31 +12,32 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.RetrieveMediaInfoAction;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.DisplayMediaInfoAction;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.modell.fileinfotree.FileInfoTree;
-import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.util.MediaUtil;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.Tab;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.util.MediaUtil;
 
-public class PlayTab extends Tab
+public class MediaLibraryTab extends Tab
 {
 	private static final long		serialVersionUID	= 1L;
 
 	private JSplitPane				splitPane;
-
 	private final NoMediaInfoPanel	noMediaInfoPanel;
 	private final ImageInfoPanel	imageInfoPanel;
 	private final AudioInfoPanel	audioInfoPanel;
 	private final VideoInfoPanel	videoInfoPanel;
+	private DisplayMediaInfoAction	displayMediaInfoAction;
 
-	private RetrieveMediaInfoAction	retreiveMediaInfoAction;
+	private FileInfo				selectedFileInfo;
 
-	public PlayTab(MainFrame mainFrame)
+	public MediaLibraryTab(MainFrame mainFrame)
 	{
 		super(mainFrame, "Play");
 
-		retreiveMediaInfoAction = new RetrieveMediaInfoAction(mainFrame);
+		displayMediaInfoAction = new DisplayMediaInfoAction(mainFrame);
 
 		noMediaInfoPanel = new NoMediaInfoPanel(mainFrame);
 		imageInfoPanel = new ImageInfoPanel(mainFrame);
@@ -56,7 +57,12 @@ public class PlayTab extends Tab
 	@Override
 	public Icon getIcon()
 	{
-		return MediaUtil.createImageIcon(MediaUtil.PATH_IMGS_16x16 + "Play Tab.png");
+		return MainController.getInstance().getImageIcon(MediaUtil.PATH_IMGS_16x16 + "Play Tab.png");
+	}
+
+	public FileInfo getSelectedFileInfo()
+	{
+		return selectedFileInfo;
 	}
 
 	public NoMediaInfoPanel getNoMediaInfoPanel()
@@ -92,7 +98,8 @@ public class PlayTab extends Tab
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		splitPane.setDividerLocation(150);
 		splitPane.setOneTouchExpandable(true);
-		splitPane.setPreferredSize(new Dimension(100, splitPane.getPreferredSize().height)); // so that the splitpane only gets smaller, if there is really no space left
+		// so that the splitpane only gets smaller, if there is really no space left
+		splitPane.setPreferredSize(new Dimension(100, splitPane.getPreferredSize().height));
 		splitPane.setLeftComponent(createFileInfoTree());
 		setMediaInfoPanel(noMediaInfoPanel);
 		return splitPane;
@@ -101,6 +108,7 @@ public class PlayTab extends Tab
 	private JScrollPane createFileInfoTree()
 	{
 		JScrollPane fileInfoTreeScrollPane = new JScrollPane();
+		fileInfoTreeScrollPane.setMinimumSize(new Dimension(150, fileInfoTreeScrollPane.getMinimumSize().height));
 		final FileInfoTree tree = new FileInfoTree();
 		tree.addTreeSelectionListener(new TreeSelectionListener()
 		{
@@ -112,11 +120,11 @@ public class PlayTab extends Tab
 				if (selectionPath != null)
 				{
 					DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
-					FileInfo selectedFileInfo = (FileInfo) node.getUserObject();
-					if (!selectedFileInfo.isDir())
+					FileInfo fi = (FileInfo) node.getUserObject();
+					setSelectedFileInfo(fi);
+					if (!fi.isDir())
 					{
-						retreiveMediaInfoAction.setSelectedFileInfo(selectedFileInfo);
-						retreiveMediaInfoAction.actionPerformed(new ActionEvent(tree, -1, "Retrieve information"));
+						displayMediaInfoAction.actionPerformed(new ActionEvent(tree, -1, "Display info"));
 					}
 				}
 			}
@@ -126,4 +134,8 @@ public class PlayTab extends Tab
 		return fileInfoTreeScrollPane;
 	}
 
+	private void setSelectedFileInfo(FileInfo selectedFileInfo)
+	{
+		this.selectedFileInfo = selectedFileInfo;
+	}
 }

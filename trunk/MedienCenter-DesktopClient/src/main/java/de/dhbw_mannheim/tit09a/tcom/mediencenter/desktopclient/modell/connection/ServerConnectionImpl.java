@@ -19,7 +19,7 @@ import de.root1.simon.Simon;
 import de.root1.simon.exceptions.EstablishConnectionFailed;
 import de.root1.simon.exceptions.LookupFailedException;
 
-public class SimonConnectionImpl implements SimonConnection, ClosedListener
+public class ServerConnectionImpl implements ServerConnection, ClosedListener
 {
 
 	// --------------------------------------------------------------------------------
@@ -36,20 +36,20 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 	int											serverRegistryPort;
 	String										serverBindname;
 
-	private SimonConnectionState				state;
-	private SimonConnectionStateDisconnected	stateDisconnected	= new SimonConnectionStateDisconnected(this);
-	private SimonConnectionStateConnected		stateConnected		= new SimonConnectionStateConnected(this);
-	private SimonConnectionStateLoggedIn		stateLoggedIn		= new SimonConnectionStateLoggedIn(this);
+	private ServerConnectionState				state;
+	private ServerConnectionStateDisconnected	stateDisconnected	= new ServerConnectionStateDisconnected(this);
+	private ServerConnectionStateConnected		stateConnected		= new ServerConnectionStateConnected(this);
+	private ServerConnectionStateLoggedIn		stateLoggedIn		= new ServerConnectionStateLoggedIn(this);
 
 	// CopyOnWriteArrayList: "A thread-safe variant of ArrayList" -> no sync needed on add/remove
 	// "This is ordinarily too costly, but may be more efficient than alternatives when traversal operations vastly outnumber mutations" -> on
 	// listeners this is the case
-	private List<SimonConnectionStateListener>	listeners			= new CopyOnWriteArrayList<>();
+	private List<ServerConnectionStateListener>	listeners			= new CopyOnWriteArrayList<>();
 
 	// --------------------------------------------------------------------------------
 	// -- Constructors ----------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public SimonConnectionImpl()
+	public ServerConnectionImpl()
 	{
 		logger.info("Init {}", this.getClass().getSimpleName());
 
@@ -59,19 +59,19 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 	// --------------------------------------------------------------------------------
 	// -- Public Methods --------------------------------------------------------------
 	// --------------------------------------------------------------------------------
-	public void addStateListener(SimonConnectionStateListener l)
+	public void addStateListener(ServerConnectionStateListener l)
 	{
 		listeners.add(l);
 	}
 
 	// --------------------------------------------------------------------------------
-	public void removeStateListener(SimonConnectionStateListener l)
+	public void removeStateListener(ServerConnectionStateListener l)
 	{
 		listeners.remove(l);
 	}
 
 	// --------------------------------------------------------------------------------
-	public SimonConnectionState getState()
+	public ServerConnectionState getState()
 	{
 		return state.getState();
 	}
@@ -171,22 +171,22 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 	@Override
 	public void closed()
 	{
-		setState(getState(SimonConnectionStateDisconnected.class));
+		setState(getState(ServerConnectionStateDisconnected.class));
 	}
 
 	// --------------------------------------------------------------------------------
 	// -- Protected Methods -----------------------------------------------------------
 	// --------------------------------------------------------------------------------
 	@SuppressWarnings("unchecked")
-	<S extends SimonConnectionState> S getState(Class<S> stateClass)
+	<S extends ServerConnectionState> S getState(Class<S> stateClass)
 	{
-		if (stateClass == SimonConnectionStateDisconnected.class)
+		if (stateClass == ServerConnectionStateDisconnected.class)
 			return (S) stateDisconnected;
 
-		if (stateClass == SimonConnectionStateConnected.class)
+		if (stateClass == ServerConnectionStateConnected.class)
 			return (S) stateConnected;
 
-		if (stateClass == SimonConnectionStateLoggedIn.class)
+		if (stateClass == ServerConnectionStateLoggedIn.class)
 			return (S) stateLoggedIn;
 
 		else
@@ -194,12 +194,12 @@ public class SimonConnectionImpl implements SimonConnection, ClosedListener
 	}
 
 	// --------------------------------------------------------------------------------
-	void setState(SimonConnectionState newState)
+	void setState(ServerConnectionState newState)
 	{
-		SimonConnectionState oldState = state;
+		ServerConnectionState oldState = state;
 		// state has to be set before the listeners are notified, because they might call this instance immediately and then the state may be old
 		state = newState;
-		for (SimonConnectionStateListener l : listeners)
+		for (ServerConnectionStateListener l : listeners)
 		{
 			l.stateChanged(oldState, newState);
 		}

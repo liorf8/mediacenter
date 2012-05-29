@@ -12,12 +12,12 @@ import de.root1.simon.exceptions.EstablishConnectionFailed;
 import de.root1.simon.exceptions.LookupFailedException;
 
 
-public abstract class SimonConnectionState implements SimonConnection
+public abstract class ServerConnectionState implements ServerConnection
 {
-	protected SimonConnectionImpl	connection;
+	protected ServerConnectionImpl	connection;
 
 	// --------------------------------------------------------------------------------
-	public SimonConnectionState(SimonConnectionImpl connection)
+	public ServerConnectionState(ServerConnectionImpl connection)
 	{
 		this.connection = connection;
 		connection.logger.info("Build {}", this.getClass().getSimpleName());
@@ -25,7 +25,7 @@ public abstract class SimonConnectionState implements SimonConnection
 
 	// --------------------------------------------------------------------------------
 	@Override
-	public SimonConnectionState getState()
+	public ServerConnectionState getState()
 	{
 		return this;
 	}

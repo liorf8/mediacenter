@@ -7,7 +7,7 @@ import javax.swing.tree.TreePath;
 
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.shared.interfaces.FileInfo;
 
-public class FileTreeSelectionListener implements TreeSelectionListener
+public class DefaultFileTreeSelectionListener implements TreeSelectionListener
 {
 	@Override
 	public void valueChanged(TreeSelectionEvent e)

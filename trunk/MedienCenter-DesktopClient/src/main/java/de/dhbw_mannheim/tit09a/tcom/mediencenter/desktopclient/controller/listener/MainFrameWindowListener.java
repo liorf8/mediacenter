@@ -1,17 +1,21 @@
 package de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.listener;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.MainController;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.controller.action.ExitAction;
 import de.dhbw_mannheim.tit09a.tcom.mediencenter.desktopclient.view.MainFrame;
 
 public class MainFrameWindowListener implements WindowListener
 {
-	private final MainFrame	mainFrame;
+	private MainController	mainController;
+	private MainFrame		mainFrame;
 
-	public MainFrameWindowListener(MainFrame mainFrame)
+	public MainFrameWindowListener(MainController mainController, MainFrame mainFrame)
 	{
+		this.mainController = mainController;
 		this.mainFrame = mainFrame;
 	}
 
@@ -25,7 +29,7 @@ public class MainFrameWindowListener implements WindowListener
 	@Override
 	public void windowClosing(WindowEvent e)
 	{
-		new ExitAction(mainFrame).actionPerformed(null);
+		new ExitAction(mainFrame).actionPerformed(new ActionEvent(e.getSource(), -1, "exit"));
 	}
 
 	@Override
