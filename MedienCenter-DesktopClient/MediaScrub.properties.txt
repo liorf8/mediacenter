@@ -1,0 +1,21 @@
+#MediaScrub 0.9 BETA
+#Tue Jun 05 01:11:07 CEST 2012
+server.host=localhost
+settings.selectedCategory=Transcoding
+player.toolbarLocation=South
+streaming.transcoding.active=true
+player.volume=68
+streaming.transcoding.audioCodec=a52
+frame.height=480
+streaming.transcoding.videoCodec=mp2v
+streaming.transcoding.deinterlace=true
+streaming.destinationPort=22221
+streaming.transcoding.audioKBitRate=320
+server.registryPort=22222
+streaming.protocol=rtp
+streaming.transcoding.audioSync=true
+streaming.transcoding.videoKBitRate=4096
+frame.width=760
+settings.dividerLocation=150
+server.bindname=server
+streaming.vlcInstallDir=C\:\\Program Files (x86)\\VideoLAN\\VLC
