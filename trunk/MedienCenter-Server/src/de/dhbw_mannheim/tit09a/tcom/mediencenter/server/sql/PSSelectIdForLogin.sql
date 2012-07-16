@@ -1,1 +1,0 @@
-SELECT id FROM Users WHERE login_lc=LCASE(?);

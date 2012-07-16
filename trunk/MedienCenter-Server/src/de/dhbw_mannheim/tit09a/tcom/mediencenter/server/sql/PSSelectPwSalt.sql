@@ -1,1 +1,0 @@
-SELECT pw, salt FROM Users WHERE id=?;
