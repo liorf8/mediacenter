@@ -1,0 +1,1 @@
+SELECT login FROM Users WHERE id=?;

@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS Media
+(
+	mrl VARCHAR(255) PRIMARY KEY,
+	elapsed_time BIGINT NOT NULL,
+	
+	CONSTRAINT cc_mrl_gt0 CHECK(CHARACTER_LENGTH(mrl) > 0)
+);
+
+
