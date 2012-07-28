@@ -2,15 +2,14 @@
 
 = Screenshots =
 
-http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-home.jpg
+
+
+http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-settings.jpg
 
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-login.jpg
 
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-home.jpg
 
-http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-manage.jpg
-
-http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-manage2.jpg
 
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-music.jpg
 
@@ -20,4 +19,6 @@ http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-vi
 
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-screen.jpg
 
-http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-settings.jpg
+http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-manage.jpg
+
+http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-manage2.jpg
