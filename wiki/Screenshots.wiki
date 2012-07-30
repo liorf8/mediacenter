@@ -2,15 +2,16 @@
 
 = Screenshots =
 
-
-
-http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-settings.jpg
-
+Login Tab
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-login.jpg
 
+Settings Tab - Transcoding
+http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-settings.jpg
+
+Home Tab
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-home.jpg
 
-
+Media
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-pic.jpg
 
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-music.jpg
