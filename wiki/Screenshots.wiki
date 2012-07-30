@@ -17,7 +17,7 @@ http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-pi
 == Media Library Tab - Music ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-music.jpg
 
-Media Library Tab - Videos ==
+== Media Library Tab - Videos ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-vid.jpg
 
 == Screen Tab ==
