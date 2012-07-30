@@ -23,7 +23,7 @@ http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-vi
 == Screen Tab ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-screen.jpg
 
-== Manage Tab - Choose a file to upload ==
+== Manage Tab - Choosing a file to upload ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-manage.jpg
 
 == Manage Tab - Uploading process ==
