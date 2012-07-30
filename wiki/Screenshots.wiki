@@ -2,36 +2,28 @@
 
 = Screenshots =
 
-Login Tab
-[[BR]]
+== Login Tab ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-login.jpg
 
-Settings Tab - Transcoding
-[[BR]]
+== Settings Tab - Transcoding ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-settings.jpg
 
-Home Tab
-[[BR]]
+== Home Tab ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-home.jpg
 
-Media Library Tab - Pictures
-[[BR]]
+== Media Library Tab - Pictures ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-pic.jpg
 
-Media Library Tab - Music
-[[BR]]
+== Media Library Tab - Music ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-music.jpg
 
-Media Library Tab - Videos
-[[BR]]
+Media Library Tab - Videos ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-medialibrary-vid.jpg
 
-Screen Tab
-[[BR]]
+== Screen Tab ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-screen.jpg
 
-Manage Tab
-[[BR]]
+== Manage Tab ==
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-manage.jpg
 
 http://mediacenter.eclipselabs.org.codespot.com/files/mediascrub-manage2.jpg
